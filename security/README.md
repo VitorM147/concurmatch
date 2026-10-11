@@ -1,6 +1,6 @@
 # Auditoria de segurança — ESAA-Security
 
-Este diretório aplica a metodologia [ESAA-Security](https://github.com/elzobrito/ESAA-Security) (Elzo Brito, licença MIT) ao Probatório/ConcurMatch:
+Este diretório aplica a metodologia [ESAA-Security](https://github.com/elzobrito/ESAA-Security) (Elzo Brito, licença MIT) ao ConMatch:
 auditoria **static-first** com **108 checks em 17 domínios**, resultados com evidência, **eventos append-only encadeados por SHA-256** e
 relatório final como **projeção determinística** desses eventos.
 

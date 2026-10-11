@@ -1,10 +1,10 @@
 // Marca e textos centralizados — trocar o nome do app é editar este arquivo + app.json.
 export const brand = {
-  name: 'Probatório',
-  tagline: 'Pra quem estuda pra passar — e quer alguém que entenda a rotina.',
-  matchTitle: 'Aprovados!',
-  matchSubtitle: 'Vocês entraram no Estágio Probatório.',
-  matchCta: 'Conversem agora para garantir a estabilidade.',
+  name: 'ConMatch',
+  tagline: 'Sua jornada aproxima pessoas.',
+  matchTitle: 'Deu ConMatch!',
+  matchSubtitle: 'Vocês querem se conhecer.',
+  matchCta: 'Que tal começar a conversa?',
   likeLimitTitle: 'Suas 20 curtidas de hoje acabaram',
   likeLimitBody: 'Elas renovam à meia-noite. Com o Premium você curte sem limite e vê quem curtiu você.',
   premiumPrice: 'R$ 24,90/mês',

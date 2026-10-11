@@ -1,19 +1,19 @@
-# Probatório — textos para as lojas
+# ConMatch — textos para as lojas
 
-**Nome:** Probatório
+**Nome:** ConMatch
 **Subtítulo (App Store, até 30):** Namoro para concurseiros
 **Descrição curta (Google Play, até 80):** Conheça concurseiros perto de você e de onde você vai ser lotado(a).
 
 ## Descrição completa
 
-Quem estuda para concurso sabe: a rotina é puxada, o tempo livre é pouco e nem todo mundo entende por que você troca o sábado à noite por um simulado. No Probatório, todo mundo entende.
+Quem estuda para concurso sabe: a rotina é puxada, o tempo livre é pouco e nem todo mundo entende por que você troca o sábado à noite por um simulado. No ConMatch, todo mundo entende.
 
-O Probatório é o app de relacionamento feito para concurseiros. Aqui você conhece pessoas que vivem a mesma jornada — da primeira leitura do edital até a posse.
+O ConMatch é o app de relacionamento feito para concurseiros. Aqui você conhece pessoas que vivem a mesma jornada — da primeira leitura do edital até a posse.
 
 **Como funciona**
 - Monte seu perfil com foto, concurso, área, fase da preparação e horário de estudo.
 - Deslize para curtir ou passar.
-- Curtida recíproca? Aprovados! Vocês entram no Estágio Probatório e podem conversar.
+- Curtida recíproca? Aprovados! Vocês entram no ConMatch e podem conversar.
 
 **Feito para a vida de concurseiro**
 - Afinidades em destaque: mesmo concurso, mesma área, estudam no mesmo período, fase parecida.

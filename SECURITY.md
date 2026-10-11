@@ -1,11 +1,11 @@
-# Segurança do Probatório / ConcurMatch
+# Segurança do ConMatch
 
 Este projeto é auditado com a metodologia **ESAA-Security** (108 checks em 17 domínios, modo static-first).
 O relatório completo, a trilha de eventos e o score ficam em [`security/`](security/README.md).
 
 ## Como reportar uma vulnerabilidade
 
-Envie para **seguranca@concurmatch.com.br** (troque pelo e-mail real antes de publicar).
+Envie para **seguranca@conmatch.com.br** (troque pelo e-mail real antes de publicar).
 Não abra issue pública. Respondemos em até 3 dias úteis.
 
 ## Controles em vigor

@@ -1,5 +1,5 @@
 -- =====================================================================
--- Probatório — schema do MVP
+-- ConMatch — schema do MVP
 -- App de relacionamento para concurseiros.
 -- Postgres 15+ (Supabase). Fuso de negócio: America/Sao_Paulo.
 -- =====================================================================

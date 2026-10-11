@@ -18,7 +18,7 @@ export default function Premium() {
     <Screen>
       <ScrollView contentContainerStyle={{ padding: space.xl, gap: space.xl }}>
         <H1>Seja <Highlight>Premium</Highlight></H1>
-        <P muted>Mais chances de aprovação no Estágio Probatório.</P>
+        <P muted>Mais chances de dar ConMatch.</P>
         <View style={{ gap: space.md }}>
           {PERKS.map(([t, d]) => (
             <View key={t} style={{ backgroundColor: c.surface, borderRadius: radius.md, padding: space.lg, borderWidth: 1, borderColor: c.border }}>

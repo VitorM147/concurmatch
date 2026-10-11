@@ -1,8 +1,8 @@
-# Probatório — MVP
+# ConMatch — MVP
 
 App de relacionamento para concurseiros. Nome provisório. Para trocar o nome, edite `apps/mobile/src/brand.ts` e `apps/mobile/app.json`.
 
-> Deu match? **"Aprovados! Vocês entraram no Estágio Probatório."**
+> Deu match? **"Deu ConMatch! Vocês querem se conhecer."**
 
 ## O que já está pronto
 
@@ -48,7 +48,7 @@ Relatório, trilha de eventos e score em [`security/`](security/README.md); cont
 ## Estrutura
 
 ```
-probatorio/
+conmatch/
 ├── apps/mobile/            App Expo (React Native + expo-router)
 │   ├── app/                Telas (rotas)
 │   └── src/                api, sessão, fotos, tema, componentes

@@ -4,12 +4,12 @@
 # No projeto hospedado, confira os mesmos valores em Authentication → Settings.
 # Segredos NUNCA ficam aqui: use env(...) e defina no ambiente/CI.
 # =====================================================================
-project_id = "probatorio"
+project_id = "conmatch"
 
 [auth]
 enabled = true
-site_url = "probatorio://"
-additional_redirect_urls = ["probatorio://**"]
+site_url = "conmatch://"
+additional_redirect_urls = ["conmatch://**"]
 # AU-005 / SS-005 — access token curto (1 h)
 jwt_expiry = 3600
 # SS-006 / AU-007 — refresh token rotativo: token usado duas vezes revoga a sessão

@@ -14,7 +14,7 @@ const like = async (a, b) => (await rpc(db, a, 'swipe_like', [b]))[0].swipe_like
 const rejects = (p, code) => assert.rejects(p, (e) => { assert.match(e.message, new RegExp(code)); return true; });
 
 // ---------------------------------------------------------------- Match
-test('like mútuo cria exatamente um match ("Estágio Probatório")', async () => {
+test('like mútuo cria exatamente um match ("ConMatch")', async () => {
   const a = await woman(), b = await man();
   assert.equal((await like(a, b)).matched, false);
   const r = await like(b, a);

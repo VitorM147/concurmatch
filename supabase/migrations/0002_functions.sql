@@ -262,7 +262,7 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------
--- Like → possível MATCH ("Estágio Probatório")
+-- Like → possível MATCH ("ConMatch")
 -- Lock por par evita a corrida em que os dois curtem ao mesmo tempo
 -- e nenhum dos dois vê o like do outro.
 -- ---------------------------------------------------------------------

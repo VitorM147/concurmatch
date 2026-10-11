@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "Probatório",
-    "slug": "probatorio",
-    "scheme": "probatorio",
+    "name": "ConMatch",
+    "slug": "conmatch",
+    "scheme": "conmatch",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "br.com.probatorio.app",
+      "bundleIdentifier": "br.com.conmatch.app",
       "supportsTablet": false,
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Usamos sua localização aproximada (cerca de 1 km) para mostrar pessoas perto de você. Nunca mostramos sua localização exata.",
@@ -15,7 +15,7 @@
       }
     },
     "android": {
-      "package": "br.com.probatorio.app",
+      "package": "br.com.conmatch.app",
       "permissions": [
         "ACCESS_COARSE_LOCATION"
       ],

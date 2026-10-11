@@ -1,4 +1,4 @@
-// Tela de match: "Aprovados! Vocês entraram no Estágio Probatório."
+// Tela de match: "Deu ConMatch! Vocês querem se conhecer."
 import { Image } from 'expo-image';
 import { Modal, StyleSheet, Text, View } from 'react-native';
 import type { Candidate } from '@/lib/api';
@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     borderWidth: 5, borderColor: '#FFD23F', borderRadius: radius.md, paddingHorizontal: space.xl,
     paddingVertical: space.sm, transform: [{ rotate: '-4deg' }],
   },
-  stamp: { color: '#FFD23F', fontSize: 44, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase' },
+  stamp: { color: '#FFD23F', fontSize: 34, fontWeight: '900', letterSpacing: 1, textTransform: 'uppercase' },
   subtitle: { color: '#fff', fontSize: 18, fontWeight: '700', textAlign: 'center' },
   photos: { flexDirection: 'row', marginVertical: space.lg },
   photo: { width: 130, height: 170, borderRadius: radius.md, borderWidth: 4, borderColor: '#fff', backgroundColor: '#2B3A5C' },

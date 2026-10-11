@@ -1,5 +1,5 @@
 {
-  "name": "probatorio-db-tests",
+  "name": "conmatch-db-tests",
   "private": true,
   "type": "module",
   "scripts": { "test": "node --test --test-concurrency=1" },
