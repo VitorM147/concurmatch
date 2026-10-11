@@ -1,0 +1,6 @@
+# DO-001 — toda mudança passa por revisão. Ative "Require review from Code Owners"
+# na proteção da branch main (Settings → Branches).
+*                       @VitorM147
+/supabase/migrations/   @VitorM147
+/supabase/config.toml   @VitorM147
+/.github/               @VitorM147

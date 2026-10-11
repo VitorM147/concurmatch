@@ -1,0 +1,199 @@
+{
+  "task_id": "SEC-013",
+  "domain": "authorization",
+  "playbook_version": "1.2.1",
+  "checks_total": 6,
+  "checks_pass": 2,
+  "checks_fail": 2,
+  "checks_partial": 1,
+  "checks_na": 1,
+  "checks_error": 0,
+  "worst_severity": "CRITICAL",
+  "duration_ms": 0,
+  "results": [
+    {
+      "check_id": "AZ-001",
+      "check_name": "Controle de acesso ausente",
+      "status": "pass",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0003_security.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0003_security.sql:8:alter table public.app_config        enable row level security;"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet",
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis",
+          "pglite_test"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "RLS ligado em todas as tabelas; app sem grant em likes/passes/blocks/reports (teste 'RLS: não lê...')."
+      },
+      "remediation": "Aplicar middleware de auth por padrão (deny-by-default). Whitelist rotas públicas explicitamente. Documentar política de acesso por rota.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AZ-002",
+      "check_name": "IDOR (Insecure Direct Object Reference)",
+      "status": "fail",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0003_security.sql",
+          "security/reports/phase2/evidence/baseline-poc.txt"
+        ],
+        "lines": [
+          "supabase/migrations/0003_security.sql:53:grant insert (user_id, storage_path, position) on public.photos to authenticated;",
+          "security/reports/phase2/evidence/baseline-poc.txt:1:E1 AZ-002 foto de outra pessoa no proprio perfil: VULNERAVEL (insert aceito com storage_path de outro usuario)"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet",
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis",
+          "pglite_poc"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "IDOR confirmado por prova de conceito: (E1) usuário cadastrava em 'photos' o storage_path da foto de OUTRA pessoa e a exibia no próprio perfil (a policy de leitura do Storage aceitava); (E6) denúncia aceitava match_id de terceiros."
+      },
+      "remediation": "Sempre filtrar queries por user_id/org_id do usuário autenticado. Implementar policy layer (ex: CASL, Pundit, Django Guardian). Usar UUIDs ao invés de IDs sequenciais.",
+      "cross_refs": [
+        "FU-006"
+      ]
+    },
+    {
+      "check_id": "AZ-003",
+      "check_name": "Verificação de permissão apenas no frontend",
+      "status": "partial",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "security/reports/phase2/evidence/baseline-poc.txt"
+        ],
+        "lines": [
+          "security/reports/phase2/evidence/baseline-poc.txt:5:E5 DA-005 criar perfil sem consentimento LGPD: VULNERAVEL (perfil com dado sensivel criado sem registro de consentimento)"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet",
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis",
+          "pglite_poc"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: consentimento LGPD e exigência de foto só no app (perfil podia ser criado direto na API sem consentimento, PoC E5)."
+      },
+      "remediation": "Implementar toda lógica de autorização no backend. Frontend deve esconder UI por UX, não por segurança. Testar endpoints diretamente com curl/Postman.",
+      "cross_refs": [
+        "DA-005"
+      ]
+    },
+    {
+      "check_id": "AZ-004",
+      "check_name": "Admin routes expostas",
+      "status": "not_applicable",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": true,
+        "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
+        "description": "Não existe painel nem rota administrativa no repositório."
+      },
+      "remediation": "Proteger admin com auth + role admin. Mover para subdomain ou porta segregada. Implementar IP whitelist se possível. Adicionar MFA para admin.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AZ-005",
+      "check_name": "Escopo de permissões mal definido",
+      "status": "fail",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0003_security.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0003_security.sql:99:grant execute on function public.is_blocked_pair(uuid, uuid) to authenticated;"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet",
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis",
+          "pglite_poc"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: is_blocked_pair liberada ao papel authenticated permitia a qualquer usuário descobrir se A bloqueou B (PoC E4); tabelas/funções futuras herdariam grants padrão do Supabase."
+      },
+      "remediation": "Implementar RBAC ou ABAC granular. Definir permissões por recurso e ação. Auditar roles periodicamente. Documentar matriz de permissões.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AZ-006",
+      "check_name": "Ações sensíveis sem confirmação",
+      "status": "pass",
+      "severity_if_fail": "LOW",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "apps/mobile/app/(tabs)/perfil.tsx"
+        ],
+        "lines": [
+          "apps/mobile/app/(tabs)/perfil.tsx:50:{ text: 'Excluir tudo', style: 'destructive', onPress: async () => {"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Excluir conta exige confirmação; bloquear/denunciar passam por folha de confirmação."
+      },
+      "remediation": "Exigir confirmação para ações destrutivas. Re-autenticação para ações críticas (delete account, change email). Soft-delete com período de recuperação.",
+      "cross_refs": []
+    }
+  ]
+}

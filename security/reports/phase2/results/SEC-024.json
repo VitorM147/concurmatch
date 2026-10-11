@@ -1,0 +1,132 @@
+{
+  "task_id": "SEC-024",
+  "domain": "frontend_security",
+  "playbook_version": "1.2.1",
+  "checks_total": 4,
+  "checks_pass": 2,
+  "checks_fail": 0,
+  "checks_partial": 1,
+  "checks_na": 1,
+  "checks_error": 0,
+  "worst_severity": "NONE",
+  "duration_ms": 0,
+  "results": [
+    {
+      "check_id": "FE-001",
+      "check_name": "Tokens armazenados em localStorage",
+      "status": "pass",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "apps/mobile/src/lib/supabase.ts"
+        ],
+        "lines": [
+          "apps/mobile/src/lib/supabase.ts:35:storage: Platform.OS === 'web' ? undefined : secureStorage,"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: sessão no AsyncStorage (equivalente mobile do localStorage, texto puro). RUN-0002: secureStorage em pedaços no Keychain/Keystore."
+      },
+      "remediation": "Mover auth tokens para httpOnly cookies. Se SPA, usar BFF (Backend For Frontend) pattern com cookies httpOnly. localStorage apenas para preferências não-sensíveis.",
+      "cross_refs": [
+        "CR-003"
+      ]
+    },
+    {
+      "check_id": "FE-002",
+      "check_name": "HTML não sanitizado",
+      "status": "not_applicable",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "React Native não renderiza HTML."
+      },
+      "remediation": "Sanitizar com DOMPurify antes de renderizar HTML dinâmico. Preferir text content ao invés de innerHTML. Sanitizar server-side como defesa em profundidade.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "FE-003",
+      "check_name": "Dependências JS vulneráveis",
+      "status": "partial",
+      "severity_if_fail": "HIGH",
+      "confidence": "medium",
+      "evidence": {
+        "files": [
+          "security/reports/phase2/evidence/npm-audit-mobile-post.json"
+        ],
+        "lines": [
+          "security/reports/phase2/evidence/npm-audit-mobile-post.json:493:\"total\": 22"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis",
+          "npm_audit"
+        ],
+        "tool_name": "npm audit",
+        "tool_version": "10.9.4",
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Ver DS-001."
+      },
+      "remediation": "Atualizar dependências vulneráveis. Adicionar SRI em scripts de CDN. Configurar npm audit na CI.",
+      "cross_refs": [
+        "DS-001"
+      ]
+    },
+    {
+      "check_id": "FE-004",
+      "check_name": "Lógica crítica no frontend",
+      "status": "pass",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0005_security_hardening.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0005_security_hardening.sql:233:raise exception 'LIKE_LIMIT_REACHED' using errcode = 'P0003',"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Limite de curtidas, Premium, match, moderação e consentimento (RUN-0002) decididos no banco."
+      },
+      "remediation": "Mover toda lógica de negócio para o backend. Frontend pode validar para UX, mas backend é source of truth. Nunca confiar em cálculos do client.",
+      "cross_refs": []
+    }
+  ]
+}

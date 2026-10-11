@@ -1,0 +1,184 @@
+{
+  "task_id": "SEC-022",
+  "domain": "devsecops",
+  "playbook_version": "1.2.1",
+  "checks_total": 6,
+  "checks_pass": 3,
+  "checks_fail": 1,
+  "checks_partial": 2,
+  "checks_na": 0,
+  "checks_error": 0,
+  "worst_severity": "LOW",
+  "duration_ms": 0,
+  "results": [
+    {
+      "check_id": "DO-001",
+      "check_name": "Ausência de code review",
+      "status": "partial",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "medium",
+      "evidence": {
+        "files": [
+          ".github/CODEOWNERS",
+          ".github/pull_request_template.md"
+        ],
+        "lines": [
+          ".github/CODEOWNERS:3:*                       @VitorM147",
+          ".github/pull_request_template.md:3:## Checklist de segurança (ESAA-Security)"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "config_artifact"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: sem CODEOWNERS nem template de PR. RUN-0002: ambos criados; proteção da branch é configuração do GitHub (fora do repo)."
+      },
+      "remediation": "Configurar branch protection. Exigir pelo menos 1 approval. CODEOWNERS para paths de segurança. Bloquear push direto para main.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "DO-002",
+      "check_name": "Pipeline sem análise de segurança",
+      "status": "pass",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          ".github/workflows/ci.yml"
+        ],
+        "lines": [
+          ".github/workflows/ci.yml:47:name: Secrets scanning (gitleaks)      # DO-003 / SC-001",
+          ".github/workflows/ci.yml:57:name: SAST (Semgrep)                   # DO-004"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "config_artifact"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: CI só com testes funcionais. RUN-0002: jobs de secrets, SAST, dependências e regressões de segurança."
+      },
+      "remediation": "Integrar SAST (Semgrep, SonarQube) na CI. Configurar para bloquear em findings high/critical. Adicionar dependency scanning.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "DO-003",
+      "check_name": "Secrets scanning ausente",
+      "status": "pass",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          ".github/workflows/ci.yml"
+        ],
+        "lines": [
+          ".github/workflows/ci.yml:52:- uses: gitleaks/gitleaks-action@v2"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "config_artifact"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: sem secrets scanning. RUN-0002: gitleaks em todo o histórico no CI."
+      },
+      "remediation": "Implementar gitleaks ou trufflehog na CI. Adicionar pre-commit hook com detect-secrets. Habilitar GitHub secret scanning se disponível.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "DO-004",
+      "check_name": "SAST não implementado",
+      "status": "pass",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "medium",
+      "evidence": {
+        "files": [
+          ".github/workflows/ci.yml"
+        ],
+        "lines": [
+          ".github/workflows/ci.yml:62:- run: semgrep scan --config p/typescript --config p/react --config p/secrets --error --metrics=off"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "config_artifact"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": true,
+        "fallback_reason": "semgrep indisponível no ambiente local; validado só por configuração",
+        "description": "Baseline: sem SAST. RUN-0002: Semgrep (typescript, react, secrets) no CI. Não executado localmente."
+      },
+      "remediation": "Implementar Semgrep (open source, multi-linguagem) ou SonarQube. Configurar na CI. Triage findings regularmente.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "DO-005",
+      "check_name": "DAST não implementado",
+      "status": "fail",
+      "severity_if_fail": "LOW",
+      "confidence": "medium",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Sem DAST. Para app mobile + BaaS, recomendado ZAP contra um projeto Supabase de staging."
+      },
+      "remediation": "Implementar OWASP ZAP ou Nuclei em CI contra staging. Scan antes de deploy para produção. Triage findings antes de release.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "DO-006",
+      "check_name": "Deploy sem auditoria",
+      "status": "partial",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "medium",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Migrations aplicadas manualmente via CLI/painel, sem pipeline de deploy auditável."
+      },
+      "remediation": "Implementar audit trail para deploys. Exigir approval para produção. Configurar rollback automático em caso de health check failure.",
+      "cross_refs": []
+    }
+  ]
+}

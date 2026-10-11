@@ -1,0 +1,181 @@
+{
+  "value": 62.6,
+  "raw_weighted_average": 62.6,
+  "classification": "fair",
+  "penalties_applied": [
+    "any_check_critical_fail"
+  ],
+  "critical_fails": 2,
+  "breakdown": [
+    {
+      "task_id": "SEC-010",
+      "domain": "secrets_config",
+      "priority": "critical",
+      "score": 100.0,
+      "checks_pass": 7,
+      "checks_fail": 0,
+      "checks_partial": 0,
+      "checks_na": 1
+    },
+    {
+      "task_id": "SEC-011",
+      "domain": "dependencies_supply_chain",
+      "priority": "high",
+      "score": 65.5,
+      "checks_pass": 3,
+      "checks_fail": 2,
+      "checks_partial": 1,
+      "checks_na": 0
+    },
+    {
+      "task_id": "SEC-012",
+      "domain": "authentication",
+      "priority": "critical",
+      "score": 69.5,
+      "checks_pass": 3,
+      "checks_fail": 1,
+      "checks_partial": 4,
+      "checks_na": 1
+    },
+    {
+      "task_id": "SEC-013",
+      "domain": "authorization",
+      "priority": "critical",
+      "score": 47.2,
+      "checks_pass": 2,
+      "checks_fail": 2,
+      "checks_partial": 1,
+      "checks_na": 1
+    },
+    {
+      "task_id": "SEC-014",
+      "domain": "api_security",
+      "priority": "high",
+      "score": 69.2,
+      "checks_pass": 4,
+      "checks_fail": 1,
+      "checks_partial": 3,
+      "checks_na": 1
+    },
+    {
+      "task_id": "SEC-015",
+      "domain": "input_validation",
+      "priority": "critical",
+      "score": 92.0,
+      "checks_pass": 3,
+      "checks_fail": 0,
+      "checks_partial": 1,
+      "checks_na": 6
+    },
+    {
+      "task_id": "SEC-016",
+      "domain": "file_upload",
+      "priority": "high",
+      "score": 69.4,
+      "checks_pass": 3,
+      "checks_fail": 1,
+      "checks_partial": 2,
+      "checks_na": 0
+    },
+    {
+      "task_id": "SEC-017",
+      "domain": "session_security",
+      "priority": "high",
+      "score": 50.0,
+      "checks_pass": 0,
+      "checks_fail": 0,
+      "checks_partial": 2,
+      "checks_na": 4
+    },
+    {
+      "task_id": "SEC-018",
+      "domain": "cryptography",
+      "priority": "high",
+      "score": 57.9,
+      "checks_pass": 2,
+      "checks_fail": 2,
+      "checks_partial": 1,
+      "checks_na": 0
+    },
+    {
+      "task_id": "SEC-019",
+      "domain": "security_headers",
+      "priority": "medium",
+      "score": null,
+      "checks_pass": 0,
+      "checks_fail": 0,
+      "checks_partial": 0,
+      "checks_na": 5
+    },
+    {
+      "task_id": "SEC-020",
+      "domain": "logging_monitoring",
+      "priority": "medium",
+      "score": 68.4,
+      "checks_pass": 2,
+      "checks_fail": 1,
+      "checks_partial": 2,
+      "checks_na": 0
+    },
+    {
+      "task_id": "SEC-021",
+      "domain": "infrastructure",
+      "priority": "high",
+      "score": 73.8,
+      "checks_pass": 1,
+      "checks_fail": 0,
+      "checks_partial": 2,
+      "checks_na": 4
+    },
+    {
+      "task_id": "SEC-022",
+      "domain": "devsecops",
+      "priority": "medium",
+      "score": 16.0,
+      "checks_pass": 0,
+      "checks_fail": 4,
+      "checks_partial": 2,
+      "checks_na": 0
+    },
+    {
+      "task_id": "SEC-023",
+      "domain": "data_security",
+      "priority": "critical",
+      "score": 62.1,
+      "checks_pass": 3,
+      "checks_fail": 2,
+      "checks_partial": 0,
+      "checks_na": 0
+    },
+    {
+      "task_id": "SEC-024",
+      "domain": "frontend_security",
+      "priority": "medium",
+      "score": 33.3,
+      "checks_pass": 1,
+      "checks_fail": 2,
+      "checks_partial": 0,
+      "checks_na": 1
+    },
+    {
+      "task_id": "SEC-025",
+      "domain": "ai_llm_security",
+      "priority": "high",
+      "score": null,
+      "checks_pass": 0,
+      "checks_fail": 0,
+      "checks_partial": 0,
+      "checks_na": 7
+    },
+    {
+      "task_id": "SEC-026",
+      "domain": "business_logic",
+      "priority": "high",
+      "score": 0.0,
+      "checks_pass": 0,
+      "checks_fail": 4,
+      "checks_partial": 0,
+      "checks_na": 0
+    }
+  ]
+}

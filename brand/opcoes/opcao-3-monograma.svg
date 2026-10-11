@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#14213D"/>
+  <!-- P: a haste desce do lado esquerdo de um coração, que vira a "barriga" da letra -->
+  <g transform="translate(182 112) scale(8)">
+    <rect x="12" y="30" width="20" height="60" rx="10" fill="#FFD23F"/>
+    <g transform="translate(5 2) scale(.72)"><path fill="#FFD23F" d="M50 86C34 76 9 60 9 37.5 9 24 19 14 31.5 14 39.5 14 46 18.5 50 25.5 54 18.5 60.5 14 68.5 14 81 14 91 24 91 37.5 91 60 66 76 50 86Z"/></g>
+  </g>
+</svg>

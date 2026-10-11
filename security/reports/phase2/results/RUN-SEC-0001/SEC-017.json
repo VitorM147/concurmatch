@@ -1,0 +1,165 @@
+{
+  "task_id": "SEC-017",
+  "domain": "session_security",
+  "playbook_version": "1.2.1",
+  "checks_total": 6,
+  "checks_pass": 0,
+  "checks_fail": 0,
+  "checks_partial": 2,
+  "checks_na": 4,
+  "checks_error": 0,
+  "worst_severity": "NONE",
+  "duration_ms": 0,
+  "results": [
+    {
+      "check_id": "SS-001",
+      "check_name": "Cookies sem httpOnly",
+      "status": "not_applicable",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": true,
+        "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
+        "description": "App mobile sem cookies (bearer token)."
+      },
+      "remediation": "Configurar httpOnly: true em todos os cookies de sessão e autenticação.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "SS-002",
+      "check_name": "Cookies sem Secure flag",
+      "status": "not_applicable",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": true,
+        "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
+        "description": "App mobile sem cookies."
+      },
+      "remediation": "Configurar Secure: true em todos os cookies sensíveis. Garantir HTTPS em produção.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "SS-003",
+      "check_name": "SameSite ausente",
+      "status": "not_applicable",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": true,
+        "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
+        "description": "App mobile sem cookies."
+      },
+      "remediation": "Configurar SameSite=Strict (ideal) ou Lax (se cross-site necessário). Nunca None sem Secure.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "SS-004",
+      "check_name": "Ausência de CSRF token",
+      "status": "not_applicable",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Token vai no header Authorization, não em cookie: CSRF não se aplica."
+      },
+      "remediation": "Implementar CSRF tokens (csurf, django csrf, Spring CSRF). Ou migrar para SameSite=Strict. APIs com Bearer token em header são naturalmente protegidas.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "SS-005",
+      "check_name": "Sessões sem expiração",
+      "status": "partial",
+      "severity_if_fail": "HIGH",
+      "confidence": "medium",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Ver AU-005: jwt_expiry 3600 versionado no RUN-0002."
+      },
+      "remediation": "Configurar TTL máximo de sessão. Implementar idle timeout. Configurar cleanup de sessões expiradas no store.",
+      "cross_refs": [
+        "AU-005"
+      ]
+    },
+    {
+      "check_id": "SS-006",
+      "check_name": "Tokens reutilizáveis",
+      "status": "partial",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "medium",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Ver AU-007: refresh token rotativo no RUN-0002."
+      },
+      "remediation": "Invalidar tokens de uso único imediatamente após consumo. Implementar refresh token rotation. Detectar reuso de refresh token como sinal de comprometimento.",
+      "cross_refs": [
+        "AU-007"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "generated_by": "SEC-001",
+  "run_id": "RUN-SEC-0001",
+  "environment": { "os": "Linux 6.18", "shell": "bash", "node": "22.22.0", "npm": "10.9.4", "python": "3.13.16" },
+  "required_tools": { "grep": true, "find": true, "git": true },
+  "optional_tools": {
+    "npm_audit":      { "available": true,  "version": "10.9.4", "used_by": ["DS-001", "FE-003"] },
+    "detect_secrets": { "available": true,  "version": "1.5.0",  "used_by": ["SC-001", "CR-004"], "note": "substituto local do gitleaks" },
+    "gitleaks":       { "available": false, "reason": "download bloqueado no ambiente; roda no CI (.github/workflows/ci.yml)" },
+    "semgrep":        { "available": false, "reason": "registro de regras inacessível no ambiente; roda no CI" },
+    "pglite":         { "available": true,  "version": "0.5.8", "used_by": ["AZ-*", "BL-*", "DA-*"], "note": "Postgres embarcado para provas de conceito e testes de regressão" },
+    "osv_scanner":    { "available": false },
+    "trivy":          { "available": false }
+  },
+  "runtime_target": { "endpoint_base_url": null, "effect": "porções runtime dos checks hybrid marcadas not_applicable (endpoint_not_provided)" }
+}

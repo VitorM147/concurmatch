@@ -1,0 +1,189 @@
+{
+  "task_id": "SEC-011",
+  "domain": "dependencies_supply_chain",
+  "playbook_version": "1.2.1",
+  "checks_total": 6,
+  "checks_pass": 3,
+  "checks_fail": 2,
+  "checks_partial": 1,
+  "checks_na": 0,
+  "checks_error": 0,
+  "worst_severity": "HIGH",
+  "duration_ms": 0,
+  "results": [
+    {
+      "check_id": "DS-001",
+      "check_name": "Dependências com vulnerabilidades conhecidas",
+      "status": "fail",
+      "severity_if_fail": "HIGH",
+      "confidence": "medium",
+      "evidence": {
+        "files": [
+          "apps/mobile/package.json"
+        ],
+        "lines": [
+          "apps/mobile/package.json:37:\"overrides\": {"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "tool_output",
+          "config_artifact"
+        ],
+        "evidence_sources": [
+          "static_analysis",
+          "npm_audit"
+        ],
+        "tool_name": "npm audit",
+        "tool_version": "10.9.4",
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "npm audit (apps/mobile). Baseline: 30 vulnerabilidades (19 HIGH, 11 MODERATE)."
+      },
+      "remediation": "Atualizar dependências vulneráveis. Se update não possível, documentar mitigação. Configurar dependabot/renovate para updates automáticos.",
+      "cross_refs": [
+        "FE-003"
+      ]
+    },
+    {
+      "check_id": "DS-002",
+      "check_name": "Dependências abandonadas",
+      "status": "pass",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "medium",
+      "evidence": {
+        "files": [
+          "apps/mobile/package.json"
+        ],
+        "lines": [
+          "apps/mobile/package.json:15:\"expo\": \"~57.0.26\","
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "config_artifact"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Dependências diretas mantidas (Expo SDK 57, supabase-js 2.117, PGlite 0.5)."
+      },
+      "remediation": "Substituir dependências abandonadas por alternativas mantidas. Se substituição não viável, documentar risco e monitorar CVEs manualmente.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "DS-003",
+      "check_name": "Typosquatting packages",
+      "status": "pass",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "apps/mobile/package.json"
+        ],
+        "lines": [
+          "apps/mobile/package.json:14:\"@supabase/supabase-js\": \"^2.117.2\","
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "config_artifact"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Nomes conferidos contra os pacotes oficiais (@supabase/*, expo-*, react-native-*, @electric-sql/pglite)."
+      },
+      "remediation": "Remover pacotes suspeitos imediatamente. Auditar o que o pacote faz. Verificar se houve execução de postinstall scripts maliciosos.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "DS-004",
+      "check_name": "Dependências sem lockfile",
+      "status": "pass",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "apps/mobile/package-lock.json",
+          "supabase/tests/package-lock.json"
+        ],
+        "lines": [
+          "apps/mobile/package-lock.json:4:\"lockfileVersion\": 3,",
+          "supabase/tests/package-lock.json:3:\"lockfileVersion\": 3,"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "config_artifact"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "package-lock.json versionado em apps/mobile e supabase/tests."
+      },
+      "remediation": "Gerar lockfile e commitar no repositório. Configurar CI para falhar se lockfile estiver desatualizado. Usar --frozen-lockfile no CI.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "DS-005",
+      "check_name": "Dependências externas não auditadas",
+      "status": "fail",
+      "severity_if_fail": "LOW",
+      "confidence": "medium",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: nenhum processo de revisão de dependências."
+      },
+      "remediation": "Auditar dependências diretas periodicamente. Usar ferramentas como socket.dev ou snyk para visibilidade de supply chain.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "DS-006",
+      "check_name": "Build não reproduzível",
+      "status": "partial",
+      "severity_if_fail": "LOW",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          ".github/workflows/ci.yml"
+        ],
+        "lines": [
+          ".github/workflows/ci.yml:21:- run: npm ci                      # DS-006: build reproduzível pelo lockfile"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "config_artifact"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: CI usava 'npm install'."
+      },
+      "remediation": "Pinar todas as versões de base images. Usar npm ci / pip install --require-hashes. Documentar processo de build reproduzível.",
+      "cross_refs": []
+    }
+  ]
+}

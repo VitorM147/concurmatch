@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "Probatório",
+    "slug": "probatorio",
+    "scheme": "probatorio",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "br.com.probatorio.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Usamos sua localização aproximada (cerca de 1 km) para mostrar pessoas perto de você. Nunca mostramos sua localização exata.",
+        "NSPhotoLibraryUsageDescription": "Para você escolher as fotos do seu perfil."
+      }
+    },
+    "android": {
+      "package": "br.com.probatorio.app",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#14213D"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Usamos sua localização aproximada (cerca de 1 km) para mostrar pessoas perto de você. Nunca mostramos sua localização exata."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Para você escolher as fotos do seu perfil."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#14213D"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    },
+    "icon": "./assets/icon.png",
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

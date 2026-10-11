@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Menor privilégio para o GITHUB_TOKEN (ESAA-Security DO-002)
+permissions:
+  contents: read
+
+jobs:
+  database:
+    name: Regras do banco + regressões de segurança (PGlite)
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: supabase/tests } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: supabase/tests/package-lock.json }
+      - run: npm ci                      # DS-006: build reproduzível pelo lockfile
+      - run: npm test                    # inclui security.test.mjs (provas de conceito da auditoria)
+
+  mobile:
+    name: App (typecheck + bundle)
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: apps/mobile } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: apps/mobile/package-lock.json }
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx expo export --platform android --output-dir /tmp/export
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+
+  audit-trail:
+    name: Trilha da auditoria ESAA (replay + SHA-256)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 security/tools/esaa_project.py verify
+
+  secrets:
+    name: Secrets scanning (gitleaks)      # DO-003 / SC-001
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }           # varre o histórico inteiro
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sast:
+    name: SAST (Semgrep)                   # DO-004
+    runs-on: ubuntu-latest
+    container: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - run: semgrep scan --config p/typescript --config p/react --config p/secrets --error --metrics=off
+
+  dependencies:
+    name: Dependências (npm audit)         # DS-001 / FE-003
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: { dir: [apps/mobile, supabase/tests] }
+    defaults: { run: { working-directory: '${{ matrix.dir }}' } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      # Bloqueia CRITICAL. Os HIGH restantes são de ferramentas de build sem
+      # versão corrigida publicada e estão aceitos com prazo em SECURITY.md.
+      - run: npm audit --audit-level=critical

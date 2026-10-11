@@ -1,0 +1,190 @@
+{
+  "task_id": "SEC-025",
+  "domain": "ai_llm_security",
+  "playbook_version": "1.2.1",
+  "checks_total": 7,
+  "checks_pass": 0,
+  "checks_fail": 0,
+  "checks_partial": 0,
+  "checks_na": 7,
+  "checks_error": 0,
+  "worst_severity": "NONE",
+  "duration_ms": 0,
+  "results": [
+    {
+      "check_id": "AI-001",
+      "check_name": "Prompt injection possível",
+      "status": "not_applicable",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "O projeto não usa LLM."
+      },
+      "remediation": "Separar system prompt de user input. Usar delimitadores claros (XML tags, markers). Sanitizar input. Implementar prompt injection detection. Validar output antes de uso.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AI-002",
+      "check_name": "LLM com acesso irrestrito a ferramentas",
+      "status": "not_applicable",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "O projeto não usa LLM."
+      },
+      "remediation": "Aplicar least privilege em tools. Implementar approval para ações destrutivas. Sandboxar execução de código. Definir escopo explícito por tool.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AI-003",
+      "check_name": "Ausência de filtragem de input",
+      "status": "not_applicable",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "O projeto não usa LLM."
+      },
+      "remediation": "Implementar input moderation (content filter). Limitar tamanho de input. Rate limit por user. Detectar patterns de jailbreak/injection.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AI-004",
+      "check_name": "Possibilidade de exfiltração de dados",
+      "status": "not_applicable",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "O projeto não usa LLM."
+      },
+      "remediation": "Sanitizar output do LLM. Filtrar markdown de imagens/links externos. Validar que system prompt não aparece no output. Implementar output guardrails.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AI-005",
+      "check_name": "Logs de decisão da IA inexistentes",
+      "status": "not_applicable",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "O projeto não usa LLM."
+      },
+      "remediation": "Logar todas as interações: input (redact PII), output, model, tokens, latência, user_id. Implementar event sourcing para decisões de agentes (ESAA). Reter logs para auditoria.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AI-006",
+      "check_name": "Proveniência de modelos e dados de treino",
+      "status": "not_applicable",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "O projeto não usa LLM."
+      },
+      "remediation": "Pinar versão de modelos API (gpt-4-0613, claude-opus-4-6, etc.). Fixar revision em from_pretrained(). Validar checksum de modelos baixados. Documentar lineage de fine-tuning datasets. Versionar prompt templates no repo (git). Se prompts precisam ser dinâmicos, validar schema e assinatura.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AI-007",
+      "check_name": "Consumo não limitado (token budget / DoS wallet)",
+      "status": "not_applicable",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "O projeto não usa LLM."
+      },
+      "remediation": "Sempre definir max_tokens / max_output_tokens. Truncar input ao limite de context window - max_tokens. Rate limit per user/tenant/API key. Implementar cost tracking e alertas quando spend excede threshold. Agentes: max_iterations (ex: 10). Timeout de 30-60s em calls. Circuit breaker para degradar graciosamente quando LLM provider falha.",
+      "cross_refs": []
+    }
+  ]
+}

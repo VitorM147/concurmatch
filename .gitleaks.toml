@@ -1,0 +1,12 @@
+# Regras padrão do gitleaks + exceções revisadas manualmente.
+# Os arquivos abaixo contêm hashes SHA-256 da trilha de auditoria ESAA (não são segredos).
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Hashes SHA-256 da trilha de auditoria ESAA-Security"
+paths = [
+  '''security/\.roadmap/activity\.jsonl''',
+  '''security/\.roadmap/roadmap\.json''',
+  '''security/reports/.*\.json''',
+]

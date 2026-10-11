@@ -1,0 +1,285 @@
+{
+  "task_id": "SEC-014",
+  "domain": "api_security",
+  "playbook_version": "1.2.1",
+  "checks_total": 9,
+  "checks_pass": 6,
+  "checks_fail": 0,
+  "checks_partial": 2,
+  "checks_na": 1,
+  "checks_error": 0,
+  "worst_severity": "NONE",
+  "duration_ms": 0,
+  "results": [
+    {
+      "check_id": "AP-001",
+      "check_name": "Endpoints sem rate limit",
+      "status": "partial",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0005_security_hardening.sql",
+          "security/reports/phase2/evidence/baseline-poc.txt",
+          "security/reports/phase2/evidence/post-remediation-poc.txt"
+        ],
+        "lines": [
+          "supabase/migrations/0005_security_hardening.sql:77:create function public.enforce_rate_limit(p_user uuid, p_action text, p_window interval, p_max int)",
+          "security/reports/phase2/evidence/baseline-poc.txt:7:E7 AP-001 passar perfis sem limite (raspagem): VULNERAVEL (150 passes em sequencia sem limite)",
+          "security/reports/phase2/evidence/post-remediation-poc.txt:7:E7 AP-001 passar perfis sem limite (raspagem): BLOQUEADO (RATE_LIMITED)"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet",
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis",
+          "pglite_poc"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": true,
+        "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
+        "description": "Baseline: swipe_pass sem limite permitia varrer todos os perfis da região (PoC E7: 150 passes seguidos). RUN-0002: rate limit em passes (120/min, 2000/dia), curtidas (60/min, teto Premium 1000/dia), mensagens e denúncias. Leitura (discover/my_matches) continua sem limite próprio: depende do gateway do Supabase."
+      },
+      "remediation": "Implementar rate limiting por IP e por user. Endpoints de auth: 5-10 req/min. APIs gerais: 100-1000 req/min conforme caso de uso. Retornar 429 com Retry-After header.",
+      "cross_refs": [
+        "BL-002"
+      ]
+    },
+    {
+      "check_id": "AP-002",
+      "check_name": "Endpoints retornando dados excessivos",
+      "status": "pass",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0005_security_hardening.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0005_security_hardening.sql:173:case when l.in_radius then public.distance_label(l.dist) end,"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "discover() não devolve data de nascimento nem coordenadas: só idade e faixa de distância."
+      },
+      "remediation": "Implementar DTOs/serializers para cada endpoint. Excluir campos sensíveis por padrão. Usar sparse fieldsets se API suporta (JSON:API, GraphQL).",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AP-003",
+      "check_name": "Enumeração de usuários",
+      "status": "pass",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "medium",
+      "evidence": {
+        "files": [
+          "apps/mobile/app/entrar.tsx",
+          "supabase/config.toml"
+        ],
+        "lines": [
+          "apps/mobile/app/entrar.tsx:31:// Mensagem genérica: não revela se o e-mail existe (AP-003)",
+          "supabase/config.toml:42:enable_confirmations = true"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet",
+          "config_artifact"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": true,
+        "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
+        "description": "Baseline: tela de cadastro exibia a mensagem crua do servidor (podia revelar e-mail existente). RUN-0002: mensagem genérica + enable_confirmations."
+      },
+      "remediation": "Retornar mesma mensagem independente de existência: 'Se a conta existir, enviaremos um email'. Usar timing constante. Considerar CAPTCHA após N tentativas.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AP-004",
+      "check_name": "Falta de validação de schema",
+      "status": "pass",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0001_schema.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0001_schema.sql:67:display_name    text not null check (char_length(display_name) between 2 and 40),"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Parâmetros tipados nas RPCs, enums e check constraints em todas as colunas de entrada."
+      },
+      "remediation": "Implementar validação com zod/joi/pydantic em todos os endpoints. Validar tipos, ranges, formatos. Rejeitar campos desconhecidos (strict mode).",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AP-005",
+      "check_name": "Falta de versionamento de API",
+      "status": "partial",
+      "severity_if_fail": "LOW",
+      "confidence": "medium",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0002_functions.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0002_functions.sql:157:create function public.discover(p_limit integer default 20)"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "RPCs sem versionamento; mudança incompatível exigiria nova função (ex.: discover_v2)."
+      },
+      "remediation": "Implementar versionamento por URL path (/api/v1/) ou header (Accept-Version). Documentar política de deprecation.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AP-006",
+      "check_name": "Ausência de paginação",
+      "status": "pass",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0005_security_hardening.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0005_security_hardening.sql:320:limit 200;"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: my_matches() sem limite. RUN-0002: limit 200; discover limitado a 50; mensagens por cursor."
+      },
+      "remediation": "Implementar paginação em todos os endpoints de listagem. Default: 20-50 items. Max: 100. Retornar metadata de paginação (total, next, prev).",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AP-007",
+      "check_name": "Replay attacks possíveis",
+      "status": "pass",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0005_security_hardening.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0005_security_hardening.sql:218:'remaining', public.remaining_likes(), 'duplicate', true);"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Curtida repetida é idempotente e não consome cota; inserts com on conflict."
+      },
+      "remediation": "Implementar idempotency keys para operações sensíveis. Validar timestamp de requests (janela de 5min). Nonces para operações financeiras.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AP-008",
+      "check_name": "Mass assignment / BOPLA write-side",
+      "status": "pass",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0003_security.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0003_security.sql:39:grant update (display_name, bio, interested_in, state, city, lat_approx, lng_approx,"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet",
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis",
+          "pglite_test"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Grants por coluna: usuário não altera verified, banned_at, birthdate, gender, approved (teste dedicado)."
+      },
+      "remediation": "Implementar DTOs/serializers com whitelist explícita por endpoint. Em Node: usar pick(req.body, ['name', 'email']). Em Python: serializers do DRF com fields explícitos. PHP: definir $fillable. Ruby: strong_parameters.require(:user).permit(:name, :email). Nunca confiar em spread.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AP-009",
+      "check_name": "Consumo inseguro de APIs externas",
+      "status": "not_applicable",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Sem consumo de API externa no backend (pagamentos ainda não integrados)."
+      },
+      "remediation": "Sempre configurar timeout (30s default, menor em paths críticos). Nunca desabilitar TLS verification em produção. Validar response com zod/pydantic/joi antes de usar. Implementar circuit breaker (opossum, resilience4j, polly) para dependências críticas. Sanitizar errors de upstream antes de propagar. Usar secrets manager para API keys.",
+      "cross_refs": []
+    }
+  ]
+}

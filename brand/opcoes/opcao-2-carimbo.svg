@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#14213D"/>
+  <defs><path id="arc" d="M512 512 m-300 0 a300 300 0 1 1 600 0 a300 300 0 1 1 -600 0"/></defs>
+  <g transform="rotate(-12 512 512)" fill="none" stroke="#FFD23F">
+    <circle cx="512" cy="512" r="404" stroke-width="34"/>
+    <circle cx="512" cy="512" r="236" stroke-width="16"/>
+    <text font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="72" letter-spacing="4" fill="#FFD23F" stroke="none" textLength="1820" lengthAdjust="spacingAndGlyphs">
+      <textPath href="#arc">APROVADO ★ ESTÁGIO PROBATÓRIO ★ </textPath>
+    </text>
+  </g>
+  <g transform="translate(366 378) scale(2.92)"><path fill="#FFD23F" d="M50 86C34 76 9 60 9 37.5 9 24 19 14 31.5 14 39.5 14 46 18.5 50 25.5 54 18.5 60.5 14 68.5 14 81 14 91 24 91 37.5 91 60 66 76 50 86Z"/></g>
+</svg>

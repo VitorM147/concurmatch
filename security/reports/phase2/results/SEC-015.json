@@ -1,0 +1,287 @@
+{
+  "task_id": "SEC-015",
+  "domain": "input_validation",
+  "playbook_version": "1.2.1",
+  "checks_total": 10,
+  "checks_pass": 4,
+  "checks_fail": 0,
+  "checks_partial": 0,
+  "checks_na": 6,
+  "checks_error": 0,
+  "worst_severity": "NONE",
+  "duration_ms": 0,
+  "results": [
+    {
+      "check_id": "IV-001",
+      "check_name": "SQL injection",
+      "status": "pass",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "security/reports/phase2/evidence/grep-dangerous-patterns.txt"
+        ],
+        "lines": [],
+        "commands_output": [
+          "security/reports/phase2/evidence/grep-dangerous-patterns.txt: 0 ocorrências"
+        ],
+        "evidence_types": [
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Nenhum SQL dinâmico (grep por EXECUTE/format: zero). Todas as funções usam parâmetros."
+      },
+      "remediation": "Usar ORM ou prepared statements. Nunca concatenar input em SQL. Raw queries com parameterized placeholders. Implementar WAF como defesa em profundidade.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "IV-002",
+      "check_name": "Command injection",
+      "status": "not_applicable",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Nenhuma execução de comando de sistema."
+      },
+      "remediation": "Evitar system commands com user input. Se necessário: whitelist de comandos + execFile (sem shell). Escapar com shlex.quote() em Python. Nunca shell=True com input externo.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "IV-003",
+      "check_name": "Template injection",
+      "status": "not_applicable",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Sem templates renderizados no servidor."
+      },
+      "remediation": "Nunca usar input como template source. Habilitar autoescaping. Usar |safe apenas com dados do sistema, nunca de usuário. Sandboxed templates quando possível.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "IV-004",
+      "check_name": "SSRF",
+      "status": "not_applicable",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "O backend não busca URLs fornecidas pelo usuário."
+      },
+      "remediation": "Validar e normalizar URLs. Bloquear IPs privados e link-local. Usar whitelist de domínios quando possível. Resolver DNS e validar IP resultante. Timeout curto em requests.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "IV-005",
+      "check_name": "Cross-site scripting (XSS)",
+      "status": "pass",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "apps/mobile/app/chat/[id].tsx"
+        ],
+        "lines": [
+          "apps/mobile/app/chat/[id].tsx:97:<Text style={[font.body, { color: mine ? c.onPrimary : c.text }]}>{item.body}</Text>"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": true,
+        "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
+        "description": "React Native renderiza texto puro (<Text>); sem WebView nem innerHTML."
+      },
+      "remediation": "Usar auto-escaping do framework. Sanitizar com DOMPurify antes de innerHTML. Nunca eval() com user input. Implementar CSP restritivo. Encode output por contexto.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "IV-006",
+      "check_name": "Inputs não validados",
+      "status": "pass",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0005_security_hardening.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0005_security_hardening.sql:30:check (storage_path ~ ('^' || user_id::text || '/[A-Za-z0-9_-]{1,64}\\.(jpg|jpeg|png|webp)$'));"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: storage_path sem validação de formato. RUN-0002: regex de caminho/extensão."
+      },
+      "remediation": "Validar todos os inputs no ponto de entrada. Definir schemas com tipos, limites e formatos. Rejeitar input malformado com 400.",
+      "cross_refs": [
+        "FU-006"
+      ]
+    },
+    {
+      "check_id": "IV-007",
+      "check_name": "Sanitização ausente",
+      "status": "pass",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0005_security_hardening.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0005_security_hardening.sql:351:new.body := btrim(new.body);"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Textos aparados (btrim) e exibidos como texto puro."
+      },
+      "remediation": "Implementar sanitização por contexto: HTML encode para render, parameterize para SQL, shellescape para commands. Sanitizar na entrada E na saída.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "IV-008",
+      "check_name": "Deserialização insegura",
+      "status": "not_applicable",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Sem desserialização de objetos não confiáveis."
+      },
+      "remediation": "Substituir por formatos seguros: JSON, Protocol Buffers, MessagePack. Se pickle/Marshal/unserialize necessário, verificar HMAC antes de desserializar OU usar allowlist restrita de classes. Python: yaml.safe_load ao invés de yaml.load. Java: ObjectInputFilter com allowlist. PHP: evitar unserialize, preferir json_decode.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "IV-009",
+      "check_name": "XML External Entity (XXE)",
+      "status": "not_applicable",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Sem XML."
+      },
+      "remediation": "Python: usar defusedxml.ElementTree ao invés de xml.etree. Java: dbf.setFeature('http://apache.org/xml/features/disallow-doctype-decl', true). PHP 8+: LIBXML_NONET. .NET: XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit }. Evitar XML quando JSON é viável.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "IV-010",
+      "check_name": "Open Redirect",
+      "status": "not_applicable",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "apps/mobile/src/lib/supabase.ts"
+        ],
+        "lines": [
+          "apps/mobile/src/lib/supabase.ts:38:detectSessionInUrl: false,"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Sem redirecionamentos; deep link sem destino variável e detectSessionInUrl: false."
+      },
+      "remediation": "Validar destino contra whitelist de hosts permitidos OU aceitar apenas paths relativos com validação estrita (deve começar com / mas não com //). Django: django.utils.http.url_has_allowed_host_and_scheme. Em Node: parse URL e validar .host. Rejeitar com 400 se inválido.",
+      "cross_refs": []
+    }
+  ]
+}

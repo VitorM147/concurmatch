@@ -1,0 +1,292 @@
+{
+  "meta": {
+    "schema_version": "0.6.0",
+    "immutable_done": true,
+    "run": {
+      "run_id": "RUN-SEC-0002",
+      "status": "success",
+      "last_event_seq": 225,
+      "projection_hash_sha256": "b5bfff0b17958b6701d0fac6c0aeb996075e1e712c802c21f6054e6549dc3744",
+      "verify_status": "ok"
+    }
+  },
+  "project": {
+    "name": "Probatório / ConcurMatch — auditoria ESAA-Security",
+    "audit_scope": "Static-first sobre o repositório (app Expo, migrations Supabase, CI) cobrindo 17 domínios e 108 checks; porções runtime não executadas (endpoint_base_url ausente)."
+  },
+  "tasks": [
+    {
+      "task_id": "SEC-001",
+      "task_kind": "spec",
+      "title": "Identificar stack tecnológica",
+      "status": "done",
+      "depends_on": []
+    },
+    {
+      "task_id": "SEC-002",
+      "task_kind": "spec",
+      "title": "Identificar arquitetura do sistema",
+      "status": "done",
+      "depends_on": [
+        "SEC-001"
+      ]
+    },
+    {
+      "task_id": "SEC-003",
+      "task_kind": "spec",
+      "title": "Identificar superfícies de ataque",
+      "status": "done",
+      "depends_on": [
+        "SEC-002"
+      ]
+    },
+    {
+      "task_id": "SEC-010",
+      "task_kind": "impl",
+      "title": "Auditar Secrets & Configuração",
+      "status": "done",
+      "depends_on": [
+        "SEC-003"
+      ]
+    },
+    {
+      "task_id": "SEC-011",
+      "task_kind": "impl",
+      "title": "Auditar Dependências e Supply Chain",
+      "status": "done",
+      "depends_on": [
+        "SEC-001"
+      ]
+    },
+    {
+      "task_id": "SEC-012",
+      "task_kind": "impl",
+      "title": "Auditar Autenticação",
+      "status": "done",
+      "depends_on": [
+        "SEC-003"
+      ]
+    },
+    {
+      "task_id": "SEC-013",
+      "task_kind": "impl",
+      "title": "Auditar Autorização",
+      "status": "done",
+      "depends_on": [
+        "SEC-012"
+      ]
+    },
+    {
+      "task_id": "SEC-014",
+      "task_kind": "impl",
+      "title": "Auditar Segurança de API",
+      "status": "done",
+      "depends_on": [
+        "SEC-003"
+      ]
+    },
+    {
+      "task_id": "SEC-015",
+      "task_kind": "impl",
+      "title": "Auditar Validação de Entrada",
+      "status": "done",
+      "depends_on": [
+        "SEC-003"
+      ]
+    },
+    {
+      "task_id": "SEC-016",
+      "task_kind": "impl",
+      "title": "Auditar Upload de Arquivos",
+      "status": "done",
+      "depends_on": [
+        "SEC-003"
+      ]
+    },
+    {
+      "task_id": "SEC-017",
+      "task_kind": "impl",
+      "title": "Auditar Segurança de Sessão",
+      "status": "done",
+      "depends_on": [
+        "SEC-012"
+      ]
+    },
+    {
+      "task_id": "SEC-018",
+      "task_kind": "impl",
+      "title": "Auditar Criptografia",
+      "status": "done",
+      "depends_on": [
+        "SEC-003"
+      ]
+    },
+    {
+      "task_id": "SEC-019",
+      "task_kind": "impl",
+      "title": "Auditar Headers de Segurança",
+      "status": "done",
+      "depends_on": [
+        "SEC-003"
+      ]
+    },
+    {
+      "task_id": "SEC-020",
+      "task_kind": "impl",
+      "title": "Auditar Logs e Monitoramento",
+      "status": "done",
+      "depends_on": [
+        "SEC-003"
+      ]
+    },
+    {
+      "task_id": "SEC-021",
+      "task_kind": "impl",
+      "title": "Auditar Infraestrutura",
+      "status": "done",
+      "depends_on": [
+        "SEC-002"
+      ]
+    },
+    {
+      "task_id": "SEC-022",
+      "task_kind": "impl",
+      "title": "Auditar DevSecOps",
+      "status": "done",
+      "depends_on": [
+        "SEC-011"
+      ]
+    },
+    {
+      "task_id": "SEC-023",
+      "task_kind": "impl",
+      "title": "Auditar Segurança de Dados",
+      "status": "done",
+      "depends_on": [
+        "SEC-003"
+      ]
+    },
+    {
+      "task_id": "SEC-024",
+      "task_kind": "impl",
+      "title": "Auditar Segurança de Frontend",
+      "status": "done",
+      "depends_on": [
+        "SEC-003"
+      ]
+    },
+    {
+      "task_id": "SEC-025",
+      "task_kind": "impl",
+      "title": "Auditar Segurança de IA/LLM",
+      "status": "done",
+      "depends_on": [
+        "SEC-003"
+      ]
+    },
+    {
+      "task_id": "SEC-026",
+      "task_kind": "impl",
+      "title": "Auditar Lógica de Negócio e Anti-Automação",
+      "status": "done",
+      "depends_on": [
+        "SEC-003",
+        "SEC-013"
+      ]
+    },
+    {
+      "task_id": "SEC-030",
+      "task_kind": "qa",
+      "title": "Consolidar vulnerabilidades identificadas",
+      "status": "done",
+      "depends_on": [
+        "SEC-010",
+        "SEC-011",
+        "SEC-012",
+        "SEC-013",
+        "SEC-014",
+        "SEC-015",
+        "SEC-016",
+        "SEC-017",
+        "SEC-018",
+        "SEC-019",
+        "SEC-020",
+        "SEC-021",
+        "SEC-022",
+        "SEC-023",
+        "SEC-024",
+        "SEC-025",
+        "SEC-026"
+      ]
+    },
+    {
+      "task_id": "SEC-031",
+      "task_kind": "qa",
+      "title": "Classificar severidade e impacto",
+      "status": "done",
+      "depends_on": [
+        "SEC-030"
+      ]
+    },
+    {
+      "task_id": "SEC-032",
+      "task_kind": "qa",
+      "title": "Gerar Matriz de Riscos",
+      "status": "done",
+      "depends_on": [
+        "SEC-031"
+      ]
+    },
+    {
+      "task_id": "SEC-040",
+      "task_kind": "spec",
+      "title": "Propor correções técnicas",
+      "status": "done",
+      "depends_on": [
+        "SEC-032"
+      ]
+    },
+    {
+      "task_id": "SEC-041",
+      "task_kind": "spec",
+      "title": "Documentar boas práticas",
+      "status": "done",
+      "depends_on": [
+        "SEC-032"
+      ]
+    },
+    {
+      "task_id": "SEC-042",
+      "task_kind": "qa",
+      "title": "Gerar Resumo Executivo",
+      "status": "done",
+      "depends_on": [
+        "SEC-040",
+        "SEC-041"
+      ]
+    },
+    {
+      "task_id": "SEC-043",
+      "task_kind": "qa",
+      "title": "Compilar Relatório Final de Auditoria",
+      "status": "done",
+      "depends_on": [
+        "SEC-042"
+      ]
+    }
+  ],
+  "indexes": {
+    "by_status": {
+      "todo": 0,
+      "in_progress": 0,
+      "review": 0,
+      "done": 27
+    },
+    "by_kind": {
+      "spec": 5,
+      "impl": 17,
+      "qa": 5
+    },
+    "checks_total": 108
+  }
+}

@@ -1,0 +1,7 @@
+E1 AZ-002 foto de outra pessoa no proprio perfil: BLOQUEADO (new row for relation "photos" violates check constraint "photos_path_owner")
+E2 BL-001 desfazer ocultacao da moderacao: BLOQUEADO (permission denied for table profiles)
+E3 BL-004 conta recem-criada derruba qualquer perfil com 1 denuncia: ok
+E4 AZ-005 consultar bloqueios entre terceiros: BLOQUEADO (permission denied for function is_blocked_pair)
+E5 DA-005 criar perfil sem consentimento LGPD: BLOQUEADO (CONSENT_REQUIRED)
+E6 AZ-002 denuncia anexando match de terceiros: BLOQUEADO (INVALID_MATCH)
+E7 AP-001 passar perfis sem limite (raspagem): BLOQUEADO (RATE_LIMITED)

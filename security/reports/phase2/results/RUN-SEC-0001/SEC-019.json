@@ -1,0 +1,140 @@
+{
+  "task_id": "SEC-019",
+  "domain": "security_headers",
+  "playbook_version": "1.2.1",
+  "checks_total": 5,
+  "checks_pass": 0,
+  "checks_fail": 0,
+  "checks_partial": 0,
+  "checks_na": 5,
+  "checks_error": 0,
+  "worst_severity": "NONE",
+  "duration_ms": 0,
+  "results": [
+    {
+      "check_id": "SH-001",
+      "check_name": "Content-Security-Policy ausente",
+      "status": "not_applicable",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "medium",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": true,
+        "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
+        "description": "Sem servidor web nem app web no escopo; headers da API são do Supabase."
+      },
+      "remediation": "Implementar CSP restritivo. Usar nonce ou hash para inline scripts. Reportar violations com report-uri.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "SH-002",
+      "check_name": "Strict-Transport-Security ausente",
+      "status": "not_applicable",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "medium",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": true,
+        "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
+        "description": "Sem servidor web nem app web no escopo; headers da API são do Supabase."
+      },
+      "remediation": "Adicionar Strict-Transport-Security: max-age=31536000; includeSubDomains; preload.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "SH-003",
+      "check_name": "X-Frame-Options ausente",
+      "status": "not_applicable",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "medium",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": true,
+        "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
+        "description": "Sem servidor web nem app web no escopo; headers da API são do Supabase."
+      },
+      "remediation": "Adicionar X-Frame-Options: DENY (ou SAMEORIGIN se iframe necessário). Preferir CSP frame-ancestors.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "SH-004",
+      "check_name": "X-Content-Type-Options ausente",
+      "status": "not_applicable",
+      "severity_if_fail": "LOW",
+      "confidence": "medium",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": true,
+        "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
+        "description": "Sem servidor web nem app web no escopo; headers da API são do Supabase."
+      },
+      "remediation": "Adicionar X-Content-Type-Options: nosniff em todas as respostas.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "SH-005",
+      "check_name": "Referrer-Policy ausente",
+      "status": "not_applicable",
+      "severity_if_fail": "LOW",
+      "confidence": "medium",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": true,
+        "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
+        "description": "Sem servidor web nem app web no escopo; headers da API são do Supabase."
+      },
+      "remediation": "Adicionar Referrer-Policy: strict-origin-when-cross-origin (ou no-referrer para máxima privacidade).",
+      "cross_refs": []
+    }
+  ]
+}

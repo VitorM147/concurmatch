@@ -1,0 +1,7 @@
+E1 AZ-002 foto de outra pessoa no proprio perfil: VULNERAVEL (insert aceito com storage_path de outro usuario)
+E2 BL-001 desfazer ocultacao da moderacao: VULNERAVEL (perfil ocultado voltou a ficar visivel pelo proprio usuario)
+E3 BL-004 conta recem-criada derruba qualquer perfil com 1 denuncia: VULNERAVEL (perfil ocultado por 1 denuncia de conta sem foto criada agora)
+E4 AZ-005 consultar bloqueios entre terceiros: VULNERAVEL (terceiro descobre que A bloqueou B)
+E5 DA-005 criar perfil sem consentimento LGPD: VULNERAVEL (perfil com dado sensivel criado sem registro de consentimento)
+E6 AZ-002 denuncia anexando match de terceiros: VULNERAVEL (match_id alheio aceito na denuncia)
+E7 AP-001 passar perfis sem limite (raspagem): VULNERAVEL (150 passes em sequencia sem limite)

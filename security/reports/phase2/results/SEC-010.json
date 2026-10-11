@@ -1,0 +1,248 @@
+{
+  "task_id": "SEC-010",
+  "domain": "secrets_config",
+  "playbook_version": "1.2.1",
+  "checks_total": 8,
+  "checks_pass": 7,
+  "checks_fail": 0,
+  "checks_partial": 0,
+  "checks_na": 1,
+  "checks_error": 0,
+  "worst_severity": "NONE",
+  "duration_ms": 0,
+  "results": [
+    {
+      "check_id": "SC-001",
+      "check_name": "Segredos hardcoded no código",
+      "status": "pass",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "security/reports/phase2/evidence/detect-secrets.json"
+        ],
+        "lines": [
+          "security/reports/phase2/evidence/detect-secrets.json:134:\"type\": \"Secret Keyword\","
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis",
+          "detect-secrets"
+        ],
+        "tool_name": "detect-secrets",
+        "tool_version": "1.5.0",
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "detect-secrets 1.5.0 em todo o repo: 3 ocorrências, todas falso-positivas (palavras-chave 'password_requirements', 'secure_password_change' e a referência env(SUPABASE_AUTH_CAPTCHA_SECRET)). Nenhum segredo real."
+      },
+      "remediation": "Mover todos os segredos para variáveis de ambiente ou secrets manager. Rotacionar imediatamente qualquer segredo que tenha sido commitado. Adicionar patterns ao .gitignore.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "SC-002",
+      "check_name": "Chaves API expostas no frontend",
+      "status": "pass",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "apps/mobile/src/lib/supabase.ts"
+        ],
+        "lines": [
+          "apps/mobile/src/lib/supabase.ts:26:if (json.role === 'service_role') throw new Error('service_role no app. Use a chave anon.');"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "O app só recebe EXPO_PUBLIC_SUPABASE_URL e a chave anon (pública por design, protegida por RLS). RUN-0002 acrescenta trava que recusa chave sb_secret_ ou JWT com role service_role."
+      },
+      "remediation": "Mover chamadas que requerem chaves secretas para o backend. Usar proxy endpoints. Chaves de frontend devem ser exclusivamente read-only e escopadas. | Aplicado: assertPublicKey() em supabase.ts",
+      "cross_refs": []
+    },
+    {
+      "check_id": "SC-003",
+      "check_name": "Arquivos .env commitados no repositório",
+      "status": "pass",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "apps/mobile/.gitignore",
+          "apps/mobile/.env.example"
+        ],
+        "lines": [
+          "apps/mobile/.gitignore:3:.env",
+          "apps/mobile/.env.example:3:EXPO_PUBLIC_SUPABASE_URL=https://SEU-PROJETO.supabase.co"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "config_artifact"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": ".env está no .gitignore; só existe .env.example com placeholders."
+      },
+      "remediation": "Adicionar .env* ao .gitignore. Remover do histórico git com git filter-branch ou BFG. Rotacionar credenciais expostas. Manter apenas .env.example com placeholders.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "SC-004",
+      "check_name": "CORS permissivo",
+      "status": "not_applicable",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "medium",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": true,
+        "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
+        "description": "CORS é gerenciado pelo Supabase; não há servidor HTTP próprio nem cliente web no escopo."
+      },
+      "remediation": "Configurar CORS com whitelist explícita de origens permitidas. Nunca combinar wildcard com credentials. Diferentes configs para ambientes dev/staging/prod.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "SC-005",
+      "check_name": "Debug mode habilitado em produção",
+      "status": "pass",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "apps/mobile/src/lib/supabase.ts"
+        ],
+        "lines": [
+          "apps/mobile/src/lib/supabase.ts:13:const isLocalDev = __DEV__ && /^http:\\/\\/(localhost|127\\.0\\.0\\.1|10\\.0\\.2\\.2|192\\.168\\.\\d+\\.\\d+)(:\\d+)?$/.test(url);"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Sem flags de debug. __DEV__ só libera HTTP para Supabase local em desenvolvimento."
+      },
+      "remediation": "Garantir DEBUG=false em produção. Implementar error handler que retorna mensagens genéricas ao client e loga detalhes internamente. Usar variáveis de ambiente por ambiente.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "SC-006",
+      "check_name": "Credenciais padrão ainda presentes",
+      "status": "pass",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "security/reports/phase2/evidence/grep-dangerous-patterns.txt"
+        ],
+        "lines": [],
+        "commands_output": [
+          "security/reports/phase2/evidence/grep-dangerous-patterns.txt: 0 ocorrências"
+        ],
+        "evidence_types": [
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Nenhuma credencial padrão; autenticação inteira no Supabase Auth."
+      },
+      "remediation": "Substituir todas as credenciais padrão por valores gerados. Exigir variáveis de ambiente para credenciais em todos os ambientes. Usar secret generation no deploy.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "SC-007",
+      "check_name": "Configurações de exemplo em produção",
+      "status": "pass",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          ".github/workflows/ci.yml"
+        ],
+        "lines": [
+          ".github/workflows/ci.yml:37:EXPO_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "config_artifact"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": ".env.example e o CI usam valores de exemplo que não autenticam em nada."
+      },
+      "remediation": "Manter configs de exemplo apenas como referência. Gerar configs de produção via CI/CD com valores injetados de secrets manager.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "SC-008",
+      "check_name": "Variáveis sensíveis expostas em logs",
+      "status": "pass",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "security/reports/phase2/evidence/grep-dangerous-patterns.txt"
+        ],
+        "lines": [],
+        "commands_output": [
+          "security/reports/phase2/evidence/grep-dangerous-patterns.txt: 0 ocorrências"
+        ],
+        "evidence_types": [
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Zero chamadas console.* em src/ e app/ (grep)."
+      },
+      "remediation": "Implementar middleware de redação de logs. Mascarar campos sensíveis (password → '***', tokens → primeiros 4 chars + '...'). Nunca logar request/response bodies completos em produção.",
+      "cross_refs": [
+        "LM-001"
+      ]
+    }
+  ]
+}

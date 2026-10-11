@@ -1,0 +1,241 @@
+{
+  "task_id": "SEC-012",
+  "domain": "authentication",
+  "playbook_version": "1.2.1",
+  "checks_total": 9,
+  "checks_pass": 3,
+  "checks_fail": 1,
+  "checks_partial": 4,
+  "checks_na": 1,
+  "checks_error": 0,
+  "worst_severity": "MEDIUM",
+  "duration_ms": 0,
+  "results": [
+    {
+      "check_id": "AU-001",
+      "check_name": "Senhas armazenadas em texto plano",
+      "status": "pass",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "medium",
+      "evidence": {
+        "files": [
+          "apps/mobile/app/entrar.tsx"
+        ],
+        "lines": [
+          "apps/mobile/app/entrar.tsx:26:? await supabase.auth.signInWithPassword({ email: email.trim(), password })"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet",
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Senhas só no Supabase Auth (bcrypt); o app nunca persiste senha."
+      },
+      "remediation": "Implementar bcrypt (cost >= 12) ou argon2id para hash de senhas. Nunca usar MD5/SHA para passwords. Migrar senhas existentes em texto plano.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AU-002",
+      "check_name": "Hash de senha inseguro",
+      "status": "pass",
+      "severity_if_fail": "HIGH",
+      "confidence": "medium",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Hash gerenciado pelo GoTrue (bcrypt)."
+      },
+      "remediation": "Migrar para bcrypt cost=12+ ou argon2id. Se bcrypt, salt é automático. Implementar rehash transparente no login.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AU-003",
+      "check_name": "Ausência de MFA",
+      "status": "fail",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "medium",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: sem MFA."
+      },
+      "remediation": "Implementar TOTP com speakeasy/pyotp. Exigir MFA para admin. Oferecer MFA opt-in para todos. Fornecer recovery codes.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AU-004",
+      "check_name": "Reset de senha inseguro",
+      "status": "partial",
+      "severity_if_fail": "HIGH",
+      "confidence": "medium",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: política de troca/reset de senha não versionada."
+      },
+      "remediation": "Gerar token com crypto.randomBytes(32). Expirar em 30-60min. Invalidar após uso. Enviar apenas link, nunca senha.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AU-005",
+      "check_name": "Sessões sem expiração",
+      "status": "partial",
+      "severity_if_fail": "HIGH",
+      "confidence": "medium",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: expiração do JWT não versionada."
+      },
+      "remediation": "Configurar TTL para sessões (8-24h normal, 15min idle admin). JWT com exp obrigatório. Implementar refresh token rotation.",
+      "cross_refs": [
+        "SS-005"
+      ]
+    },
+    {
+      "check_id": "AU-006",
+      "check_name": "Ausência de proteção contra brute force",
+      "status": "partial",
+      "severity_if_fail": "HIGH",
+      "confidence": "medium",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": true,
+        "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
+        "description": "Baseline: limite de tentativas dependia de padrão não versionado; validação só no app."
+      },
+      "remediation": "Implementar rate limit (ex: 5 tentativas/min por IP+username). Lockout progressivo após 5 falhas. CAPTCHA após 3 falhas. Notificar usuário de tentativas.",
+      "cross_refs": [
+        "BL-002"
+      ]
+    },
+    {
+      "check_id": "AU-007",
+      "check_name": "Tokens permanentes",
+      "status": "partial",
+      "severity_if_fail": "HIGH",
+      "confidence": "medium",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: rotação de refresh token não versionada."
+      },
+      "remediation": "Definir expiração em todos os tokens. Access token: 15-60min. Refresh token: 7-30 dias com rotação. API keys: revogáveis com auditoria.",
+      "cross_refs": [
+        "SS-006"
+      ]
+    },
+    {
+      "check_id": "AU-008",
+      "check_name": "Session fixation",
+      "status": "not_applicable",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Sem sessão de servidor nem cookies: autenticação por bearer token."
+      },
+      "remediation": "Regenerar session ID imediatamente após login bem-sucedido. Rejeitar session IDs via URL. Usar apenas cookies httpOnly para transporte.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AU-009",
+      "check_name": "Fraquezas específicas de JWT",
+      "status": "pass",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "medium",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "O app não emite nem valida JWT; quem valida é o Supabase. Nenhum uso de alg none."
+      },
+      "remediation": "Sempre passar algorithms explícito em verify (ex: jwt.verify(token, key, { algorithms: ['RS256'] })). Usar asymmetric (RS256/ES256) para sistemas distribuídos. HS secrets com >= 32 bytes random de secrets manager. Validar kid contra whitelist. Nunca aceitar JWT em query param. Implementar jti + blocklist para revogação.",
+      "cross_refs": []
+    }
+  ]
+}
