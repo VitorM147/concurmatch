@@ -3,21 +3,15 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
-  Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View,
+  Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SafetySheet } from '@/components/SafetySheet';
 import { Screen } from '@/components/ui';
 import { api, ApiError, type Message } from '@/lib/api';
 import { useSession } from '@/lib/session';
-import { brand } from '@/brand';
-import { font, radius, space, useColors } from '@/theme';
-
-const ICEBREAKERS = [
-  'Qual matéria está tirando seu sono?',
-  'Café ou energético na reta final?',
-  'Se passar, qual a primeira coisa que vai fazer?',
-];
+import { brand, chatSuggestions } from '@/brand';
+import { font, fonts, radius, space, useColors } from '@/theme';
 
 export default function Chat() {
   const c = useColors();
@@ -63,7 +57,7 @@ export default function Chat() {
         title: name ?? 'Conversa',
         headerRight: () => (
           <Pressable onPress={() => setSafety(true)} accessibilityLabel="Opções de segurança" hitSlop={12}>
-            <Text style={{ color: c.text, fontSize: 22, fontWeight: '900' }}>⋯</Text>
+            <Text style={{ color: c.text, fontSize: 22, fontFamily: fonts.bold }}>⋯</Text>
           </Pressable>
         ),
       }} />
@@ -77,15 +71,9 @@ export default function Chat() {
           contentContainerStyle={{ padding: space.lg, gap: space.sm, flexGrow: 1 }}
           onContentSizeChange={() => list.current?.scrollToEnd({ animated: true })}
           ListEmptyComponent={
-            <View style={{ flex: 1, justifyContent: 'flex-end', gap: space.md }}>
+            <View style={{ flex: 1, justifyContent: 'flex-end', gap: space.sm, paddingBottom: space.lg }}>
               <Text style={[font.h2, { color: c.text, textAlign: 'center' }]}>{brand.matchSubtitle}</Text>
-              <Text style={[font.small, { color: c.textMuted, textAlign: 'center' }]}>Quebre o gelo:</Text>
-              {ICEBREAKERS.map((q) => (
-                <Pressable key={q} onPress={() => send(q)}
-                  style={[styles.ice, { borderColor: c.border, backgroundColor: c.surface }]}>
-                  <Text style={[font.body, { color: c.text }]}>{q}</Text>
-                </Pressable>
-              ))}
+              <Text style={[font.small, { color: c.textMuted, textAlign: 'center' }]}>{brand.matchCta}</Text>
             </View>
           }
           renderItem={({ item }) => {
@@ -104,6 +92,22 @@ export default function Chat() {
           }}
         />
 
+        {msgs.length < 3 ? (
+          <View style={{ gap: space.xs, paddingTop: space.sm }}>
+            <Text style={[font.label, { color: c.textMuted, paddingHorizontal: space.lg }]}>Sugestões para conversar</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: space.sm, paddingHorizontal: space.lg, paddingBottom: space.sm }}>
+              {chatSuggestions.map((q) => (
+                <Pressable key={q} onPress={() => setText(q)} accessibilityRole="button"
+                  accessibilityHint="Coloca a sugestão no campo de mensagem"
+                  style={[styles.ice, { backgroundColor: c.chip }]}>
+                  <Text style={[font.small, { color: c.onChip }]}>{q}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
+
         <View style={[styles.composer, { borderTopColor: c.border, paddingBottom: insets.bottom + space.sm, backgroundColor: c.bg }]}>
           <TextInput
             value={text}
@@ -116,8 +120,8 @@ export default function Chat() {
             style={[styles.input, { backgroundColor: c.surface, color: c.text, borderColor: c.border }]}
           />
           <Pressable onPress={() => send()} disabled={!text.trim() || sending} accessibilityLabel="Enviar"
-            style={[styles.send, { backgroundColor: c.accent, opacity: text.trim() ? 1 : 0.4 }]}>
-            <Text style={{ color: c.onAccent, fontWeight: '900', fontSize: 18 }}>↑</Text>
+            style={[styles.send, { backgroundColor: c.primary, opacity: text.trim() ? 1 : 0.4 }]}>
+            <Text style={{ color: c.onPrimary, fontFamily: fonts.bold, fontSize: 18 }}>↑</Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -131,8 +135,8 @@ export default function Chat() {
 const styles = StyleSheet.create({
   bubble: { maxWidth: '80%', borderRadius: radius.lg, paddingHorizontal: space.lg, paddingVertical: space.sm + 2, gap: 2 },
   time: { fontSize: 11, opacity: 0.7, alignSelf: 'flex-end' },
-  ice: { borderWidth: 1, borderRadius: radius.md, padding: space.md },
+  ice: { borderRadius: radius.pill, paddingHorizontal: space.lg, paddingVertical: space.sm + 2 },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm, paddingHorizontal: space.md, paddingTop: space.sm, borderTopWidth: StyleSheet.hairlineWidth },
-  input: { flex: 1, minHeight: 44, maxHeight: 120, borderWidth: 1, borderRadius: radius.lg, paddingHorizontal: space.lg, paddingTop: 12, paddingBottom: 12, fontSize: 16 },
+  input: { flex: 1, minHeight: 44, maxHeight: 120, borderWidth: 1, borderRadius: radius.lg, paddingHorizontal: space.lg, paddingTop: 12, paddingBottom: 12, fontSize: 16, fontFamily: fonts.regular },
   send: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
 });

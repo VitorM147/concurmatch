@@ -25,7 +25,8 @@ const AUTH_STUB = `
 export async function createDb() {
   const db = new PGlite();
   await db.exec(AUTH_STUB);
-  for (const f of ['0001_schema.sql', '0002_functions.sql', '0003_security.sql', '0005_security_hardening.sql']) {
+  for (const f of ['0001_schema.sql', '0002_functions.sql', '0003_security.sql', '0005_security_hardening.sql',
+                   '0007_message_likes_and_interests.sql']) {
     await db.exec(read(`migrations/${f}`));
   }
   await db.exec(read('seed.sql'));

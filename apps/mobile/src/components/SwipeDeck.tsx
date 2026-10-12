@@ -6,13 +6,13 @@ import {
   Animated, Dimensions, PanResponder, Pressable, StyleSheet, Text, View,
 } from 'react-native';
 import type { Candidate } from '@/lib/api';
-import { periodLabels, statusLabels } from '@/brand';
-import { font, radius, space, useColors } from '@/theme';
+import { interestLabels, periodLabels, statusLabels } from '@/brand';
+import { fonts, palette, radius, space, useColors } from '@/theme';
 
-const { width: W } = Dimensions.get('window');
+const { width: W, height: H } = Dimensions.get('window');
 const THRESHOLD = W * 0.28;
 
-export type SwipeDir = 'like' | 'pass';
+export type SwipeDir = 'like' | 'pass' | 'star';
 export interface SwipeDeckHandle { swipe: (dir: SwipeDir) => void }
 
 interface Props {
@@ -20,9 +20,11 @@ interface Props {
   urls: Record<string, string>;
   onSwipe: (c: Candidate, dir: SwipeDir) => void;
   onOpen?: (c: Candidate) => void;
+  /** Interesses do usuário logado: os em comum aparecem destacados */
+  myInterests?: string[];
 }
 
-export const SwipeDeck = forwardRef<SwipeDeckHandle, Props>(function SwipeDeck({ items, urls, onSwipe }, ref) {
+export const SwipeDeck = forwardRef<SwipeDeckHandle, Props>(function SwipeDeck({ items, urls, onSwipe, myInterests = [] }, ref) {
   const pos = useRef(new Animated.ValueXY()).current;
   const busy = useRef(false);
   const top = items[0];
@@ -31,9 +33,9 @@ export const SwipeDeck = forwardRef<SwipeDeckHandle, Props>(function SwipeDeck({
   const fly = (dir: SwipeDir) => {
     if (!top || busy.current) return;
     busy.current = true;
-    Haptics.impactAsync(dir === 'like' ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light);
+    Haptics.impactAsync(dir === 'pass' ? Haptics.ImpactFeedbackStyle.Light : Haptics.ImpactFeedbackStyle.Medium);
     Animated.timing(pos, {
-      toValue: { x: (dir === 'like' ? 1 : -1) * W * 1.4, y: 40 },
+      toValue: dir === 'star' ? { x: 0, y: -H * 1.2 } : { x: (dir === 'like' ? 1 : -1) * W * 1.4, y: 40 },
       duration: 220,
       useNativeDriver: false,
     }).start(() => {
@@ -62,19 +64,19 @@ export const SwipeDeck = forwardRef<SwipeDeckHandle, Props>(function SwipeDeck({
 
   return (
     <View style={styles.deck}>
-      {next ? <Card key={next.id} c={next} urls={urls} /> : null}
+      {next ? <Card key={next.id} c={next} urls={urls} mine={myInterests} /> : null}
       {top ? (
         <Animated.View
           key={top.id}
           {...responder.panHandlers}
           style={[StyleSheet.absoluteFill, { transform: [{ translateX: pos.x }, { translateY: pos.y }, { rotate }] }]}
         >
-          <Card c={top} urls={urls} />
+          <Card c={top} urls={urls} mine={myInterests} />
           <Animated.View style={[styles.stamp, styles.stampLike, { opacity: likeOpacity }]}>
-            <Text style={[styles.stampText, { color: '#1F9D6B' }]}>CURTIR</Text>
+            <Text style={[styles.stampText, { color: palette.marfim }]}>CURTIR</Text>
           </Animated.View>
           <Animated.View style={[styles.stamp, styles.stampPass, { opacity: passOpacity }]}>
-            <Text style={[styles.stampText, { color: '#D64545' }]}>PASSAR</Text>
+            <Text style={[styles.stampText, { color: palette.marfim }]}>PASSAR</Text>
           </Animated.View>
         </Animated.View>
       ) : null}
@@ -82,7 +84,7 @@ export const SwipeDeck = forwardRef<SwipeDeckHandle, Props>(function SwipeDeck({
   );
 });
 
-function Card({ c, urls }: { c: Candidate; urls: Record<string, string> }) {
+function Card({ c, urls, mine }: { c: Candidate; urls: Record<string, string>; mine: string[] }) {
   const colors = useColors();
   const [i, setI] = useState(0);
   const photo = urls[c.photos[i] ?? c.photos[0]];
@@ -108,6 +110,14 @@ function Card({ c, urls }: { c: Candidate; urls: Record<string, string> }) {
         </View>
       ) : null}
 
+      {c.message_to_me ? (
+        <View style={styles.bubble} pointerEvents="none"
+          accessibilityLabel={`${c.display_name} curtiu você e mandou: ${c.message_to_me}`}>
+          <Text style={styles.bubbleLabel}>★ {c.display_name} curtiu você e mandou:</Text>
+          <Text style={styles.bubbleText}>“{c.message_to_me}”</Text>
+        </View>
+      ) : null}
+
       <View style={styles.info} pointerEvents="none">
         <Text style={styles.name}>
           {c.display_name}, {c.age}{c.verified ? '  ✓' : ''}
@@ -128,6 +138,18 @@ function Card({ c, urls }: { c: Candidate; urls: Record<string, string> }) {
             ))}
           </View>
         ) : null}
+        {c.interests?.length ? (
+          <View style={styles.reasons}>
+            {[...c.interests].sort((a, b) => Number(mine.includes(b)) - Number(mine.includes(a))).slice(0, 5).map((k) => {
+              const shared = mine.includes(k);
+              return (
+                <Text key={k} style={[styles.interest, shared && styles.interestShared]}>
+                  {shared ? '♥ ' : ''}{interestLabels[k] ?? k}
+                </Text>
+              );
+            })}
+          </View>
+        ) : null}
         {c.bio ? <Text style={styles.bio} numberOfLines={2}>{c.bio}</Text> : null}
       </View>
     </View>
@@ -139,22 +161,34 @@ const styles = StyleSheet.create({
   card: { borderRadius: radius.lg, overflow: 'hidden' },
   info: {
     position: 'absolute', left: 0, right: 0, bottom: 0, padding: space.xl, gap: space.xs,
-    backgroundColor: 'rgba(14,20,36,0.62)',
+    backgroundColor: 'rgba(46,14,20,0.66)',
   },
-  name: { color: '#fff', fontSize: 28, fontWeight: '800' },
-  comp: { color: '#fff', ...font.small, fontSize: 14 },
-  highlight: { backgroundColor: '#FFD23F', color: '#14213D', fontWeight: '800' },
-  meta: { color: 'rgba(255,255,255,0.85)', ...font.small },
+  name: { color: palette.marfim, fontSize: 30, fontFamily: fonts.display },
+  comp: { color: palette.marfim, fontSize: 14, fontFamily: fonts.medium },
+  highlight: { backgroundColor: palette.marfim, color: palette.vinho, fontFamily: fonts.bold },
+  meta: { color: 'rgba(248,242,236,0.85)', fontSize: 13, fontFamily: fonts.medium },
   reasons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginTop: space.xs },
   reason: {
-    color: '#fff', fontSize: 12, fontWeight: '700', paddingHorizontal: space.sm, paddingVertical: 3,
+    color: palette.marfim, fontSize: 12, fontFamily: fonts.semibold, paddingHorizontal: space.sm, paddingVertical: 3,
     borderRadius: radius.pill, borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)', overflow: 'hidden',
   },
-  bio: { color: 'rgba(255,255,255,0.9)', fontSize: 14, marginTop: space.xs },
+  interest: {
+    color: palette.vinho, backgroundColor: 'rgba(248,242,236,0.92)', fontSize: 12, fontFamily: fonts.semibold,
+    paddingHorizontal: space.sm + 2, paddingVertical: 4, borderRadius: radius.pill, overflow: 'hidden',
+  },
+  interestShared: { backgroundColor: palette.rosa, color: palette.white },
+  bio: { color: 'rgba(248,242,236,0.92)', fontSize: 14, fontFamily: fonts.regular, marginTop: space.xs },
+  bubble: {
+    position: 'absolute', top: space.xl, left: space.lg, right: space.lg, padding: space.md, gap: 2,
+    backgroundColor: palette.marfim, borderRadius: radius.md, borderBottomLeftRadius: 4,
+    shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 4,
+  },
+  bubbleLabel: { color: palette.rosa, fontSize: 12, fontFamily: fonts.semibold },
+  bubbleText: { color: palette.vinhoEscuro, fontSize: 16, fontFamily: fonts.medium, lineHeight: 21 },
   dots: { position: 'absolute', top: space.md, left: space.md, right: space.md, flexDirection: 'row', gap: 4 },
   dot: { flex: 1, height: 3, borderRadius: 2 },
   stamp: { position: 'absolute', top: 48, borderWidth: 4, borderRadius: radius.sm, paddingHorizontal: space.md, paddingVertical: space.xs },
-  stampLike: { left: 24, borderColor: '#1F9D6B', transform: [{ rotate: '-14deg' }] },
-  stampPass: { right: 24, borderColor: '#D64545', transform: [{ rotate: '14deg' }] },
-  stampText: { fontSize: 30, fontWeight: '900', letterSpacing: 2 },
+  stampLike: { left: 24, borderColor: palette.marfim, backgroundColor: 'rgba(107,30,41,0.85)', transform: [{ rotate: '-14deg' }] },
+  stampPass: { right: 24, borderColor: palette.marfim, backgroundColor: 'rgba(46,14,20,0.7)', transform: [{ rotate: '14deg' }] },
+  stampText: { fontSize: 28, fontFamily: fonts.bold, letterSpacing: 2 },
 });

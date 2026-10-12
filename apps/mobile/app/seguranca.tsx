@@ -18,7 +18,7 @@ export default function Seguranca() {
       <ScrollView contentContainerStyle={{ padding: space.xl, gap: space.md }}>
         {TIPS.map(([t, d]) => (
           <View key={t} style={{ backgroundColor: c.surface, borderRadius: radius.md, padding: space.lg, gap: space.xs, borderWidth: 1, borderColor: c.border }}>
-            <Text style={[font.body, { color: c.text, fontWeight: '700' }]}>{t}</Text>
+            <Text style={[font.bodyBold, { color: c.text }]}>{t}</Text>
             <Text style={[font.small, { color: c.textMuted, lineHeight: 19 }]}>{d}</Text>
           </View>
         ))}

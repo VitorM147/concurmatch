@@ -4,17 +4,17 @@ import {
   ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View,
   type StyleProp, type TextInputProps, type ViewStyle,
 } from 'react-native';
-import { font, radius, space, useColors } from '@/theme';
+import { font, fonts, radius, space, useColors } from '@/theme';
 
 type Variant = 'primary' | 'accent' | 'ghost' | 'danger';
 
-export function Button({ title, onPress, variant = 'primary', loading, disabled, style }: {
+export function Button({ title, onPress, variant = 'primary', loading, disabled, style, textColor }: {
   title: string; onPress: () => void; variant?: Variant; loading?: boolean; disabled?: boolean;
-  style?: StyleProp<ViewStyle>;
+  style?: StyleProp<ViewStyle>; textColor?: string;
 }) {
   const c = useColors();
   const bg = { primary: c.primary, accent: c.accent, ghost: 'transparent', danger: c.danger }[variant];
-  const fg = { primary: c.onPrimary, accent: c.onAccent, ghost: c.text, danger: '#fff' }[variant];
+  const fg = textColor ?? { primary: c.onPrimary, accent: c.onAccent, ghost: c.text, danger: '#fff' }[variant];
   const off = disabled || loading;
   return (
     <Pressable
@@ -58,11 +58,11 @@ export function Chip({ label, selected, onPress }: { label: string; selected?: b
       accessibilityState={{ selected: !!selected }}
       onPress={onPress}
       style={[styles.chip, {
-        backgroundColor: selected ? c.accent : c.surface,
-        borderColor: selected ? c.accent : c.border,
+        backgroundColor: selected ? c.primary : c.chip,
+        borderColor: selected ? c.primary : c.chip,
       }]}
     >
-      <Text style={[font.small, { color: selected ? c.onAccent : c.text }]}>{label}</Text>
+      <Text style={[font.small, { color: selected ? c.onPrimary : c.onChip }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -102,10 +102,10 @@ export function P({ children, muted }: { children: ReactNode; muted?: boolean })
   return <Text style={[font.body, { color: muted ? c.textMuted : c.text, lineHeight: 22 }]}>{children}</Text>;
 }
 
-/** Destaque "marca-texto" — assinatura visual do app */
+/** Destaque em itálico (como o "Match" do logo) */
 export function Highlight({ children }: { children: ReactNode }) {
   const c = useColors();
-  return <Text style={{ backgroundColor: c.accent, color: c.onAccent, fontWeight: '800' }}> {children} </Text>;
+  return <Text style={{ color: c.accent, fontFamily: fonts.displayItalic }}>{children}</Text>;
 }
 
 export function Empty({ title, body, action }: { title: string; body?: string; action?: ReactNode }) {
@@ -120,8 +120,8 @@ export function Empty({ title, body, action }: { title: string; body?: string; a
 
 const styles = StyleSheet.create({
   button: { height: 52, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', paddingHorizontal: space.xl },
-  buttonText: { fontSize: 16, fontWeight: '700' },
-  input: { height: 50, borderWidth: 1, borderRadius: radius.md, paddingHorizontal: space.lg, fontSize: 16 },
+  buttonText: { fontSize: 16, fontFamily: fonts.semibold },
+  input: { height: 50, borderWidth: 1, borderRadius: radius.md, paddingHorizontal: space.lg, fontSize: 16, fontFamily: fonts.regular },
   chip: { paddingHorizontal: space.lg, paddingVertical: space.sm + 2, borderRadius: radius.pill, borderWidth: 1 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: space.xxl, gap: space.md },

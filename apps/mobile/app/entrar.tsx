@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Field, H1, Highlight, P, Screen } from '@/components/ui';
+import { BrandSymbol, Logo } from '@/components/Brand';
+import { Button, Field, H1, P, Screen } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { brand } from '@/brand';
-import { font, space, useColors } from '@/theme';
+import { font, palette, space, useColors } from '@/theme';
 
 export default function Entrar() {
   const c = useColors();
@@ -42,9 +43,8 @@ export default function Entrar() {
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: space.xl, gap: space.xl }}>
             <View style={{ gap: space.md }}>
-              <Text style={[font.title, { fontSize: 40, color: c.text }]}>
-                <Highlight>{brand.name}</Highlight>
-              </Text>
+              <BrandSymbol size={56} left={c.surface} right={palette.rosa} outline={c.primary} />
+              <Logo size={40} />
               <P muted>{brand.tagline}</P>
             </View>
 

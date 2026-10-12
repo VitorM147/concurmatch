@@ -25,6 +25,9 @@ export interface Candidate {
   score: number;
   reasons: string[];
   photos: string[];
+  interests: string[];
+  /** Recado que essa pessoa mandou junto da curtida (só quem recebeu vê) */
+  message_to_me: string | null;
 }
 
 export interface MatchRow {
@@ -78,6 +81,7 @@ export interface ProfileInput {
   age_min?: number;
   age_max?: number;
   max_distance_km?: number;
+  interests?: string[];
 }
 
 export type Profile = ProfileInput & { id: string; verified: boolean; is_visible: boolean };
@@ -94,6 +98,10 @@ const friendly: Record<string, string> = {
   CONSENT_REQUIRED: 'Aceite os termos e a política de privacidade para continuar.',
   ACCOUNT_UNDER_REVIEW: 'Sua conta está em revisão pela nossa equipe de segurança.',
   INVALID_MATCH: 'Não foi possível vincular essa conversa à denúncia.',
+  MESSAGE_TOO_LONG: 'A mensagem pode ter no máximo 100 caracteres.',
+  MESSAGE_NOT_ALLOWED: 'Sem links, e-mails, @perfis ou telefone na primeira mensagem. Combine isso depois do match.',
+  MESSAGE_LIKE_LIMIT: 'Você já usou as curtidas com mensagem de hoje. Elas renovam à meia-noite.',
+  profiles_interests_valid: 'Escolha até 10 interesses da lista.',
 };
 
 export class ApiError extends Error {
@@ -158,7 +166,10 @@ export const api = {
   // ---- Discovery / swipe
   discover: (limit = 20) => call<Candidate[]>('discover', { p_limit: limit }),
   remainingLikes: () => call<number | null>('remaining_likes'),
-  like: (target: string) => call<LikeResult>('swipe_like', { p_target: target }),
+  like: (target: string, message?: string) => call<LikeResult>('swipe_like', {
+    p_target: target,
+    p_message: message?.trim() ? message.trim().slice(0, 100) : null,
+  }),
   pass: (target: string) => call<void>('swipe_pass', { p_target: target }),
 
   // ---- Matches / chat

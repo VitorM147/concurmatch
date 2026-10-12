@@ -1,6 +1,6 @@
 # ConMatch — MVP
 
-App de relacionamento para concurseiros. Nome provisório. Para trocar o nome, edite `apps/mobile/src/brand.ts` e `apps/mobile/app.json`.
+App de relacionamento para quem estuda para concursos, vestibular, OAB e residência (18+). *Pessoas que compartilham mais.* Para trocar o nome, edite `apps/mobile/src/brand.ts` e `apps/mobile/app.json`.
 
 > Deu match? **"Deu ConMatch! Vocês querem se conhecer."**
 
@@ -9,13 +9,15 @@ App de relacionamento para concurseiros. Nome provisório. Para trocar o nome, e
 | Parte | Conteúdo |
 |---|---|
 | **Banco (Supabase/Postgres)** | Schema, RLS, regras de negócio em funções SQL, catálogo de concursos e configurações |
-| **Testes do banco** | 31 testes automatizados com Postgres embarcado: match, limite de curtidas, discovery, chat, bloqueio, denúncia, RLS, LGPD e regressões de segurança |
-| **App (Expo / React Native)** | Cadastro e login, onboarding com consentimento LGPD, Descobrir (swipe), tela de match, lista de matches, chat em tempo real, denunciar, bloquear e desfazer match, perfil com fotos e preferências, Premium (tela), Central de segurança, excluir conta |
+| **Testes do banco** | 41 testes automatizados com Postgres embarcado: match, limite de curtidas, curtida com mensagem, interesses, discovery, chat, bloqueio, denúncia, RLS, LGPD e regressões de segurança |
+| **App (Expo / React Native)** | Cadastro e login, onboarding com consentimento LGPD, Descobrir (swipe + curtida com mensagem), tela de match, abas Conexões e Mensagens, chat em tempo real com sugestões para conversar, denunciar, bloquear e desfazer match, perfil com fotos, "Sobre mim", interesses e preferências, Premium (tela), Central de segurança, excluir conta |
 | **CI** | GitHub Actions rodando os testes do banco e o typecheck do app |
 
 ### Regras de negócio implementadas
 
 - **20 curtidas por dia** no plano grátis. O limite renova à meia-noite de Brasília e é configurável em `app_config`. O Premium tem curtidas ilimitadas.
+- **Curtida com mensagem (botão ★).** Recado de até 100 caracteres junto da curtida. A pessoa vê o recado no card, e quem mandou recado aparece primeiro no Descobrir. Se der match, os recados viram as primeiras mensagens da conversa. Sem links, e-mails, @perfis ou telefone; 5 por dia no grátis e 20 no Premium (configurável em `app_config`). A curtida conta na cota diária.
+- **Interesses.** Até 10, de um catálogo fixo (`interest_catalog()`); os em comum aparecem destacados no card.
 - **Match atômico.** Um lock por par impede que dois likes simultâneos deixem de gerar o match.
 - **Discovery** com:
   - interesse mútuo de gênero;
@@ -53,7 +55,7 @@ conmatch/
 │   ├── app/                Telas (rotas)
 │   └── src/                api, sessão, fotos, tema, componentes
 ├── supabase/
-│   ├── migrations/         0001 schema · 0002 regras · 0003 RLS · 0004 storage/realtime · 0005/0006 hardening
+│   ├── migrations/         0001 schema · 0002 regras · 0003 RLS · 0004 storage/realtime · 0005/0006 hardening · 0007 curtida com mensagem
 │   ├── seed.sql            Configurações, pesos e catálogo de concursos
 │   └── tests/              Testes com PGlite
 ├── security/               Auditoria ESAA-Security (eventos, relatórios, orquestrador)
@@ -66,7 +68,7 @@ conmatch/
 ### 1. Supabase (cerca de 10 min)
 
 1. Crie um projeto em [supabase.com](https://supabase.com), na região **South America (São Paulo)**.
-2. Em **SQL Editor**, rode em ordem os arquivos `0001` a `0006` de `supabase/migrations/` e depois o `seed.sql` (o `0006` exige a extensão `pg_cron`).
+2. Em **SQL Editor**, rode em ordem os arquivos `0001` a `0007` de `supabase/migrations/` e depois o `seed.sql` (o `0006` exige a extensão `pg_cron`).
    - Se usar a Supabase CLI: `supabase link` e depois `supabase db push`.
 3. Em **Authentication → Providers → Email**, deixe ativo. Em desenvolvimento, você pode desligar o "Confirm email".
 
@@ -88,7 +90,7 @@ Abra no celular pelo app **Expo Go**, lendo o QR code. Para testar o match, crie
 ```bash
 cd supabase/tests
 npm install
-npm test          # 31 testes (regras + regressões de segurança), sem Docker nem Supabase
+npm test          # 41 testes (regras + segurança + curtida com mensagem), sem Docker nem Supabase
 ```
 
 ## Próximos passos (fora deste MVP)

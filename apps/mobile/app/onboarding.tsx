@@ -184,7 +184,7 @@ export default function Onboarding() {
                 <ChipGroup options={opts(genderLabels)} value={gender} onChange={setGender} />
                 <Label>Tenho interesse em</Label>
                 <ChipGroup options={opts(genderLabels)} value={interest} onChange={setInterest} multi />
-                <Field label="Bio (opcional)" value={bio} onChangeText={setBio} multiline maxLength={500}
+                <Field label="Sobre mim (opcional)" value={bio} onChangeText={setBio} multiline maxLength={500}
                   placeholder="Ex.: Pós-edital da PF, café preto e Lei Seca às 6h."
                   style={{ height: 96, textAlignVertical: 'top', paddingTop: space.md }} />
               </>

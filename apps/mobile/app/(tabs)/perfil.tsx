@@ -1,13 +1,13 @@
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, Share, StyleSheet, Switch, Text, View } from 'react-native';
-import { Button, ChipGroup, H1, Screen } from '@/components/ui';
+import { Button, ChipGroup, Field, H1, Screen } from '@/components/ui';
 import { api, type StudyStatus } from '@/lib/api';
 import { pickAndUploadPhoto, useSignedUrls } from '@/lib/photos';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
-import { statusLabels } from '@/brand';
+import { interestLabels, MAX_INTERESTS, statusLabels } from '@/brand';
 import { font, radius, space, useColors } from '@/theme';
 
 const DISTANCES = [10, 25, 50, 100, 300].map((d) => ({ value: d, label: `${d} km` }));
@@ -23,6 +23,8 @@ export default function Perfil() {
   const [photos, setPhotos] = useState<{ storage_path: string; position: number }[]>([]);
   const [busy, setBusy] = useState(false);
   const urls = useSignedUrls(photos.map((p) => p.storage_path));
+  const [bio, setBio] = useState(profile?.bio ?? '');
+  useEffect(() => { setBio(profile?.bio ?? ''); }, [profile?.bio]);
 
   const loadPhotos = useCallback(() => { api.myPhotos().then(setPhotos).catch(() => {}); }, []);
   useFocusEffect(useCallback(() => { loadPhotos(); }, [loadPhotos]));
@@ -85,6 +87,23 @@ export default function Perfil() {
           })}
         </View>
 
+        <Section title="Sobre mim">
+          <Field label="Conte um pouco sobre você" value={bio} onChangeText={setBio} multiline maxLength={500}
+            style={{ height: 110, paddingTop: 12, textAlignVertical: 'top' }}
+            hint={`${bio.length}/500 · salva quando você sai do campo`}
+            onBlur={() => { if ((profile.bio ?? '') !== bio.trim()) save({ bio: bio.trim() || null }); }} />
+        </Section>
+
+        <Section title={`Meus interesses (${(profile.interests ?? []).length}/${MAX_INTERESTS})`}>
+          <ChipGroup multi
+            options={Object.entries(interestLabels).map(([value, label]) => ({ value, label }))}
+            value={profile.interests ?? []}
+            onChange={(v: string[]) => {
+              if (v.length > MAX_INTERESTS) return Alert.alert('Limite de interesses', `Escolha até ${MAX_INTERESTS}.`);
+              save({ interests: v });
+            }} />
+        </Section>
+
         <Section title="Fase atual">
           <ChipGroup options={Object.entries(statusLabels).map(([value, label]) => ({ value, label }))}
             value={profile.status} onChange={(v: StudyStatus) => save({ status: v })} />
@@ -109,7 +128,7 @@ export default function Perfil() {
         </View>
 
         <View style={{ gap: space.md }}>
-          <Button title="Premium — curtidas ilimitadas" variant="accent" onPress={() => router.push('/premium')} />
+          <Button title="Premium — curtidas ilimitadas" onPress={() => router.push('/premium')} />
           <Button title="Central de segurança" variant="ghost" onPress={() => router.push('/seguranca')} />
           <Button title="Baixar meus dados" variant="ghost" onPress={exportData} />
           <Button title="Sair" variant="ghost" onPress={() => supabase.auth.signOut()} />
@@ -125,7 +144,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   const c = useColors();
   return (
     <View style={{ gap: space.sm }}>
-      <Text style={[font.small, { color: c.textMuted, letterSpacing: 1, textTransform: 'uppercase' }]}>{title}</Text>
+      <Text style={[font.label, { color: c.textMuted }]}>{title}</Text>
       {children}
     </View>
   );

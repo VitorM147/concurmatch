@@ -1,9 +1,12 @@
+import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
+import { PlayfairDisplay_700Bold, PlayfairDisplay_700Bold_Italic } from '@expo-google-fonts/playfair-display';
+import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SessionProvider, useSession } from '@/lib/session';
-import { useColors } from '@/theme';
+import { fonts, useColors } from '@/theme';
 
 // Guarda de rotas: sem sessão → /entrar; sem perfil ou sem foto → /onboarding; senão → app
 function Gate() {
@@ -11,6 +14,10 @@ function Gate() {
   const segments = useSegments();
   const router = useRouter();
   const c = useColors();
+  const [fontsLoaded, fontError] = useFonts({
+    Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold,
+    PlayfairDisplay_700Bold, PlayfairDisplay_700Bold_Italic,
+  });
 
   useEffect(() => {
     if (!ready) return;
@@ -24,7 +31,8 @@ function Gate() {
     }
   }, [ready, session, profile, hasPhoto, segments, router]);
 
-  if (!ready) {
+  // Se a fonte falhar, segue com a do sistema em vez de travar na abertura
+  if (!ready || (!fontsLoaded && !fontError)) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: c.bg }}>
         <ActivityIndicator color={c.text} />
@@ -36,6 +44,7 @@ function Gate() {
     <Stack screenOptions={{
       headerStyle: { backgroundColor: c.bg },
       headerTintColor: c.text,
+      headerTitleStyle: { fontFamily: fonts.display, fontSize: 20 },
       headerShadowVisible: false,
       contentStyle: { backgroundColor: c.bg },
     }}>

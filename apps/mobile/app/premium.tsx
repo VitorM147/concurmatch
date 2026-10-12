@@ -22,7 +22,7 @@ export default function Premium() {
         <View style={{ gap: space.md }}>
           {PERKS.map(([t, d]) => (
             <View key={t} style={{ backgroundColor: c.surface, borderRadius: radius.md, padding: space.lg, borderWidth: 1, borderColor: c.border }}>
-              <Text style={[font.body, { color: c.text, fontWeight: '700' }]}>{t}</Text>
+              <Text style={[font.bodyBold, { color: c.text }]}>{t}</Text>
               <Text style={[font.small, { color: c.textMuted }]}>{d}</Text>
             </View>
           ))}
