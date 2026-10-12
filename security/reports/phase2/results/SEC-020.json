@@ -3,9 +3,9 @@
   "domain": "logging_monitoring",
   "playbook_version": "1.2.1",
   "checks_total": 5,
-  "checks_pass": 2,
+  "checks_pass": 3,
   "checks_fail": 0,
-  "checks_partial": 3,
+  "checks_partial": 2,
   "checks_na": 0,
   "checks_error": 0,
   "worst_severity": "NONE",
@@ -103,19 +103,26 @@
     {
       "check_id": "LM-004",
       "check_name": "Ausência de alertas de segurança",
-      "status": "partial",
+      "status": "pass",
       "severity_if_fail": "MEDIUM",
       "confidence": "high",
       "evidence": {
         "files": [
-          "supabase/migrations/0005_security_hardening.sql"
+          "supabase/migrations/0005_security_hardening.sql",
+          "security/reports/phase2/evidence/run3-static-findings.txt",
+          "supabase/migrations/0016_security_run3.sql",
+          "supabase/functions/report-triage/index.ts"
         ],
         "lines": [
-          "supabase/migrations/0005_security_hardening.sql:44:create table public.security_alerts ("
+          "supabase/migrations/0005_security_hardening.sql:44:create table public.security_alerts (",
+          "security/reports/phase2/evidence/run3-static-findings.txt:43:ocorrências de webhook de alerta: 0",
+          "supabase/migrations/0016_security_run3.sql:229:create function public.alerts_to_notify(p_limit integer default 50) returns jsonb",
+          "supabase/functions/report-triage/index.ts:9:// ALERT_WEBHOOK_URL (Slack/Discord/Google Chat). SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY"
         ],
         "commands_output": [],
         "evidence_types": [
-          "code_snippet"
+          "code_snippet",
+          "tool_output"
         ],
         "evidence_sources": [
           "static_analysis"
@@ -124,9 +131,9 @@
         "tool_version": null,
         "fallback_applied": false,
         "fallback_reason": null,
-        "description": "Baseline: nenhum alerta. RUN-0002: fila security_alerts (denúncia de menor, pico de denúncias, ocultação, rate limit). Falta canal de notificação (webhook/e-mail)."
+        "description": "Alertas ficavam só na tabela security_alerts. RUN-0004: o robô manda um resumo (tipo e horário, sem conteúdo) para o webhook do suporte (Slack/Discord/Google Chat) e marca cada alerta como avisado."
       },
-      "remediation": "Configurar alertas para: auth failures > threshold, error rate spikes, suspicious patterns. Integrar com Sentry/Datadog/PagerDuty.",
+      "remediation": "Configurar alertas para: auth failures > threshold, error rate spikes, suspicious patterns. Integrar com Sentry/Datadog/PagerDuty. | Aplicado: alerts_to_notify + webhook",
       "cross_refs": []
     },
     {

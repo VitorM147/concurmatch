@@ -22,7 +22,7 @@
           "apps/mobile/app/entrar.tsx"
         ],
         "lines": [
-          "apps/mobile/app/entrar.tsx:26:? await supabase.auth.signInWithPassword({ email: email.trim(), password })"
+          "apps/mobile/app/entrar.tsx:27:? await supabase.auth.signInWithPassword({ email: email.trim(), password })"
         ],
         "commands_output": [],
         "evidence_types": [

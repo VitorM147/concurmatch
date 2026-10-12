@@ -19,14 +19,19 @@
       "confidence": "high",
       "evidence": {
         "files": [
-          "apps/mobile/src/lib/supabase.ts"
+          "apps/mobile/src/lib/supabase.ts",
+          "security/reports/phase2/evidence/run3-static-findings.txt",
+          "apps/admin/index.html"
         ],
         "lines": [
-          "apps/mobile/src/lib/supabase.ts:35:storage: Platform.OS === 'web' ? undefined : secureStorage,"
+          "apps/mobile/src/lib/supabase.ts:35:storage: Platform.OS === 'web' ? undefined : secureStorage,",
+          "security/reports/phase2/evidence/run3-static-findings.txt:17:admin/index.html:108:  if (url && key) db = supabase.createClient(url, key);",
+          "apps/admin/index.html:113:auth: { storage: window.sessionStorage, persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },"
         ],
         "commands_output": [],
         "evidence_types": [
-          "code_snippet"
+          "code_snippet",
+          "tool_output"
         ],
         "evidence_sources": [
           "static_analysis"
@@ -35,9 +40,9 @@
         "tool_version": null,
         "fallback_applied": false,
         "fallback_reason": null,
-        "description": "Baseline: sessão no AsyncStorage (equivalente mobile do localStorage, texto puro). RUN-0002: secureStorage em pedaços no Keychain/Keystore."
+        "description": "Painel do suporte guardava a sessão no localStorage (padrão do supabase-js), legível por qualquer script da página. RUN-0004: sessionStorage (some ao fechar a aba) + CSP estrita + SRI + segundo fator."
       },
-      "remediation": "Mover auth tokens para httpOnly cookies. Se SPA, usar BFF (Backend For Frontend) pattern com cookies httpOnly. localStorage apenas para preferências não-sensíveis.",
+      "remediation": "Mover auth tokens para httpOnly cookies. Se SPA, usar BFF (Backend For Frontend) pattern com cookies httpOnly. localStorage apenas para preferências não-sensíveis. | Aplicado: sessionStorage no painel",
       "cross_refs": [
         "CR-003"
       ]

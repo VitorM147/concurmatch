@@ -1,0 +1,179 @@
+{
+  "value": 90.9,
+  "raw_weighted_average": 90.9,
+  "classification": "excellent",
+  "penalties_applied": [],
+  "critical_fails": 0,
+  "breakdown": [
+    {
+      "task_id": "SEC-010",
+      "domain": "secrets_config",
+      "priority": "critical",
+      "score": 100.0,
+      "checks_pass": 7,
+      "checks_fail": 0,
+      "checks_partial": 0,
+      "checks_na": 1
+    },
+    {
+      "task_id": "SEC-011",
+      "domain": "dependencies_supply_chain",
+      "priority": "high",
+      "score": 84.5,
+      "checks_pass": 4,
+      "checks_fail": 0,
+      "checks_partial": 2,
+      "checks_na": 0
+    },
+    {
+      "task_id": "SEC-012",
+      "domain": "authentication",
+      "priority": "critical",
+      "score": 96.6,
+      "checks_pass": 7,
+      "checks_fail": 0,
+      "checks_partial": 1,
+      "checks_na": 1
+    },
+    {
+      "task_id": "SEC-013",
+      "domain": "authorization",
+      "priority": "critical",
+      "score": 100.0,
+      "checks_pass": 5,
+      "checks_fail": 0,
+      "checks_partial": 0,
+      "checks_na": 1
+    },
+    {
+      "task_id": "SEC-014",
+      "domain": "api_security",
+      "priority": "high",
+      "score": 88.5,
+      "checks_pass": 6,
+      "checks_fail": 0,
+      "checks_partial": 2,
+      "checks_na": 1
+    },
+    {
+      "task_id": "SEC-015",
+      "domain": "input_validation",
+      "priority": "critical",
+      "score": 100.0,
+      "checks_pass": 4,
+      "checks_fail": 0,
+      "checks_partial": 0,
+      "checks_na": 6
+    },
+    {
+      "task_id": "SEC-016",
+      "domain": "file_upload",
+      "priority": "high",
+      "score": 79.2,
+      "checks_pass": 4,
+      "checks_fail": 1,
+      "checks_partial": 1,
+      "checks_na": 0
+    },
+    {
+      "task_id": "SEC-017",
+      "domain": "session_security",
+      "priority": "high",
+      "score": 100.0,
+      "checks_pass": 2,
+      "checks_fail": 0,
+      "checks_partial": 0,
+      "checks_na": 4
+    },
+    {
+      "task_id": "SEC-018",
+      "domain": "cryptography",
+      "priority": "high",
+      "score": 94.7,
+      "checks_pass": 4,
+      "checks_fail": 0,
+      "checks_partial": 1,
+      "checks_na": 0
+    },
+    {
+      "task_id": "SEC-019",
+      "domain": "security_headers",
+      "priority": "medium",
+      "score": null,
+      "checks_pass": 0,
+      "checks_fail": 0,
+      "checks_partial": 0,
+      "checks_na": 5
+    },
+    {
+      "task_id": "SEC-020",
+      "domain": "logging_monitoring",
+      "priority": "medium",
+      "score": 78.9,
+      "checks_pass": 2,
+      "checks_fail": 0,
+      "checks_partial": 3,
+      "checks_na": 0
+    },
+    {
+      "task_id": "SEC-021",
+      "domain": "infrastructure",
+      "priority": "high",
+      "score": 73.8,
+      "checks_pass": 1,
+      "checks_fail": 0,
+      "checks_partial": 2,
+      "checks_na": 4
+    },
+    {
+      "task_id": "SEC-022",
+      "domain": "devsecops",
+      "priority": "medium",
+      "score": 76.0,
+      "checks_pass": 3,
+      "checks_fail": 1,
+      "checks_partial": 2,
+      "checks_na": 0
+    },
+    {
+      "task_id": "SEC-023",
+      "domain": "data_security",
+      "priority": "critical",
+      "score": 87.9,
+      "checks_pass": 4,
+      "checks_fail": 0,
+      "checks_partial": 1,
+      "checks_na": 0
+    },
+    {
+      "task_id": "SEC-024",
+      "domain": "frontend_security",
+      "priority": "medium",
+      "score": 83.3,
+      "checks_pass": 2,
+      "checks_fail": 0,
+      "checks_partial": 1,
+      "checks_na": 1
+    },
+    {
+      "task_id": "SEC-025",
+      "domain": "ai_llm_security",
+      "priority": "high",
+      "score": null,
+      "checks_pass": 0,
+      "checks_fail": 0,
+      "checks_partial": 0,
+      "checks_na": 7
+    },
+    {
+      "task_id": "SEC-026",
+      "domain": "business_logic",
+      "priority": "high",
+      "score": 87.5,
+      "checks_pass": 3,
+      "checks_fail": 0,
+      "checks_partial": 1,
+      "checks_na": 0
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+# RUN-SEC-0003 — código antes da migration 0016 (node supabase/tests/poc-run3.mjs baseline)
+E1 VULNERÁVEL: inscrição da vítima ficou Rio Branco/AC, homem
+E2 VULNERÁVEL: robô gravou 119 inscrições; pessoa real recusada (RATE_LIMITED)
+E3 VULNERÁVEL: sessão sem segundo fator conseguiu banir um perfil
+E4 VULNERÁVEL: foto de 30 dias atrás aceita como selfie do desafio
+E5 VULNERÁVEL: pedido entra na fila sem arquivo nenhum

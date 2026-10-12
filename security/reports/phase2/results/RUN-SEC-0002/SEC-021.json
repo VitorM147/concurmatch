@@ -1,0 +1,200 @@
+{
+  "task_id": "SEC-021",
+  "domain": "infrastructure",
+  "playbook_version": "1.2.1",
+  "checks_total": 7,
+  "checks_pass": 1,
+  "checks_fail": 0,
+  "checks_partial": 2,
+  "checks_na": 4,
+  "checks_error": 0,
+  "worst_severity": "NONE",
+  "duration_ms": 0,
+  "results": [
+    {
+      "check_id": "IF-001",
+      "check_name": "HTTPS opcional",
+      "status": "pass",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "medium",
+      "evidence": {
+        "files": [
+          "apps/mobile/src/lib/supabase.ts"
+        ],
+        "lines": [
+          "apps/mobile/src/lib/supabase.ts:14:if (!url.startsWith('https://') && !isLocalDev) {"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": true,
+        "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
+        "description": "Endpoints do Supabase são HTTPS; RUN-0002 também força no cliente."
+      },
+      "remediation": "Configurar HTTPS obrigatório. Redirect 301 em HTTP. Certificado válido (Let's Encrypt). HSTS header.",
+      "cross_refs": [
+        "CR-001"
+      ]
+    },
+    {
+      "check_id": "IF-002",
+      "check_name": "Ausência de firewall",
+      "status": "not_applicable",
+      "severity_if_fail": "HIGH",
+      "confidence": "low",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "BaaS gerenciado: sem servidores nem regras de firewall no repositório."
+      },
+      "remediation": "Configurar firewall deny-by-default. Abrir apenas portas necessárias (80, 443). DB/cache apenas acessível internamente. Security groups restritivos.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "IF-003",
+      "check_name": "Ausência de WAF",
+      "status": "not_applicable",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "low",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Sem origem web própria a proteger com WAF."
+      },
+      "remediation": "Implementar WAF (Cloudflare, AWS WAF, Azure WAF, ModSecurity). Configurar regras OWASP Core Rule Set. Monitorar falsos positivos.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "IF-004",
+      "check_name": "Network segmentation ausente",
+      "status": "not_applicable",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "low",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Sem rede própria; isolamento é do provedor."
+      },
+      "remediation": "Segregar em camadas: DMZ (frontend), app (backend), data (DB). DB apenas acessível do backend. Network policies em Kubernetes.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "IF-005",
+      "check_name": "Backups não configurados",
+      "status": "partial",
+      "severity_if_fail": "HIGH",
+      "confidence": "low",
+      "evidence": {
+        "files": [
+          "SECURITY.md"
+        ],
+        "lines": [
+          "SECURITY.md:31:3. **Database → Backups:** confirmar backup diário (plano Pro) e testar uma restauração."
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Backup depende do plano do Supabase e não é verificável no repo; exigência registrada em SECURITY.md."
+      },
+      "remediation": "Configurar backups automatizados (diário DB, semanal full). Testar restore mensalmente. Armazenar off-site/cross-region. Criptografar backups.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "IF-006",
+      "check_name": "Proteção contra DDoS ausente",
+      "status": "partial",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "low",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Proteção de borda do provedor + rate limits de aplicação (RUN-0002); sem proteção dedicada."
+      },
+      "remediation": "Implementar CDN com proteção DDoS (Cloudflare, AWS Shield). Rate limiting em nginx/load balancer. Não expor IP do origin server.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "IF-007",
+      "check_name": "Container hardening ausente",
+      "status": "not_applicable",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Sem containers."
+      },
+      "remediation": "Adicionar USER não-root no final do Dockerfile (ex: RUN adduser -D appuser && USER appuser). Pinar base images por digest (FROM node:18.19.0-alpine@sha256:abc...). Nunca usar privileged: true. Nunca montar /var/run/docker.sock sem análise de risco. Em K8s: runAsNonRoot: true, readOnlyRootFilesystem: true, allowPrivilegeEscalation: false, drop ALL capabilities e adicionar apenas as necessárias. Secrets via env do orquestrador, nunca no Dockerfile.",
+      "cross_refs": []
+    }
+  ]
+}

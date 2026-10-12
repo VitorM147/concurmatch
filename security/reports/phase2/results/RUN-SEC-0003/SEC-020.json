@@ -1,0 +1,161 @@
+{
+  "task_id": "SEC-020",
+  "domain": "logging_monitoring",
+  "playbook_version": "1.2.1",
+  "checks_total": 5,
+  "checks_pass": 2,
+  "checks_fail": 0,
+  "checks_partial": 3,
+  "checks_na": 0,
+  "checks_error": 0,
+  "worst_severity": "NONE",
+  "duration_ms": 0,
+  "results": [
+    {
+      "check_id": "LM-001",
+      "check_name": "Logs contendo dados sensíveis",
+      "status": "pass",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0002_functions.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0002_functions.sql:508:insert into public.audit_logs (actor_id, action) values (null, 'account_deleted');"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Nenhum log com dado pessoal; audit_logs guarda IDs, não conteúdo."
+      },
+      "remediation": "Implementar redação de campos sensíveis. Mascarar PII em logs. Nunca logar request bodies completos.",
+      "cross_refs": [
+        "SC-008"
+      ]
+    },
+    {
+      "check_id": "LM-002",
+      "check_name": "Ausência de logs de auditoria",
+      "status": "pass",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0005_security_hardening.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0005_security_hardening.sql:501:values (null, 'retention_purge', jsonb_build_object('matches', v_unmatched, 'passes', v_passes,"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "audit_logs registra bloqueio, ocultação automática, exclusão de conta e (RUN-0002) expurgo de retenção."
+      },
+      "remediation": "Implementar audit logging para: auth events, permission changes, data access, admin actions. Incluir user_id, action, timestamp, IP, result.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "LM-003",
+      "check_name": "Logs não estruturados",
+      "status": "partial",
+      "severity_if_fail": "LOW",
+      "confidence": "medium",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0001_schema.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0001_schema.sql:210:create table public.audit_logs ("
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "audit_logs é estruturado (jsonb), mas o app não tem log/crash reporting estruturado."
+      },
+      "remediation": "Usar logger estruturado (pino, winston JSON, structlog). Formato JSONL para facilitar parsing e análise.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "LM-004",
+      "check_name": "Ausência de alertas de segurança",
+      "status": "partial",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0005_security_hardening.sql",
+          "security/reports/phase2/evidence/run3-static-findings.txt"
+        ],
+        "lines": [
+          "supabase/migrations/0005_security_hardening.sql:44:create table public.security_alerts (",
+          "security/reports/phase2/evidence/run3-static-findings.txt:43:ocorrências de webhook de alerta: 0"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet",
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Alertas ficavam só na tabela security_alerts."
+      },
+      "remediation": "Configurar alertas para: auth failures > threshold, error rate spikes, suspicious patterns. Integrar com Sentry/Datadog/PagerDuty.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "LM-005",
+      "check_name": "Ausência de correlação de requisições",
+      "status": "partial",
+      "severity_if_fail": "LOW",
+      "confidence": "low",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Request ID existe só nos logs do Supabase; o app não propaga ID de correlação."
+      },
+      "remediation": "Implementar middleware de correlation ID. Propagar via header (X-Request-ID). Incluir em todos os logs. Considerar OpenTelemetry.",
+      "cross_refs": []
+    }
+  ]
+}

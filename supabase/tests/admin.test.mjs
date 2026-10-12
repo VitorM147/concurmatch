@@ -2,7 +2,7 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { createDb, createUser, asUser, rpc } from './harness.mjs';
+import { createDb, createUser, asUser, rpc, withMfa } from './harness.mjs';
 import { decideVerification } from '../functions/_shared/selfie-decision.js';
 
 let db;
@@ -11,7 +11,7 @@ before(async () => { db = await createDb(); });
 const man   = (o = {}) => createUser(db, { gender: 'homem',  interested_in: '{mulher}', ...o });
 const woman = (o = {}) => createUser(db, { gender: 'mulher', interested_in: '{homem}',  ...o });
 const rejects = (p, re) => assert.rejects(p, (e) => { assert.match(e.message, re); return true; });
-const makeAdmin = async () => { const id = await woman(); await db.query('insert into public.admins (user_id) values ($1)', [id]); return id; };
+const makeAdmin = async () => { const id = withMfa(await woman()); await db.query('insert into public.admins (user_id) values ($1)', [id]); return id; };
 const one = async (u, fn, args = []) => Object.values((await rpc(db, u, fn, args))[0])[0];
 
 // ---------------------------------------------------------------- Compromisso

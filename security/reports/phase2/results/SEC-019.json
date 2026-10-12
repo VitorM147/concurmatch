@@ -3,10 +3,10 @@
   "domain": "security_headers",
   "playbook_version": "1.2.1",
   "checks_total": 5,
-  "checks_pass": 0,
+  "checks_pass": 5,
   "checks_fail": 0,
   "checks_partial": 0,
-  "checks_na": 5,
+  "checks_na": 0,
   "checks_error": 0,
   "worst_severity": "NONE",
   "duration_ms": 0,
@@ -14,15 +14,24 @@
     {
       "check_id": "SH-001",
       "check_name": "Content-Security-Policy ausente",
-      "status": "not_applicable",
+      "status": "pass",
       "severity_if_fail": "MEDIUM",
       "confidence": "medium",
       "evidence": {
-        "files": [],
-        "lines": [],
+        "files": [
+          "security/reports/phase2/evidence/run3-static-findings.txt",
+          "apps/site/_headers",
+          "apps/admin/index.html"
+        ],
+        "lines": [
+          "security/reports/phase2/evidence/run3-static-findings.txt:21:apps/site/index.html: Content-Security-Policy = 0",
+          "apps/site/_headers:3:Content-Security-Policy: default-src 'none'; script-src 'self' 'sha256-2oTiQEaIo96SH067ZeioDqVLyeD1Uds0RnxCwlK5QdU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fo",
+          "apps/admin/index.html:80:integrity=\"sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o\" crossorigin=\"anonymous\"></script>"
+        ],
         "commands_output": [],
         "evidence_types": [
-          "doc_reference"
+          "code_snippet",
+          "tool_output"
         ],
         "evidence_sources": [
           "static_analysis"
@@ -31,23 +40,30 @@
         "tool_version": null,
         "fallback_applied": true,
         "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
-        "description": "Sem servidor web nem app web no escopo; headers da API são do Supabase."
+        "description": "Site (apps/site) e painel (apps/admin) sem Content-Security-Policy. RUN-0004: CSP default-src 'none' com hash dos scripts inline (apps/security-headers.py), em _headers e em <meta>; o CI falha se ficar desatualizada; script do CDN com SRI."
       },
-      "remediation": "Implementar CSP restritivo. Usar nonce ou hash para inline scripts. Reportar violations com report-uri.",
+      "remediation": "Implementar CSP restritivo. Usar nonce ou hash para inline scripts. Reportar violations com report-uri. | Aplicado: _headers + meta CSP + SRI",
       "cross_refs": []
     },
     {
       "check_id": "SH-002",
       "check_name": "Strict-Transport-Security ausente",
-      "status": "not_applicable",
+      "status": "pass",
       "severity_if_fail": "MEDIUM",
       "confidence": "medium",
       "evidence": {
-        "files": [],
-        "lines": [],
+        "files": [
+          "security/reports/phase2/evidence/run3-static-findings.txt",
+          "apps/site/_headers"
+        ],
+        "lines": [
+          "security/reports/phase2/evidence/run3-static-findings.txt:23:apps/site/_headers: ausente",
+          "apps/site/_headers:4:Strict-Transport-Security: max-age=63072000; includeSubDomains; preload"
+        ],
         "commands_output": [],
         "evidence_types": [
-          "doc_reference"
+          "code_snippet",
+          "tool_output"
         ],
         "evidence_sources": [
           "static_analysis"
@@ -56,23 +72,30 @@
         "tool_version": null,
         "fallback_applied": true,
         "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
-        "description": "Sem servidor web nem app web no escopo; headers da API são do Supabase."
+        "description": "Sem HSTS no site e no painel. RUN-0004: Strict-Transport-Security de 2 anos com preload em _headers."
       },
-      "remediation": "Adicionar Strict-Transport-Security: max-age=31536000; includeSubDomains; preload.",
+      "remediation": "Adicionar Strict-Transport-Security: max-age=31536000; includeSubDomains; preload. | Aplicado: _headers",
       "cross_refs": []
     },
     {
       "check_id": "SH-003",
       "check_name": "X-Frame-Options ausente",
-      "status": "not_applicable",
+      "status": "pass",
       "severity_if_fail": "MEDIUM",
       "confidence": "medium",
       "evidence": {
-        "files": [],
-        "lines": [],
+        "files": [
+          "security/reports/phase2/evidence/run3-static-findings.txt",
+          "apps/admin/_headers"
+        ],
+        "lines": [
+          "security/reports/phase2/evidence/run3-static-findings.txt:23:apps/site/_headers: ausente",
+          "apps/admin/_headers:5:X-Frame-Options: DENY"
+        ],
         "commands_output": [],
         "evidence_types": [
-          "doc_reference"
+          "code_snippet",
+          "tool_output"
         ],
         "evidence_sources": [
           "static_analysis"
@@ -81,23 +104,30 @@
         "tool_version": null,
         "fallback_applied": true,
         "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
-        "description": "Sem servidor web nem app web no escopo; headers da API são do Supabase."
+        "description": "Páginas podiam ser carregadas em iframe (clickjacking no painel). RUN-0004: X-Frame-Options DENY e frame-ancestors 'none'."
       },
-      "remediation": "Adicionar X-Frame-Options: DENY (ou SAMEORIGIN se iframe necessário). Preferir CSP frame-ancestors.",
+      "remediation": "Adicionar X-Frame-Options: DENY (ou SAMEORIGIN se iframe necessário). Preferir CSP frame-ancestors. | Aplicado: _headers",
       "cross_refs": []
     },
     {
       "check_id": "SH-004",
       "check_name": "X-Content-Type-Options ausente",
-      "status": "not_applicable",
+      "status": "pass",
       "severity_if_fail": "LOW",
       "confidence": "medium",
       "evidence": {
-        "files": [],
-        "lines": [],
+        "files": [
+          "security/reports/phase2/evidence/run3-static-findings.txt",
+          "apps/site/_headers"
+        ],
+        "lines": [
+          "security/reports/phase2/evidence/run3-static-findings.txt:23:apps/site/_headers: ausente",
+          "apps/site/_headers:6:X-Content-Type-Options: nosniff"
+        ],
         "commands_output": [],
         "evidence_types": [
-          "doc_reference"
+          "code_snippet",
+          "tool_output"
         ],
         "evidence_sources": [
           "static_analysis"
@@ -106,23 +136,30 @@
         "tool_version": null,
         "fallback_applied": true,
         "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
-        "description": "Sem servidor web nem app web no escopo; headers da API são do Supabase."
+        "description": "Sem X-Content-Type-Options. RUN-0004: nosniff em _headers."
       },
-      "remediation": "Adicionar X-Content-Type-Options: nosniff em todas as respostas.",
+      "remediation": "Adicionar X-Content-Type-Options: nosniff em todas as respostas. | Aplicado: _headers",
       "cross_refs": []
     },
     {
       "check_id": "SH-005",
       "check_name": "Referrer-Policy ausente",
-      "status": "not_applicable",
+      "status": "pass",
       "severity_if_fail": "LOW",
       "confidence": "medium",
       "evidence": {
-        "files": [],
-        "lines": [],
+        "files": [
+          "security/reports/phase2/evidence/run3-static-findings.txt",
+          "apps/site/_headers"
+        ],
+        "lines": [
+          "security/reports/phase2/evidence/run3-static-findings.txt:23:apps/site/_headers: ausente",
+          "apps/site/_headers:7:Referrer-Policy: strict-origin-when-cross-origin"
+        ],
         "commands_output": [],
         "evidence_types": [
-          "doc_reference"
+          "code_snippet",
+          "tool_output"
         ],
         "evidence_sources": [
           "static_analysis"
@@ -131,9 +168,9 @@
         "tool_version": null,
         "fallback_applied": true,
         "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
-        "description": "Sem servidor web nem app web no escopo; headers da API são do Supabase."
+        "description": "Sem Referrer-Policy. RUN-0004: strict-origin-when-cross-origin em _headers."
       },
-      "remediation": "Adicionar Referrer-Policy: strict-origin-when-cross-origin (ou no-referrer para máxima privacidade).",
+      "remediation": "Adicionar Referrer-Policy: strict-origin-when-cross-origin (ou no-referrer para máxima privacidade). | Aplicado: _headers",
       "cross_refs": []
     }
   ]

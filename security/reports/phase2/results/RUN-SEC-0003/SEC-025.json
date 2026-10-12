@@ -1,0 +1,213 @@
+{
+  "task_id": "SEC-025",
+  "domain": "ai_llm_security",
+  "playbook_version": "1.2.1",
+  "checks_total": 7,
+  "checks_pass": 6,
+  "checks_fail": 0,
+  "checks_partial": 1,
+  "checks_na": 0,
+  "checks_error": 0,
+  "worst_severity": "NONE",
+  "duration_ms": 0,
+  "results": [
+    {
+      "check_id": "AI-001",
+      "check_name": "Prompt injection possível",
+      "status": "pass",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "medium",
+      "evidence": {
+        "files": [
+          "supabase/functions/_shared/report-decision.js",
+          "supabase/migrations/0010_report_auto_triage.sql"
+        ],
+        "lines": [
+          "supabase/functions/_shared/report-decision.js:44:export function decideReport({ texts, scores }) {",
+          "supabase/migrations/0010_report_auto_triage.sql:104:if exists (select 1 from unnest(v_texts) t where public.sexual_service_signal_strict(t)) then"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "A Moderation API é um classificador: devolve só notas por categoria, não segue instruções do texto. A decisão sai de limites fixos no código, e o filtro de programa/cobrança do banco vale mais que a nota."
+      },
+      "remediation": "Separar system prompt de user input. Usar delimitadores claros (XML tags, markers). Sanitizar input. Implementar prompt injection detection. Validar output antes de uso.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AI-002",
+      "check_name": "LLM com acesso irrestrito a ferramentas",
+      "status": "pass",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0010_report_auto_triage.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0010_report_auto_triage.sql:89:raise exception 'INVALID_SEVERITY' using errcode = '22023';"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Nenhum modelo tem acesso a ferramentas: o robô aplica a decisão por funções fixas (apply_report_triage com gravidade validada contra uma lista fechada)."
+      },
+      "remediation": "Aplicar least privilege em tools. Implementar approval para ações destrutivas. Sandboxar execução de código. Definir escopo explícito por tool.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AI-003",
+      "check_name": "Ausência de filtragem de input",
+      "status": "pass",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Entrada limitada ao que a pessoa denunciada escreveu, até 50 textos de 4.000 caracteres; fotos só depois de conferir os bytes."
+      },
+      "remediation": "Implementar input moderation (content filter). Limitar tamanho de input. Rate limit por user. Detectar patterns de jailbreak/injection.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AI-004",
+      "check_name": "Possibilidade de exfiltração de dados",
+      "status": "pass",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0010_report_auto_triage.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0010_report_auto_triage.sql:48:where m->>'from' = 'denunciado')"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Vai para a API só o texto da conversa denunciada (sem nomes, e-mails ou ids) e a foto em questão; a transferência internacional está descrita na Política de Privacidade (ver DA-005)."
+      },
+      "remediation": "Sanitizar output do LLM. Filtrar markdown de imagens/links externos. Validar que system prompt não aparece no output. Implementar output guardrails.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AI-005",
+      "check_name": "Logs de decisão da IA inexistentes",
+      "status": "pass",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0010_report_auto_triage.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0010_report_auto_triage.sql:127:values (null, 'auto_triage', r.reported_id,"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Toda decisão automática guarda modelo, notas e motivo (reports.auto_scores, photos.auto_scores, verification_requests.auto_result) e entra em audit_logs."
+      },
+      "remediation": "Logar todas as interações: input (redact PII), output, model, tokens, latência, user_id. Implementar event sourcing para decisões de agentes (ESAA). Reter logs para auditoria.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AI-006",
+      "check_name": "Proveniência de modelos e dados de treino",
+      "status": "partial",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "security/reports/phase2/evidence/run3-static-findings.txt"
+        ],
+        "lines": [
+          "security/reports/phase2/evidence/run3-static-findings.txt:5:report-triage/index.ts:13:const MODEL = 'omni-moderation-latest';"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet",
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Robô usava 'omni-moderation-latest' (o modelo muda sem aviso e os limites de decisão dependem dele)."
+      },
+      "remediation": "Pinar versão de modelos API (gpt-4-0613, claude-opus-4-6, etc.). Fixar revision em from_pretrained(). Validar checksum de modelos baixados. Documentar lineage de fine-tuning datasets. Versionar prompt templates no repo (git). Se prompts precisam ser dinâmicos, validar schema e assinatura.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "AI-007",
+      "check_name": "Consumo não limitado (token budget / DoS wallet)",
+      "status": "pass",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Lotes pequenos por minuto (20 denúncias, 10 fotos, 5 selfies), entrada truncada e no máximo 3 pedidos de verificação por pessoa por dia; a Moderation API é gratuita."
+      },
+      "remediation": "Sempre definir max_tokens / max_output_tokens. Truncar input ao limite de context window - max_tokens. Rate limit per user/tenant/API key. Implementar cost tracking e alertas quando spend excede threshold. Agentes: max_iterations (ex: 10). Timeout de 30-60s em calls. Circuit breaker para degradar graciosamente quando LLM provider falha.",
+      "cross_refs": []
+    }
+  ]
+}

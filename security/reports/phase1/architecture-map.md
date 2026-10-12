@@ -25,3 +25,16 @@
 | Fotos | galeria | Storage privado + `photos` | autenticados, via URL assinada de 1 h |
 | Mensagens | chat | `messages` | só os 2 participantes |
 | Sessão (tokens) | Auth | Keychain/Keystore (desde RUN-0002) | o app |
+
+## Desde a RUN-SEC-0003
+
+```
+site (estático) ──join_waitlist (anon)──┐
+painel (estático, MFA) ──admin_* (aal2)─┤
+app Expo ──RPCs/RLS (authenticated)─────┼──► Supabase (Postgres + Auth + Storage)
+                                        │        │ pg_cron (1 min) + pg_net
+                                        │        ▼
+                                        │   Edge Functions ──► OpenAI Moderation (denúncias, fotos)
+                                        │   (x-worker-secret) ─► AWS Rekognition (selfies, opcional)
+                                        │                     ─► webhook de alertas do suporte
+```

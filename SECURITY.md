@@ -20,7 +20,13 @@ Não abra issue pública. Respondemos em até 3 dias úteis.
 | Sessão | Token no Keychain/Keystore (expo-secure-store); JWT de 1 h; refresh token rotativo | `apps/mobile/src/lib/secureStorage.ts`, `supabase/config.toml` |
 | Transporte | App recusa URL sem HTTPS e recusa chave `service_role` | `apps/mobile/src/lib/supabase.ts` |
 | LGPD | Consentimento exigido pelo servidor, exportação (`export_my_data`), exclusão total, retenção automática | `0005`, `0006` |
-| CI | Testes de regressão de segurança, gitleaks, Semgrep, npm audit, Dependabot | `.github/` |
+| Painel do suporte | Só admins (`public.admins`) com segundo fator (aal2); motivo obrigatório; tudo em `audit_logs`; sessão em sessionStorage | `0012`, `0016`, `apps/admin` |
+| Verificação | Desafio de rosto; selfie precisa existir e ser enviada depois do desafio; apagada depois da decisão | `0013`, `0016` |
+| Robôs (Edge Functions) | Chamados só pelo pg_cron com `x-worker-secret`; timeout de 15 s; modelo de IA fixado; nunca registram texto de conversa | `supabase/functions` |
+| Fotos | Robô confere o tipo real (bytes) e passa pela Moderation API; reprovada sai do perfil | `0016`, `report-triage` |
+| Site e painel | CSP com hash, HSTS, X-Frame-Options, nosniff, Referrer-Policy (`_headers`); SRI no supabase-js | `apps/security-headers.py` |
+| Lista de espera | Pública (anon) só por `join_waitlist`: sem sobrescrita, campo-isca, limite por IP (hash, 30 dias) | `0016` |
+| CI | Testes de regressão de segurança, gitleaks, Semgrep, npm audit, deno check, cabeçalhos; actions por SHA; Dependabot | `.github/` |
 
 ## Configuração manual obrigatória no painel do Supabase
 
@@ -39,6 +45,10 @@ O que está fora do repositório não é verificável pela auditoria estática. 
 | `anon`/publishable | Se vazar junto com falha de RLS, ou a cada 12 meses | Settings → API → gerar nova; publicar nova versão do app; revogar a antiga |
 | `service_role`/secret | Imediatamente se exposta; a cada 6 meses | Settings → API; atualizar secrets do CI/Edge Functions |
 | Segredo do CAPTCHA | Se exposto | Cloudflare → Turnstile → rotacionar; atualizar env |
+| `OPENAI_API_KEY` | Se exposta; a cada 12 meses | platform.openai.com → API keys; `supabase secrets set` |
+| Chave IAM da AWS (selfie) | Se exposta; a cada 6 meses | IAM → nova chave só com `rekognition:DetectFaces`/`CompareFaces`; `supabase secrets set`; apagar a antiga |
+| `REPORT_TRIAGE_SECRET` / `SELFIE_CHECK_SECRET` | Se expostos | gerar novo texto; atualizar o segredo da função **e** o Vault (`report_triage_secret` / `selfie_check_secret`) |
+| `ALERT_WEBHOOK_URL` | Se vazar (qualquer um posta no canal) | gerar novo webhook no Slack/Discord; `supabase secrets set` |
 
 ## Riscos aceitos (revisar até 2027-01-31)
 
@@ -46,8 +56,8 @@ O que está fora do repositório não é verificável pela auditoria estática. 
 |---|---|---|
 | `braces`, `micromatch`, `node-forge` (HIGH, npm audit) | Ferramentas de build do Expo/Metro; não vão para o app publicado; ainda não há versão corrigida | Dependabot semanal; CI bloqueia CRITICAL |
 | `decode-uri-component` (MODERATE) | Dependência do `expo-router`; a versão corrigida é só ESM e quebra o `query-string` | Aguardar atualização do `expo-router` |
-| Moderação automática de imagem | Ainda não implementada | Planejada com AWS Rekognition antes do lançamento público |
-| MFA sem tela no app | TOTP habilitado no servidor, sem fluxo no app | Implementar na fase Beta |
+| Antivírus nos uploads | Não há motor de antivírus | Só imagens conferidas pelos bytes e pela Moderation API, servidas por URL assinada e nunca executadas |
+| MFA sem tela no app | Obrigatório no painel do suporte; para usuários do app ainda não há tela | Implementar na fase Beta |
 
 ## Resposta a incidentes (resumo)
 

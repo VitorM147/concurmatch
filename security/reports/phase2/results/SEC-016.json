@@ -3,33 +3,41 @@
   "domain": "file_upload",
   "playbook_version": "1.2.1",
   "checks_total": 6,
-  "checks_pass": 4,
-  "checks_fail": 1,
+  "checks_pass": 5,
+  "checks_fail": 0,
   "checks_partial": 1,
   "checks_na": 0,
   "checks_error": 0,
-  "worst_severity": "MEDIUM",
+  "worst_severity": "NONE",
   "duration_ms": 0,
   "results": [
     {
       "check_id": "FU-001",
       "check_name": "Uploads sem validação de tipo",
-      "status": "partial",
+      "status": "pass",
       "severity_if_fail": "HIGH",
       "confidence": "medium",
       "evidence": {
         "files": [
           "supabase/migrations/0004_supabase_platform.sql",
-          "supabase/migrations/0006_platform_hardening.sql"
+          "supabase/migrations/0006_platform_hardening.sql",
+          "security/reports/phase2/evidence/run3-static-findings.txt",
+          "supabase/functions/_shared/photo-decision.js",
+          "supabase/functions/report-triage/index.ts",
+          "supabase/tests/security-run3.test.mjs"
         ],
         "lines": [
           "supabase/migrations/0004_supabase_platform.sql:7:insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)",
-          "supabase/migrations/0006_platform_hardening.sql:13:and name ~ ('^' || auth.uid()::text || '/[A-Za-z0-9_-]{1,64}\\.(jpg|jpeg|png|webp)$')"
+          "supabase/migrations/0006_platform_hardening.sql:13:and name ~ ('^' || auth.uid()::text || '/[A-Za-z0-9_-]{1,64}\\.(jpg|jpeg|png|webp)$')",
+          "security/reports/phase2/evidence/run3-static-findings.txt:40:ocorrências de magic number / moderação de imagem: 0",
+          "supabase/functions/_shared/photo-decision.js:5:export function sniffImage(bytes) {",
+          "supabase/functions/report-triage/index.ts:99:await db.rpc('apply_photo_check', { p_photo: ph.id, p_flagged: true, p_reason: 'nao_e_imagem',",
+          "supabase/tests/security-run3.test.mjs:97:test('foto: o robô confere o tipo real do arquivo (bytes), não a extensão', () => {"
         ],
         "commands_output": [],
         "evidence_types": [
           "code_snippet",
-          "config_artifact"
+          "tool_output"
         ],
         "evidence_sources": [
           "static_analysis"
@@ -38,9 +46,9 @@
         "tool_version": null,
         "fallback_applied": false,
         "fallback_reason": null,
-        "description": "Bucket restringe MIME (image/jpeg|png|webp) pelo Content-Type declarado; RUN-0002 exige extensão de imagem. Não há verificação do conteúdo real (magic bytes) no servidor."
+        "description": "Tipo validado só pela extensão e pelo Content-Type declarado. RUN-0004: o robô confere o tipo real pelos primeiros bytes (JPEG/PNG/WebP) em fotos e selfies; arquivo que não é imagem sai do perfil."
       },
-      "remediation": "Whitelist de extensões e MIME types permitidos. Validar magic bytes com library (file-type, python-magic). Rejeitar tudo que não está na whitelist.",
+      "remediation": "Whitelist de extensões e MIME types permitidos. Validar magic bytes com library (file-type, python-magic). Rejeitar tudo que não está na whitelist. | Aplicado: conferência de bytes no robô",
       "cross_refs": []
     },
     {
@@ -104,19 +112,26 @@
     {
       "check_id": "FU-004",
       "check_name": "Ausência de antivírus",
-      "status": "fail",
+      "status": "partial",
       "severity_if_fail": "MEDIUM",
       "confidence": "high",
       "evidence": {
         "files": [
-          "supabase/migrations/0001_schema.sql"
+          "supabase/migrations/0001_schema.sql",
+          "security/reports/phase2/evidence/run3-static-findings.txt",
+          "supabase/functions/report-triage/index.ts",
+          "supabase/migrations/0016_security_run3.sql"
         ],
         "lines": [
-          "supabase/migrations/0001_schema.sql:117:approved     boolean not null default true,   -- moderação pode reprovar"
+          "supabase/migrations/0001_schema.sql:117:approved     boolean not null default true,   -- moderação pode reprovar",
+          "security/reports/phase2/evidence/run3-static-findings.txt:40:ocorrências de magic number / moderação de imagem: 0",
+          "supabase/functions/report-triage/index.ts:104:const scores = await moderate([{ type: 'image_url', image_url: { url: `data:image/${kind};base64,${toBase64(bytes)}` } }], apiKey);",
+          "supabase/migrations/0016_security_run3.sql:192:create function public.apply_photo_check(p_photo uuid, p_flagged boolean, p_reason text default null,"
         ],
         "commands_output": [],
         "evidence_types": [
-          "code_snippet"
+          "code_snippet",
+          "tool_output"
         ],
         "evidence_sources": [
           "static_analysis"
@@ -125,9 +140,9 @@
         "tool_version": null,
         "fallback_applied": false,
         "fallback_reason": null,
-        "description": "Não há varredura de malware nem moderação automática de imagem (nudez, menores, rostos). Planejado: AWS Rekognition atualizando photos.approved antes do lançamento público."
+        "description": "Nenhuma checagem do conteúdo das fotos. RUN-0004: o robô passa cada foto nova pela Moderation API (nudez, menor, violência) e reprova automaticamente; sinal de menor esconde o perfil e abre denúncia. Não há antivírus, mas os arquivos são só imagens servidas por URL assinada e nunca executadas."
       },
-      "remediation": "Integrar ClamAV ou serviço equivalente. Escanear antes de persistir. Quarentenar até scan completar. Rejeitar e alertar em caso de detecção.",
+      "remediation": "Integrar ClamAV ou serviço equivalente. Escanear antes de persistir. Quarentenar até scan completar. Rejeitar e alertar em caso de detecção. | Aplicado: moderação de fotos no robô",
       "cross_refs": []
     },
     {

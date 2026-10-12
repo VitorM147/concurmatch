@@ -11,7 +11,7 @@ App de relacionamento para quem estuda para concursos, vestibular, OAB e residê
 | Parte | Conteúdo |
 |---|---|
 | **Banco (Supabase/Postgres)** | Schema, RLS, regras de negócio em funções SQL, catálogo de concursos e configurações |
-| **Testes do banco** | 80 testes automatizados com Postgres embarcado: match, cotas diárias, verificação, curtida com mensagem, filtro de programa/cobrança, denúncia com evidência, recurso, interesses, discovery, chat, bloqueio, denúncia, RLS, LGPD e regressões de segurança |
+| **Testes do banco** | 94 testes automatizados com Postgres embarcado: match, cotas diárias, verificação, curtida com mensagem, filtro de programa/cobrança, denúncia com evidência, recurso, interesses, discovery, chat, bloqueio, denúncia, RLS, LGPD e regressões de segurança |
 | **App (Expo / React Native)** | Cadastro e login, onboarding com consentimento LGPD, Descobrir (swipe + curtida com mensagem), tela de match, abas Conexões e Mensagens, chat em tempo real com sugestões para conversar, denunciar, bloquear e desfazer match, perfil com fotos, "Sobre mim", interesses e preferências, Premium (tela, só verificado), verificação por gesto + selfie, perfil em análise com recurso, Central de segurança, excluir conta |
 | **CI** | GitHub Actions rodando os testes do banco e o typecheck do app |
 
@@ -133,9 +133,13 @@ A Edge Function `supabase/functions/report-triage` roda a cada minuto (pg_cron, 
    ```
 5. Para ver o que sobrou para decidir: `select public.moderation_queue();`. Para decidir: `select public.moderation_resolve('<user_id>', 'banir' | 'restaurar', 'motivo');`.
 
+O mesmo robô confere as fotos novas (tipo real do arquivo e Moderation API de imagem) e, se `ALERT_WEBHOOK_URL` estiver configurado (`supabase secrets set ALERT_WEBHOOK_URL=...`, um webhook do Slack, Discord ou Google Chat), avisa o suporte sobre alertas importantes, sem mandar conteúdo de conversa. Aplique também a migration `0017`.
+
 Os limites de gravidade ficam em `supabase/functions/_shared/report-decision.js`. A Política de Privacidade precisa informar que, em caso de denúncia, o texto da conversa é analisado por um serviço automático fora do Brasil (OpenAI).
 
 ## Painel do suporte (`apps/admin`)
+
+O painel exige **segundo fator**: no primeiro acesso ele mostra um QR code para o app autenticador (Google Authenticator, 1Password...), e daí em diante pede o código de 6 dígitos. Sem isso o banco recusa qualquer decisão (`MFA_REQUIRED`). Ative o TOTP em Authentication → Multi-Factor no painel do Supabase.
 
 Uma página só (`apps/admin/index.html`), sem build. Abra no navegador ou publique em qualquer hospedagem estática (ex.: `suporte.conmatch.com.br`, protegida por senha no provedor).
 
@@ -156,6 +160,8 @@ Pronta e **desligada** até existir conta na AWS. Enquanto isso, as selfies apar
 
 ## Site e lista de espera (`apps/site`)
 
-`apps/site/index.html` é o conmatch.com.br: apresentação, planos e lista de espera por cidade (gravada em `public.waitlist` pela função `join_waitlist`, que não devolve dados de ninguém). Preencha `SUPABASE_URL` e `SUPABASE_ANON_KEY` no fim do arquivo e publique a pasta em qualquer hospedagem estática (Cloudflare Pages, Netlify, Vercel) apontando o domínio do Registro.br.
+`apps/site/index.html` é o conmatch.com.br: apresentação, planos e lista de espera por cidade (gravada em `public.waitlist` pela função `join_waitlist`, que não devolve dados de ninguém). Preencha `SUPABASE_URL` e `SUPABASE_ANON_KEY` em `apps/site/config.js` e publique a pasta em qualquer hospedagem estática (Cloudflare Pages, Netlify, Vercel) apontando o domínio do Registro.br.
+
+A URL e a chave pública ficam em `apps/site/config.js`. Os arquivos `_headers` (site e painel) trazem CSP, HSTS e os demais cabeçalhos de segurança no formato do Cloudflare Pages e do Netlify; se mudar algum `<script>` inline, rode `python3 apps/security-headers.py` (o CI confere).
 
 `termos.html` e `privacidade.html` são gerados de `docs/legal/*.md` (rascunho para o advogado): rode `python3 apps/site/build-legal.py` sempre que o texto mudar. O app abre esses links no cadastro.

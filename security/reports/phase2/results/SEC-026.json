@@ -22,13 +22,27 @@
           "supabase/migrations/0002_functions.sql",
           "supabase/migrations/0005_security_hardening.sql",
           "security/reports/phase2/evidence/baseline-poc.txt",
-          "security/reports/phase2/evidence/post-remediation-poc.txt"
+          "security/reports/phase2/evidence/post-remediation-poc.txt",
+          "supabase/migrations/0008_verified_first_and_moderation.sql",
+          "security/reports/phase2/evidence/run3-baseline-poc.txt",
+          "supabase/migrations/0016_security_run3.sql",
+          "supabase/functions/selfie-check/index.ts",
+          "security/reports/phase2/evidence/run4-post-remediation-poc.txt",
+          "supabase/tests/security-run3.test.mjs"
         ],
         "lines": [
           "supabase/migrations/0002_functions.sql:487:update public.profiles set is_visible = false where id = p_target;",
           "supabase/migrations/0005_security_hardening.sql:37:alter table public.profiles add column moderation_hidden_at timestamptz;",
           "security/reports/phase2/evidence/baseline-poc.txt:2:E2 BL-001 desfazer ocultacao da moderacao: VULNERAVEL (perfil ocultado voltou a ficar visivel pelo proprio usuario)",
-          "security/reports/phase2/evidence/post-remediation-poc.txt:2:E2 BL-001 desfazer ocultacao da moderacao: BLOQUEADO (permission denied for table profiles)"
+          "security/reports/phase2/evidence/post-remediation-poc.txt:2:E2 BL-001 desfazer ocultacao da moderacao: BLOQUEADO (permission denied for table profiles)",
+          "supabase/migrations/0008_verified_first_and_moderation.sql:407:create function public.submit_verification(p_selfie_path text) returns jsonb",
+          "security/reports/phase2/evidence/run3-baseline-poc.txt:5:E4 VULNERÁVEL: foto de 30 dias atrás aceita como selfie do desafio",
+          "security/reports/phase2/evidence/run3-baseline-poc.txt:6:E5 VULNERÁVEL: pedido entra na fila sem arquivo nenhum",
+          "supabase/migrations/0016_security_run3.sql:77:raise exception 'SELFIE_TOO_OLD' using errcode = '22023',",
+          "supabase/functions/selfie-check/index.ts:67:p_note: 'O arquivo enviado não é uma foto. Tire a selfie pelo app.', p_result: { not_image: true } });",
+          "security/reports/phase2/evidence/run4-post-remediation-poc.txt:5:E4 protegido: recusada (SELFIE_TOO_OLD)",
+          "security/reports/phase2/evidence/run4-post-remediation-poc.txt:6:E5 protegido: recusado (SELFIE_NOT_FOUND)",
+          "supabase/tests/security-run3.test.mjs:79:test('E4: selfie enviada antes do desafio é recusada', async () => {"
         ],
         "commands_output": [],
         "evidence_types": [
@@ -43,9 +57,9 @@
         "tool_version": null,
         "fallback_applied": false,
         "fallback_reason": null,
-        "description": "Baseline: a ocultação automática usava is_visible, que o próprio usuário religava no app (PoC E2). RUN-0002: coluna moderation_hidden_at sem grant; discover/like/chat respeitam."
+        "description": "Verificação de perfil: submit_verification aceitava qualquer caminho na pasta do usuário — foto antiga da galeria renomeada (PoC E4) ou arquivo inexistente (PoC E5), furando o desafio do rosto. RUN-0004: o arquivo precisa existir no Storage e ter sido enviado depois do desafio; o robô recusa arquivo que não é imagem e selfie apagada."
       },
-      "remediation": "Implementar state machine server-side com transições explícitas. Cada endpoint de step valida status atual antes de permitir ação. Rejeitar transições inválidas (ex: de 'pending' direto para 'completed' sem passar por 'paid'). Considerar Temporal/XState para fluxos complexos. Log de audit para mudanças de state (cross-ref LM-002).",
+      "remediation": "Implementar state machine server-side com transições explícitas. Cada endpoint de step valida status atual antes de permitir ação. Rejeitar transições inválidas (ex: de 'pending' direto para 'completed' sem passar por 'paid'). Considerar Temporal/XState para fluxos complexos. Log de audit para mudanças de state (cross-ref LM-002). | Aplicado: 0016: submit_verification confere storage.objects",
       "cross_refs": []
     },
     {
@@ -57,27 +71,39 @@
       "evidence": {
         "files": [
           "supabase/migrations/0005_security_hardening.sql",
-          "supabase/config.toml"
+          "supabase/config.toml",
+          "supabase/migrations/0014_waitlist.sql",
+          "security/reports/phase2/evidence/run3-baseline-poc.txt",
+          "supabase/migrations/0016_security_run3.sql",
+          "security/reports/phase2/evidence/run4-post-remediation-poc.txt",
+          "supabase/tests/security-run3.test.mjs"
         ],
         "lines": [
           "supabase/migrations/0005_security_hardening.sql:18:('likes_per_day_premium',          '1000', 'Teto diário de curtidas do Premium (anti-bot)'),",
-          "supabase/config.toml:34:[auth.captcha]"
+          "supabase/config.toml:34:[auth.captcha]",
+          "supabase/migrations/0014_waitlist.sql:23:('waitlist_per_minute', '120', 'Inscrições por minuto na lista de espera (anti-robô, global)')",
+          "security/reports/phase2/evidence/run3-baseline-poc.txt:3:E2 VULNERÁVEL: robô gravou 119 inscrições; pessoa real recusada (RATE_LIMITED)",
+          "supabase/migrations/0016_security_run3.sql:9:('waitlist_per_ip_hour',      '5',    'Inscrições por hora vindas do mesmo IP na lista de espera'),",
+          "supabase/migrations/0016_security_run3.sql:144:-- Campo-isca preenchido = robô: responde igual, não grava nada",
+          "security/reports/phase2/evidence/run4-post-remediation-poc.txt:3:E2 protegido: robô gravou 5 inscrições; pessoa real ainda entra",
+          "supabase/tests/security-run3.test.mjs:37:test('E2: robô de um IP só para no limite dele; outra pessoa continua entrando', async () => {"
         ],
         "commands_output": [],
         "evidence_types": [
           "code_snippet",
-          "config_artifact"
+          "tool_output"
         ],
         "evidence_sources": [
-          "static_analysis"
+          "static_analysis",
+          "pglite_poc"
         ],
         "tool_name": null,
         "tool_version": null,
         "fallback_applied": true,
         "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
-        "description": "Baseline: sem anti-automação (passes ilimitados, Premium sem teto, sem CAPTCHA). RUN-0002: rate limits e teto Premium; CAPTCHA configurado mas desligado até o app enviar o token."
+        "description": "Lista de espera aberta ao público (anon) só com limite global: um robô de um IP gravou 119 inscrições e travou o site para todos (PoC E2). RUN-0004: limite por IP (hash, apagado em 30 dias), campo-isca e disjuntor global alto. CAPTCHA do cadastro no app continua desligado até o app enviar o token."
       },
-      "remediation": "Implementar CAPTCHA (hCaptcha, Turnstile, reCAPTCHA v3) em endpoints críticos. Velocity checks per user (máximo N ações por janela). Device fingerprinting (FingerprintJS). Considerar proof-of-work para fluxos muito abusados. Monitorar comportamento anômalo e bloquear proativamente.",
+      "remediation": "Implementar CAPTCHA (hCaptcha, Turnstile, reCAPTCHA v3) em endpoints críticos. Velocity checks per user (máximo N ações por janela). Device fingerprinting (FingerprintJS). Considerar proof-of-work para fluxos muito abusados. Monitorar comportamento anômalo e bloquear proativamente. | Aplicado: 0016: limite por IP + campo-isca",
       "cross_refs": [
         "AP-001",
         "AU-006"
@@ -125,13 +151,23 @@
           "supabase/migrations/0002_functions.sql",
           "supabase/migrations/0005_security_hardening.sql",
           "security/reports/phase2/evidence/baseline-poc.txt",
-          "security/reports/phase2/evidence/post-remediation-poc.txt"
+          "security/reports/phase2/evidence/post-remediation-poc.txt",
+          "supabase/migrations/0014_waitlist.sql",
+          "security/reports/phase2/evidence/run3-baseline-poc.txt",
+          "supabase/migrations/0016_security_run3.sql",
+          "security/reports/phase2/evidence/run4-post-remediation-poc.txt",
+          "supabase/tests/security-run3.test.mjs"
         ],
         "lines": [
           "supabase/migrations/0002_functions.sql:484:if p_reason = 'menor_de_idade'",
           "supabase/migrations/0005_security_hardening.sql:364:create function public.is_trusted_reporter(p_user uuid) returns boolean",
           "security/reports/phase2/evidence/baseline-poc.txt:3:E3 BL-004 conta recem-criada derruba qualquer perfil com 1 denuncia: VULNERAVEL (perfil ocultado por 1 denuncia de conta sem foto criada agora)",
-          "security/reports/phase2/evidence/post-remediation-poc.txt:3:E3 BL-004 conta recem-criada derruba qualquer perfil com 1 denuncia: ok"
+          "security/reports/phase2/evidence/post-remediation-poc.txt:3:E3 BL-004 conta recem-criada derruba qualquer perfil com 1 denuncia: ok",
+          "supabase/migrations/0014_waitlist.sql:55:on conflict (lower(email)) do update set state = excluded.state, city = excluded.city,",
+          "security/reports/phase2/evidence/run3-baseline-poc.txt:2:E1 VULNERÁVEL: inscrição da vítima ficou Rio Branco/AC, homem",
+          "supabase/migrations/0016_security_run3.sql:163:on conflict (lower(email)) do nothing;",
+          "security/reports/phase2/evidence/run4-post-remediation-poc.txt:2:E1 protegido: inscrição da vítima ficou São Paulo/SP, mulher",
+          "supabase/tests/security-run3.test.mjs:29:test('E1: e-mail repetido não troca a cidade nem o gênero de quem já está na lista', async () => {"
         ],
         "commands_output": [],
         "evidence_types": [
@@ -146,9 +182,9 @@
         "tool_version": null,
         "fallback_applied": false,
         "fallback_reason": null,
-        "description": "Baseline: uma denúncia de 'menor de idade' de qualquer conta, mesmo criada no minuto anterior e sem foto, ocultava qualquer perfil (PoC E3) — arma para derrubar concorrentes. RUN-0002: só denunciantes confiáveis (conta 24h+, com foto, fora de revisão) contam; 2 para 'menor', 3 para os demais; toda denúncia gera alerta para revisão humana."
+        "description": "Lista de espera: join_waitlist fazia upsert pelo e-mail, então qualquer pessoa trocava a cidade e o gênero de outra (PoC E1). RUN-0004: e-mail repetido não altera nada e a resposta é a mesma (não revela quem está na lista)."
       },
-      "remediation": "Definir limits por usuário para fluxos de alto valor (N compras de produto limitado, M cupons por mês). Implementar detecção de múltiplas contas (mesmo device, mesmo IP, mesmo CPF). Soft-approval para ações de alto valor. Rate limit mais agressivo em endpoints de busca/catálogo. Considerar impact analysis no threat model.",
+      "remediation": "Definir limits por usuário para fluxos de alto valor (N compras de produto limitado, M cupons por mês). Implementar detecção de múltiplas contas (mesmo device, mesmo IP, mesmo CPF). Soft-approval para ações de alto valor. Rate limit mais agressivo em endpoints de busca/catálogo. Considerar impact analysis no threat model. | Aplicado: 0016: on conflict do nothing",
       "cross_refs": []
     }
   ]

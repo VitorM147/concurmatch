@@ -22,7 +22,7 @@
           "apps/mobile/app/entrar.tsx"
         ],
         "lines": [
-          "apps/mobile/app/entrar.tsx:26:? await supabase.auth.signInWithPassword({ email: email.trim(), password })"
+          "apps/mobile/app/entrar.tsx:27:? await supabase.auth.signInWithPassword({ email: email.trim(), password })"
         ],
         "commands_output": [],
         "evidence_types": [
@@ -74,14 +74,19 @@
       "confidence": "high",
       "evidence": {
         "files": [
-          "supabase/config.toml"
+          "supabase/config.toml",
+          "security/reports/phase2/evidence/run3-static-findings.txt",
+          "supabase/migrations/0016_security_run3.sql"
         ],
         "lines": [
-          "supabase/config.toml:54:[auth.mfa.totp]"
+          "supabase/config.toml:54:[auth.mfa.totp]",
+          "security/reports/phase2/evidence/run3-static-findings.txt:14:admin/index.html: ocorrências de 'mfa': 0",
+          "supabase/migrations/0016_security_run3.sql:8:('admin_requires_mfa',        'true', 'Painel do suporte só com segundo fator (sessão aal2)'),"
         ],
         "commands_output": [],
         "evidence_types": [
-          "config_artifact"
+          "code_snippet",
+          "tool_output"
         ],
         "evidence_sources": [
           "static_analysis"
@@ -90,9 +95,9 @@
         "tool_version": null,
         "fallback_applied": false,
         "fallback_reason": null,
-        "description": "Baseline: sem MFA. RUN-0002: TOTP habilitado no servidor (config.toml); falta a tela de ativação no app."
+        "description": "TOTP habilitado no servidor; o painel do suporte não pedia segundo fator. RUN-0004: segundo fator obrigatório para admins (aal2 no banco). Usuários do app ainda não têm tela de ativação de MFA (opcional para eles)."
       },
-      "remediation": "Implementar TOTP com speakeasy/pyotp. Exigir MFA para admin. Oferecer MFA opt-in para todos. Fornecer recovery codes.",
+      "remediation": "Implementar TOTP com speakeasy/pyotp. Exigir MFA para admin. Oferecer MFA opt-in para todos. Fornecer recovery codes. | Aplicado: 0016 + painel",
       "cross_refs": []
     },
     {

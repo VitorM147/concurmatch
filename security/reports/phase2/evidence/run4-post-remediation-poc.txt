@@ -1,0 +1,6 @@
+# RUN-SEC-0004 — código atual, com a migration 0016 (node supabase/tests/poc-run3.mjs)
+E1 protegido: inscrição da vítima ficou São Paulo/SP, mulher
+E2 protegido: robô gravou 5 inscrições; pessoa real ainda entra
+E3 protegido: bloqueado (MFA_REQUIRED)
+E4 protegido: recusada (SELFIE_TOO_OLD)
+E5 protegido: recusado (SELFIE_NOT_FOUND)

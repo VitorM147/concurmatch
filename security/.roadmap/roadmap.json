@@ -3,16 +3,16 @@
     "schema_version": "0.6.0",
     "immutable_done": true,
     "run": {
-      "run_id": "RUN-SEC-0002",
+      "run_id": "RUN-SEC-0004",
       "status": "success",
-      "last_event_seq": 225,
-      "projection_hash_sha256": "b5bfff0b17958b6701d0fac6c0aeb996075e1e712c802c21f6054e6549dc3744",
+      "last_event_seq": 448,
+      "projection_hash_sha256": "827ad1a618cc93b9e32e03407378c4683d6d6d0147e6ef6b010a43c102173d7c",
       "verify_status": "ok"
     }
   },
   "project": {
-    "name": "Probatório / ConcurMatch — auditoria ESAA-Security",
-    "audit_scope": "Static-first sobre o repositório (app Expo, migrations Supabase, CI) cobrindo 17 domínios e 108 checks; porções runtime não executadas (endpoint_base_url ausente)."
+    "name": "ConMatch — auditoria ESAA-Security",
+    "audit_scope": "Static-first sobre o repositório (app Expo, migrations e Edge Functions do Supabase, painel do suporte, site e CI) cobrindo 17 domínios e 108 checks; porções runtime não executadas (endpoint_base_url ausente)."
   },
   "tasks": [
     {

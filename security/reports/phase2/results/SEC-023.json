@@ -78,11 +78,15 @@
       "evidence": {
         "files": [
           "supabase/migrations/0005_security_hardening.sql",
-          "supabase/migrations/0006_platform_hardening.sql"
+          "supabase/migrations/0006_platform_hardening.sql",
+          "security/reports/phase2/evidence/run3-static-findings.txt",
+          "supabase/migrations/0016_security_run3.sql"
         ],
         "lines": [
           "supabase/migrations/0005_security_hardening.sql:474:create function public.purge_expired_data() returns jsonb",
-          "supabase/migrations/0006_platform_hardening.sql:32:select cron.schedule('purge-expired-data', '17 3 * * *', $$select public.purge_expired_data()$$);"
+          "supabase/migrations/0006_platform_hardening.sql:32:select cron.schedule('purge-expired-data', '17 3 * * *', $$select public.purge_expired_data()$$);",
+          "security/reports/phase2/evidence/run3-static-findings.txt:47:retenção da lista de espera em purge_expired_data: 0",
+          "supabase/migrations/0016_security_run3.sql:12:('retention_waitlist_days',   '365',  'Dias para apagar inscrições antigas da lista de espera'),"
         ],
         "commands_output": [],
         "evidence_types": [
@@ -90,16 +94,15 @@
           "tool_output"
         ],
         "evidence_sources": [
-          "static_analysis",
-          "pglite_test"
+          "static_analysis"
         ],
         "tool_name": null,
         "tool_version": null,
         "fallback_applied": false,
         "fallback_reason": null,
-        "description": "Baseline: nenhuma retenção (mensagens, passes e logs para sempre). RUN-0002: purge_expired_data() diária via pg_cron, preservando conversas com denúncia aberta (teste dedicado)."
+        "description": "Lista de espera sem retenção. RUN-0004: inscrições apagadas em 365 dias, hash de IP em 30, pedidos de verificação recusados em 90; selfies apagadas depois da decisão."
       },
-      "remediation": "Definir política de retenção por tipo de dado. Implementar cleanup automático. Documentar e auditar compliance.",
+      "remediation": "Definir política de retenção por tipo de dado. Implementar cleanup automático. Documentar e auditar compliance. | Aplicado: 0016: purge_expired_data",
       "cross_refs": []
     },
     {
@@ -145,7 +148,7 @@
         ],
         "lines": [
           "supabase/migrations/0005_security_hardening.sql:444:create function public.export_my_data() returns jsonb",
-          "apps/mobile/src/lib/api.ts:197:// LGPD: apaga os arquivos de foto do Storage antes de apagar a conta",
+          "apps/mobile/src/lib/api.ts:247:// LGPD: apaga os arquivos de foto do Storage antes de apagar a conta",
           "security/reports/phase2/evidence/post-remediation-poc.txt:5:E5 DA-005 criar perfil sem consentimento LGPD: BLOQUEADO (CONSENT_REQUIRED)"
         ],
         "commands_output": [],

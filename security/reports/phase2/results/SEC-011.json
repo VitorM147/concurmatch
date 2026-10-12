@@ -3,9 +3,9 @@
   "domain": "dependencies_supply_chain",
   "playbook_version": "1.2.1",
   "checks_total": 6,
-  "checks_pass": 4,
+  "checks_pass": 5,
   "checks_fail": 0,
-  "checks_partial": 2,
+  "checks_partial": 1,
   "checks_na": 0,
   "checks_error": 0,
   "worst_severity": "NONE",
@@ -24,7 +24,7 @@
         ],
         "lines": [
           "security/reports/phase2/evidence/npm-audit-mobile-post.json:6:\"severity\": \"high\",",
-          "apps/mobile/package.json:37:\"overrides\": {"
+          "apps/mobile/package.json:41:\"overrides\": {"
         ],
         "commands_output": [],
         "evidence_types": [
@@ -57,7 +57,7 @@
           "apps/mobile/package.json"
         ],
         "lines": [
-          "apps/mobile/package.json:15:\"expo\": \"~57.0.26\","
+          "apps/mobile/package.json:17:\"expo\": \"~57.0.26\","
         ],
         "commands_output": [],
         "evidence_types": [
@@ -86,7 +86,7 @@
           "apps/mobile/package.json"
         ],
         "lines": [
-          "apps/mobile/package.json:14:\"@supabase/supabase-js\": \"^2.117.2\","
+          "apps/mobile/package.json:16:\"@supabase/supabase-js\": \"^2.117.3\","
         ],
         "commands_output": [],
         "evidence_types": [
@@ -138,19 +138,24 @@
     {
       "check_id": "DS-005",
       "check_name": "Dependências externas não auditadas",
-      "status": "partial",
+      "status": "pass",
       "severity_if_fail": "LOW",
       "confidence": "medium",
       "evidence": {
         "files": [
-          ".github/dependabot.yml"
+          ".github/dependabot.yml",
+          "security/reports/phase2/evidence/run3-static-findings.txt",
+          ".github/workflows/ci.yml"
         ],
         "lines": [
-          ".github/dependabot.yml:4:- package-ecosystem: npm"
+          ".github/dependabot.yml:4:- package-ecosystem: npm",
+          "security/reports/phase2/evidence/run3-static-findings.txt:27:ci.yml:18:      - uses: actions/checkout@v4",
+          ".github/workflows/ci.yml:20:- uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4"
         ],
         "commands_output": [],
         "evidence_types": [
-          "config_artifact"
+          "code_snippet",
+          "tool_output"
         ],
         "evidence_sources": [
           "static_analysis"
@@ -159,9 +164,9 @@
         "tool_version": null,
         "fallback_applied": false,
         "fallback_reason": null,
-        "description": "Baseline: nenhum processo de revisão de dependências. RUN-0002: Dependabot (npm + actions). Actions referenciadas por tag, não por SHA."
+        "description": "Actions do CI referenciadas por tag móvel (@v4). RUN-0004: fixadas por SHA de commit; Dependabot segue propondo updates; deno check das Edge Functions no CI."
       },
-      "remediation": "Auditar dependências diretas periodicamente. Usar ferramentas como socket.dev ou snyk para visibilidade de supply chain. | Aplicado: dependabot.yml; pendente: fixar actions por SHA",
+      "remediation": "Auditar dependências diretas periodicamente. Usar ferramentas como socket.dev ou snyk para visibilidade de supply chain. | Aplicado: dependabot.yml; pendente: fixar actions por SHA; actions por SHA",
       "cross_refs": []
     },
     {
@@ -175,7 +180,7 @@
           ".github/workflows/ci.yml"
         ],
         "lines": [
-          ".github/workflows/ci.yml:21:- run: npm ci                      # DS-006: build reproduzível pelo lockfile"
+          ".github/workflows/ci.yml:23:- run: npm ci                      # DS-006: build reproduzível pelo lockfile"
         ],
         "commands_output": [],
         "evidence_types": [

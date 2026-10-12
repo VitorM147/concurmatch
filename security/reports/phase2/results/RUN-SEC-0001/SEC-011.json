@@ -22,7 +22,7 @@
           "apps/mobile/package.json"
         ],
         "lines": [
-          "apps/mobile/package.json:37:\"overrides\": {"
+          "apps/mobile/package.json:41:\"overrides\": {"
         ],
         "commands_output": [],
         "evidence_types": [
@@ -55,7 +55,7 @@
           "apps/mobile/package.json"
         ],
         "lines": [
-          "apps/mobile/package.json:15:\"expo\": \"~57.0.26\","
+          "apps/mobile/package.json:17:\"expo\": \"~57.0.26\","
         ],
         "commands_output": [],
         "evidence_types": [
@@ -84,7 +84,7 @@
           "apps/mobile/package.json"
         ],
         "lines": [
-          "apps/mobile/package.json:14:\"@supabase/supabase-js\": \"^2.117.2\","
+          "apps/mobile/package.json:16:\"@supabase/supabase-js\": \"^2.117.3\","
         ],
         "commands_output": [],
         "evidence_types": [
@@ -167,7 +167,7 @@
           ".github/workflows/ci.yml"
         ],
         "lines": [
-          ".github/workflows/ci.yml:21:- run: npm ci                      # DS-006: build reproduzível pelo lockfile"
+          ".github/workflows/ci.yml:23:- run: npm ci                      # DS-006: build reproduzível pelo lockfile"
         ],
         "commands_output": [],
         "evidence_types": [

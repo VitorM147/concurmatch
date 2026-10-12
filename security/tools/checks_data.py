@@ -315,3 +315,156 @@ CHECKS = [
       ev=[(M2, r"if p_reason = 'menor_de_idade'"), (M5, r"create function public\.is_trusted_reporter"), (POC_B, r"^E3"), (POC_A, r"^E3")],
       types=("code_snippet", "tool_output"), src=("static_analysis", "pglite_poc")),
 ]
+
+
+# =====================================================================
+# Rodadas 3 e 4 (12–13/10/2026): código novo das migrations 0008–0015,
+# robôs (Edge Functions), painel do suporte e site.
+#   r3 -> RUN-SEC-0003 (antes das correções; evidência do código antigo em
+#         run3-static-findings.txt, tirada do commit 2aca6d1, e PoC run3-baseline-poc.txt)
+#   r4 -> RUN-SEC-0004 (depois das migrations 0016/0017, robôs, painel, site e CI)
+# Checks sem entrada aqui seguem com o status da RUN-SEC-0002 nas duas rodadas.
+# Na descrição, o trecho depois de " RUN-0004:" só aparece na rodada 4.
+# =====================================================================
+M8 = "supabase/migrations/0008_verified_first_and_moderation.sql"
+M12 = "supabase/migrations/0012_admin_panel_and_rules.sql"
+M14 = "supabase/migrations/0014_waitlist.sql"
+M16 = "supabase/migrations/0016_security_run3.sql"
+M17 = "supabase/migrations/0017_platform_run3.sql"
+ADMIN = "apps/admin/index.html"
+HDR_SITE = "apps/site/_headers"
+HDR_ADMIN = "apps/admin/_headers"
+TRIAGE = "supabase/functions/report-triage/index.ts"
+SELFIE = "supabase/functions/selfie-check/index.ts"
+PHOTO = "supabase/functions/_shared/photo-decision.js"
+T3 = "supabase/tests/security-run3.test.mjs"
+POC3 = "security/reports/phase2/evidence/run3-baseline-poc.txt"
+POC4 = "security/reports/phase2/evidence/run4-post-remediation-poc.txt"
+STATIC3 = "security/reports/phase2/evidence/run3-static-findings.txt"
+POC_SRC = ("static_analysis", "pglite_poc")
+
+
+def U(check_id, r3, r4, desc, ev=(), fix=None, types=("code_snippet", "tool_output"), src=("static_analysis",), conf=None):
+    return check_id, dict(r3=r3, r4=r4, desc=desc, ev=list(ev), fix=fix, types=list(types), src=list(src), conf=conf)
+
+
+UPDATES = dict([
+    U("AZ-004", FAIL, PASS,
+      "Painel do suporte (apps/admin + funções admin_*) aceitava sessão só com senha: quem roubasse a senha de um admin banía "
+      "perfis e lia selfies (PoC E3). RUN-0004: is_admin()/require_admin() exigem sessão aal2 (segundo fator TOTP); o painel "
+      "cadastra e pede o código; a policy de leitura de selfies no Storage usa is_admin().",
+      ev=[(M12, r"create function public\.require_admin"), (STATIC3, r"signInWithPassword"), (POC3, r"^E3"),
+          (M16, r"MFA_REQUIRED"), (ADMIN, r"challengeAndVerify"), (POC4, r"^E3"), (T3, r"E3:")],
+      src=POC_SRC, fix="0016: is_admin() exige aal2; painel com TOTP"),
+    U("AU-003", PARTIAL, PARTIAL,
+      "TOTP habilitado no servidor; o painel do suporte não pedia segundo fator. RUN-0004: segundo fator obrigatório para "
+      "admins (aal2 no banco). Usuários do app ainda não têm tela de ativação de MFA (opcional para eles).",
+      ev=[(STATIC3, r"ocorrências de 'mfa'"), (M16, r"admin_requires_mfa")], fix="0016 + painel"),
+    U("BL-001", FAIL, PASS,
+      "Verificação de perfil: submit_verification aceitava qualquer caminho na pasta do usuário — foto antiga da galeria "
+      "renomeada (PoC E4) ou arquivo inexistente (PoC E5), furando o desafio do rosto. RUN-0004: o arquivo precisa existir no "
+      "Storage e ter sido enviado depois do desafio; o robô recusa arquivo que não é imagem e selfie apagada.",
+      ev=[(M8, r"create function public\.submit_verification"), (POC3, r"^E4"), (POC3, r"^E5"),
+          (M16, r"SELFIE_TOO_OLD"), (SELFIE, r"not_image"), (POC4, r"^E4"), (POC4, r"^E5"), (T3, r"E4:")],
+      src=POC_SRC, fix="0016: submit_verification confere storage.objects"),
+    U("BL-004", FAIL, PASS,
+      "Lista de espera: join_waitlist fazia upsert pelo e-mail, então qualquer pessoa trocava a cidade e o gênero de outra "
+      "(PoC E1). RUN-0004: e-mail repetido não altera nada e a resposta é a mesma (não revela quem está na lista).",
+      ev=[(M14, r"on conflict \(lower\(email\)\) do update"), (POC3, r"^E1"),
+          (M16, r"on conflict \(lower\(email\)\) do nothing"), (POC4, r"^E1"), (T3, r"E1:")],
+      src=POC_SRC, fix="0016: on conflict do nothing"),
+    U("BL-002", PARTIAL, PARTIAL,
+      "Lista de espera aberta ao público (anon) só com limite global: um robô de um IP gravou 119 inscrições e travou o site "
+      "para todos (PoC E2). RUN-0004: limite por IP (hash, apagado em 30 dias), campo-isca e disjuntor global alto. "
+      "CAPTCHA do cadastro no app continua desligado até o app enviar o token.",
+      ev=[(M14, r"waitlist_per_minute"), (POC3, r"^E2"), (M16, r"waitlist_per_ip_hour"), (M16, r"Campo-isca"),
+          (POC4, r"^E2"), (T3, r"E2:")],
+      src=POC_SRC, fix="0016: limite por IP + campo-isca"),
+    U("AP-001", PARTIAL, PASS,
+      "Endpoint público da lista de espera sem limite por origem (PoC E2). RUN-0004: limite por IP; curtir e passar já têm "
+      "teto diário (10/50/250, migrations 0008/0009) além do limite por minuto.",
+      ev=[(POC3, r"^E2"), (M8, r"ACTION_LIMIT_REACHED"), (M16, r"waitlist_per_ip_hour")], src=POC_SRC,
+      fix="0016 + 0008/0009"),
+    U("AP-009", PARTIAL, PASS,
+      "Robôs chamam OpenAI e AWS sem timeout (uma chamada travada segura o robô inteiro). RUN-0004: AbortSignal.timeout de 15 s "
+      "em toda chamada externa, resposta da Moderation API validada, falhas registradas sem o texto das conversas.",
+      ev=[(STATIC3, r"await fetch\("), (STATIC3, r"aws\.send\("), (TRIAGE, r"AbortSignal\.timeout"), (SELFIE, r"abortSignal")],
+      fix="timeouts nos robôs"),
+    U("AI-001", PASS, PASS,
+      "A Moderation API é um classificador: devolve só notas por categoria, não segue instruções do texto. A decisão sai de "
+      "limites fixos no código, e o filtro de programa/cobrança do banco vale mais que a nota.",
+      ev=[("supabase/functions/_shared/report-decision.js", r"export function decideReport"),
+          ("supabase/migrations/0010_report_auto_triage.sql", r"sexual_service_signal_strict")],
+      types=("code_snippet",), conf="medium"),
+    U("AI-002", PASS, PASS,
+      "Nenhum modelo tem acesso a ferramentas: o robô aplica a decisão por funções fixas (apply_report_triage com gravidade "
+      "validada contra uma lista fechada).",
+      ev=[("supabase/migrations/0010_report_auto_triage.sql", r"INVALID_SEVERITY")], types=("code_snippet",)),
+    U("AI-003", PASS, PASS,
+      "Entrada limitada ao que a pessoa denunciada escreveu, até 50 textos de 4.000 caracteres; fotos só depois de conferir os bytes.",
+      ev=[(TRIAGE, r"slice\(0, 4000\)")], types=("code_snippet",)),
+    U("AI-004", PASS, PASS,
+      "Vai para a API só o texto da conversa denunciada (sem nomes, e-mails ou ids) e a foto em questão; a transferência "
+      "internacional está descrita na Política de Privacidade (ver DA-005).",
+      ev=[("supabase/migrations/0010_report_auto_triage.sql", r"where m->>'from' = 'denunciado'")], types=("code_snippet",)),
+    U("AI-005", PASS, PASS,
+      "Toda decisão automática guarda modelo, notas e motivo (reports.auto_scores, photos.auto_scores, "
+      "verification_requests.auto_result) e entra em audit_logs.",
+      ev=[("supabase/migrations/0010_report_auto_triage.sql", r"'auto_triage'"), (M16, r"'auto_photo_flag'")], types=("code_snippet",)),
+    U("AI-006", PARTIAL, PASS,
+      "Robô usava 'omni-moderation-latest' (o modelo muda sem aviso e os limites de decisão dependem dele). RUN-0004: modelo "
+      "fixado na versão datada omni-moderation-2024-09-26; trocar passa por revisão.",
+      ev=[(STATIC3, r"omni-moderation-latest"), (TRIAGE, r"omni-moderation-2024-09-26")], fix="modelo fixado"),
+    U("AI-007", PASS, PASS,
+      "Lotes pequenos por minuto (20 denúncias, 10 fotos, 5 selfies), entrada truncada e no máximo 3 pedidos de verificação "
+      "por pessoa por dia; a Moderation API é gratuita.",
+      ev=[(TRIAGE, r"REPORT_BATCH = 20"), (SELFIE, r"BATCH = 5")], types=("code_snippet",)),
+    U("FU-001", PARTIAL, PASS,
+      "Tipo validado só pela extensão e pelo Content-Type declarado. RUN-0004: o robô confere o tipo real pelos primeiros "
+      "bytes (JPEG/PNG/WebP) em fotos e selfies; arquivo que não é imagem sai do perfil.",
+      ev=[(STATIC3, r"magic number"), (PHOTO, r"export function sniffImage"), (TRIAGE, r"nao_e_imagem"), (T3, r"tipo real")],
+      fix="conferência de bytes no robô"),
+    U("FU-004", FAIL, PARTIAL,
+      "Nenhuma checagem do conteúdo das fotos. RUN-0004: o robô passa cada foto nova pela Moderation API (nudez, menor, "
+      "violência) e reprova automaticamente; sinal de menor esconde o perfil e abre denúncia. Não há antivírus, mas os "
+      "arquivos são só imagens servidas por URL assinada e nunca executadas.",
+      ev=[(STATIC3, r"moderação de imagem"), (TRIAGE, r"image_url"), (M16, r"create function public\.apply_photo_check")],
+      fix="moderação de fotos no robô"),
+    U("LM-004", PARTIAL, PASS,
+      "Alertas ficavam só na tabela security_alerts. RUN-0004: o robô manda um resumo (tipo e horário, sem conteúdo) para o "
+      "webhook do suporte (Slack/Discord/Google Chat) e marca cada alerta como avisado.",
+      ev=[(STATIC3, r"webhook de alerta"), (M16, r"create function public\.alerts_to_notify"), (TRIAGE, r"ALERT_WEBHOOK_URL")],
+      fix="alerts_to_notify + webhook"),
+    U("DA-003", PARTIAL, PASS,
+      "Lista de espera sem retenção. RUN-0004: inscrições apagadas em 365 dias, hash de IP em 30, pedidos de verificação "
+      "recusados em 90; selfies apagadas depois da decisão.",
+      ev=[(STATIC3, r"retenção da lista de espera"), (M16, r"retention_waitlist_days")], fix="0016: purge_expired_data"),
+    U("FE-001", PARTIAL, PASS,
+      "Painel do suporte guardava a sessão no localStorage (padrão do supabase-js), legível por qualquer script da página. "
+      "RUN-0004: sessionStorage (some ao fechar a aba) + CSP estrita + SRI + segundo fator.",
+      ev=[(STATIC3, r"supabase\.createClient\("), (ADMIN, r"storage: window\.sessionStorage")], fix="sessionStorage no painel"),
+    U("SH-001", FAIL, PASS,
+      "Site (apps/site) e painel (apps/admin) sem Content-Security-Policy. RUN-0004: CSP default-src 'none' com hash dos "
+      "scripts inline (apps/security-headers.py), em _headers e em <meta>; o CI falha se ficar desatualizada; script do CDN com SRI.",
+      ev=[(STATIC3, r"Content-Security-Policy = 0"), (HDR_SITE, r"Content-Security-Policy"), (ADMIN, r'integrity="sha384-')],
+      fix="_headers + meta CSP + SRI"),
+    U("SH-002", FAIL, PASS, "Sem HSTS no site e no painel. RUN-0004: Strict-Transport-Security de 2 anos com preload em _headers.",
+      ev=[(STATIC3, r"_headers: ausente"), (HDR_SITE, r"Strict-Transport-Security")], fix="_headers"),
+    U("SH-003", FAIL, PASS, "Páginas podiam ser carregadas em iframe (clickjacking no painel). RUN-0004: X-Frame-Options DENY e frame-ancestors 'none'.",
+      ev=[(STATIC3, r"_headers: ausente"), (HDR_ADMIN, r"X-Frame-Options: DENY")], fix="_headers"),
+    U("SH-004", FAIL, PASS, "Sem X-Content-Type-Options. RUN-0004: nosniff em _headers.",
+      ev=[(STATIC3, r"_headers: ausente"), (HDR_SITE, r"X-Content-Type-Options")], fix="_headers"),
+    U("SH-005", FAIL, PASS, "Sem Referrer-Policy. RUN-0004: strict-origin-when-cross-origin em _headers.",
+      ev=[(STATIC3, r"_headers: ausente"), (HDR_SITE, r"Referrer-Policy")], fix="_headers"),
+    U("DS-005", PARTIAL, PASS,
+      "Actions do CI referenciadas por tag móvel (@v4). RUN-0004: fixadas por SHA de commit; Dependabot segue propondo updates; "
+      "deno check das Edge Functions no CI.",
+      ev=[(STATIC3, r"uses: actions/checkout@v4"), (CI, r"actions/checkout@11d5960a")], fix="actions por SHA"),
+])
+
+for _c in CHECKS:
+    _u = UPDATES.get(_c["check_id"])
+    _c["r3"] = _u["r3"] if _u else _c["final"]
+    _c["r4"] = _u["r4"] if _u else _c["final"]
+    _c["update"] = _u
+assert set(UPDATES) <= {c["check_id"] for c in CHECKS}, "check desconhecido em UPDATES"

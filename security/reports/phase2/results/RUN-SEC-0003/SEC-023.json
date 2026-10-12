@@ -1,0 +1,173 @@
+{
+  "task_id": "SEC-023",
+  "domain": "data_security",
+  "playbook_version": "1.2.1",
+  "checks_total": 5,
+  "checks_pass": 3,
+  "checks_fail": 0,
+  "checks_partial": 2,
+  "checks_na": 0,
+  "checks_error": 0,
+  "worst_severity": "NONE",
+  "duration_ms": 0,
+  "results": [
+    {
+      "check_id": "DA-001",
+      "check_name": "Dados sensíveis armazenados sem proteção",
+      "status": "pass",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "medium",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0003_security.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0003_security.sql:46:create policy profiles_own_select on public.profiles for select using (id = auth.uid());"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Dado sensível (gênero/interesse) protegido por RLS; só o dono lê; usado apenas no filtro."
+      },
+      "remediation": "Classificar dados por sensibilidade. Criptografar campos sensíveis. Implementar access control por classificação.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "DA-002",
+      "check_name": "Dados excessivos armazenados",
+      "status": "pass",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0001_schema.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0001_schema.sql:237:new.lat_approx := round(new.lat_approx, 2);"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Coordenadas arredondadas no servidor (~1 km); sem endereço; data de nascimento necessária para idade."
+      },
+      "remediation": "Aplicar princípio da minimização. Coletar apenas dados necessários. Configurar cleanup de dados temporários. Revisar campos coletados periodicamente.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "DA-003",
+      "check_name": "Ausência de política de retenção",
+      "status": "partial",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0005_security_hardening.sql",
+          "supabase/migrations/0006_platform_hardening.sql",
+          "security/reports/phase2/evidence/run3-static-findings.txt"
+        ],
+        "lines": [
+          "supabase/migrations/0005_security_hardening.sql:474:create function public.purge_expired_data() returns jsonb",
+          "supabase/migrations/0006_platform_hardening.sql:32:select cron.schedule('purge-expired-data', '17 3 * * *', $$select public.purge_expired_data()$$);",
+          "security/reports/phase2/evidence/run3-static-findings.txt:47:retenção da lista de espera em purge_expired_data: 0"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet",
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Lista de espera sem retenção."
+      },
+      "remediation": "Definir política de retenção por tipo de dado. Implementar cleanup automático. Documentar e auditar compliance.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "DA-004",
+      "check_name": "Ausência de anonimização",
+      "status": "pass",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0001_schema.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0001_schema.sql:198:reporter_id uuid references public.profiles(id) on delete set null,"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Exclusão em cascata; denúncias feitas pelo usuário ficam anônimas (reporter_id set null)."
+      },
+      "remediation": "Implementar anonimização para analytics e ambientes não-produção. Usar pseudonimização reversível onde necessário para negócio. Mascarar PII em exports.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "DA-005",
+      "check_name": "Não conformidade com LGPD/GDPR",
+      "status": "partial",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0005_security_hardening.sql",
+          "apps/mobile/src/lib/api.ts",
+          "security/reports/phase2/evidence/post-remediation-poc.txt"
+        ],
+        "lines": [
+          "supabase/migrations/0005_security_hardening.sql:444:create function public.export_my_data() returns jsonb",
+          "apps/mobile/src/lib/api.ts:247:// LGPD: apaga os arquivos de foto do Storage antes de apagar a conta",
+          "security/reports/phase2/evidence/post-remediation-poc.txt:5:E5 DA-005 criar perfil sem consentimento LGPD: BLOQUEADO (CONSENT_REQUIRED)"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet",
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis",
+          "pglite_poc"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: consentimento só no app (PoC E5), sem portabilidade e arquivos de foto ficavam no Storage após a exclusão. RUN-0002: consentimento exigido no servidor, export_my_data(), app apaga as fotos antes de excluir a conta. Pendente: texto da política de privacidade/termos e encarregado (DPO) — não estão no repositório."
+      },
+      "remediation": "Implementar consent management. Criar endpoints de portabilidade (export JSON/CSV). Implementar exclusão/anonimização. Documentar base legal por tratamento. Designar DPO.",
+      "cross_refs": [
+        "AZ-003"
+      ]
+    }
+  ]
+}

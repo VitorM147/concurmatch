@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/ 'sha256-oakrEaZuTPtt6RLR77PZ+eATGXE8eYi7v6C3SfX8skE='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src https://*.supabase.co wss://*.supabase.co; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>ConMatch · Suporte</title>
@@ -74,7 +75,9 @@ th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}
 </head>
 <body>
 <div id="app"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<!-- SRI: o navegador recusa o arquivo se a CDN entregar qualquer byte diferente (sha384 do pacote npm 2.45.4) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"
+        integrity="sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o" crossorigin="anonymous"></script>
 <script>
 (() => {
   // ------------------------------------------------------------ util
@@ -105,7 +108,11 @@ th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}
   // ------------------------------------------------------------ setup / login
   let db = null, view = 'fila', selected = null;
   const url = store.get('cm_url'), key = store.get('cm_anon');
-  if (url && key) db = supabase.createClient(url, key);
+  // FE-001: sessão do painel em sessionStorage (some ao fechar a aba), não em localStorage
+  const client = (u, k) => supabase.createClient(u, k, {
+    auth: { storage: window.sessionStorage, persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
+  });
+  if (url && key) db = client(url, key);
 
   function setupScreen(msg) {
     const u = h('input', { placeholder: 'https://xxxx.supabase.co', value: store.get('cm_url') || '' });
@@ -117,7 +124,7 @@ th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}
       h('button', { class: 'primary', onclick: () => {
         if (!/^https:\/\/.+/.test(u.value) || k.value.length < 20) return setupScreen('Confira a URL e a chave.');
         store.set('cm_url', u.value.trim()); store.set('cm_anon', k.value.trim());
-        db = supabase.createClient(u.value.trim(), k.value.trim()); loginScreen();
+        db = client(u.value.trim(), k.value.trim()); loginScreen();
       } }, 'Salvar')));
   }
 
@@ -127,13 +134,54 @@ th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}
     const go = async () => {
       const { error } = await db.auth.signInWithPassword({ email: e.value.trim(), password: p.value });
       if (error) return loginScreen('E-mail ou senha incorretos.');
-      boot();
+      mfaStep();
     };
     p.addEventListener('keydown', (ev) => ev.key === 'Enter' && go());
     $app.replaceChildren(h('div', { class: 'login card' },
       h('h2', {}, 'Suporte ConMatch'), e, p, msg ? h('p', { class: 'err' }, msg) : null,
       h('button', { class: 'primary', onclick: go }, 'Entrar'),
       h('button', { onclick: () => setupScreen() }, 'Trocar projeto')));
+  }
+
+  // ------------------------------------------------------------ segundo fator (TOTP)
+  // O banco só aceita decisões de sessão aal2 (0016). Primeiro acesso: cadastra
+  // o app autenticador lendo o QR code; depois, só o código de 6 dígitos.
+  async function mfaStep(msg) {
+    const { data: aal } = await db.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal?.currentLevel === 'aal2') return boot();
+    const { data: f, error: fe } = await db.auth.mfa.listFactors();
+    if (fe) return loginScreen('Não foi possível ler o segundo fator: ' + fe.message);
+    const all = f?.all || [];
+    const ok = all.find((x) => x.factor_type === 'totp' && x.status === 'verified');
+    const code = h('input', { inputmode: 'numeric', autocomplete: 'one-time-code', maxlength: '6',
+                              placeholder: 'código de 6 dígitos' });
+    let factorId = ok?.id, extra = [];
+    if (!ok) {
+      for (const x of all.filter((y) => y.factor_type === 'totp' && y.status !== 'verified')) {
+        await db.auth.mfa.unenroll({ factorId: x.id });
+      }
+      const { data: en, error } = await db.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Painel ConMatch' });
+      if (error) return loginScreen('Não foi possível cadastrar o segundo fator: ' + error.message);
+      factorId = en.id;
+      extra = [
+        h('p', { class: 'muted' }, 'Primeiro acesso: leia o QR code com o Google Authenticator, Microsoft Authenticator ou 1Password.'),
+        h('img', { src: en.totp.qr_code, alt: 'QR code do segundo fator', width: '180', height: '180' }),
+        h('p', { class: 'muted' }, 'Sem câmera? Digite esta chave no app: ', h('code', {}, en.totp.secret)),
+      ];
+    }
+    const verify = async () => {
+      const { error } = await db.auth.mfa.challengeAndVerify({ factorId, code: code.value.trim() });
+      if (error) return mfaStep('Código incorreto ou vencido. Tente o próximo.');
+      boot();
+    };
+    code.addEventListener('keydown', (ev) => ev.key === 'Enter' && verify());
+    $app.replaceChildren(h('div', { class: 'login card' },
+      h('h2', {}, 'Segundo fator'),
+      ok ? h('p', { class: 'muted' }, 'Abra o app autenticador e digite o código do ConMatch.') : null,
+      ...extra, code, msg ? h('p', { class: 'err' }, msg) : null,
+      h('button', { class: 'primary', onclick: verify }, 'Confirmar'),
+      h('button', { onclick: async () => { await db.auth.signOut(); loginScreen(); } }, 'Sair')));
+    code.focus();
   }
 
   const rpc = async (fn, args) => {
@@ -152,8 +200,13 @@ th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}
   async function boot() {
     const { data: { session } } = await db.auth.getSession();
     if (!session) return loginScreen();
-    try { await render(); }
+    try {
+      const st = await rpc('admin_status');
+      if (st.admin && !st.mfa_ok) return mfaStep();
+      await render();
+    }
     catch (e) {
+      if (/MFA_REQUIRED/.test(e.message)) return mfaStep();
       if (/NOT_ADMIN/.test(e.message)) {
         await db.auth.signOut();
         return loginScreen('Este usuário não é admin. Cadastre em public.admins.');

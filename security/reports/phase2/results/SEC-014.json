@@ -3,10 +3,10 @@
   "domain": "api_security",
   "playbook_version": "1.2.1",
   "checks_total": 9,
-  "checks_pass": 6,
+  "checks_pass": 8,
   "checks_fail": 0,
-  "checks_partial": 2,
-  "checks_na": 1,
+  "checks_partial": 1,
+  "checks_na": 0,
   "checks_error": 0,
   "worst_severity": "NONE",
   "duration_ms": 0,
@@ -14,19 +14,25 @@
     {
       "check_id": "AP-001",
       "check_name": "Endpoints sem rate limit",
-      "status": "partial",
+      "status": "pass",
       "severity_if_fail": "HIGH",
       "confidence": "high",
       "evidence": {
         "files": [
           "supabase/migrations/0005_security_hardening.sql",
           "security/reports/phase2/evidence/baseline-poc.txt",
-          "security/reports/phase2/evidence/post-remediation-poc.txt"
+          "security/reports/phase2/evidence/post-remediation-poc.txt",
+          "security/reports/phase2/evidence/run3-baseline-poc.txt",
+          "supabase/migrations/0008_verified_first_and_moderation.sql",
+          "supabase/migrations/0016_security_run3.sql"
         ],
         "lines": [
           "supabase/migrations/0005_security_hardening.sql:77:create function public.enforce_rate_limit(p_user uuid, p_action text, p_window interval, p_max int)",
           "security/reports/phase2/evidence/baseline-poc.txt:7:E7 AP-001 passar perfis sem limite (raspagem): VULNERAVEL (150 passes em sequencia sem limite)",
-          "security/reports/phase2/evidence/post-remediation-poc.txt:7:E7 AP-001 passar perfis sem limite (raspagem): BLOQUEADO (RATE_LIMITED)"
+          "security/reports/phase2/evidence/post-remediation-poc.txt:7:E7 AP-001 passar perfis sem limite (raspagem): BLOQUEADO (RATE_LIMITED)",
+          "security/reports/phase2/evidence/run3-baseline-poc.txt:3:E2 VULNERÁVEL: robô gravou 119 inscrições; pessoa real recusada (RATE_LIMITED)",
+          "supabase/migrations/0008_verified_first_and_moderation.sql:219:raise exception 'ACTION_LIMIT_REACHED' using errcode = 'P0003',",
+          "supabase/migrations/0016_security_run3.sql:9:('waitlist_per_ip_hour',      '5',    'Inscrições por hora vindas do mesmo IP na lista de espera'),"
         ],
         "commands_output": [],
         "evidence_types": [
@@ -41,9 +47,9 @@
         "tool_version": null,
         "fallback_applied": true,
         "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
-        "description": "Baseline: swipe_pass sem limite permitia varrer todos os perfis da região (PoC E7: 150 passes seguidos). RUN-0002: rate limit em passes (120/min, 2000/dia), curtidas (60/min, teto Premium 1000/dia), mensagens e denúncias. Leitura (discover/my_matches) continua sem limite próprio: depende do gateway do Supabase."
+        "description": "Endpoint público da lista de espera sem limite por origem (PoC E2). RUN-0004: limite por IP; curtir e passar já têm teto diário (10/50/250, migrations 0008/0009) além do limite por minuto."
       },
-      "remediation": "Implementar rate limiting por IP e por user. Endpoints de auth: 5-10 req/min. APIs gerais: 100-1000 req/min conforme caso de uso. Retornar 429 com Retry-After header.",
+      "remediation": "Implementar rate limiting por IP e por user. Endpoints de auth: 5-10 req/min. APIs gerais: 100-1000 req/min conforme caso de uso. Retornar 429 com Retry-After header. | Aplicado: 0016 + 0008/0009",
       "cross_refs": [
         "BL-002"
       ]
@@ -89,7 +95,7 @@
           "supabase/config.toml"
         ],
         "lines": [
-          "apps/mobile/app/entrar.tsx:31:// Mensagem genérica: não revela se o e-mail existe (AP-003)",
+          "apps/mobile/app/entrar.tsx:32:// Mensagem genérica: não revela se o e-mail existe (AP-003)",
           "supabase/config.toml:42:enable_confirmations = true"
         ],
         "commands_output": [],
@@ -259,15 +265,25 @@
     {
       "check_id": "AP-009",
       "check_name": "Consumo inseguro de APIs externas",
-      "status": "not_applicable",
+      "status": "pass",
       "severity_if_fail": "HIGH",
       "confidence": "high",
       "evidence": {
-        "files": [],
-        "lines": [],
+        "files": [
+          "security/reports/phase2/evidence/run3-static-findings.txt",
+          "supabase/functions/report-triage/index.ts",
+          "supabase/functions/selfie-check/index.ts"
+        ],
+        "lines": [
+          "security/reports/phase2/evidence/run3-static-findings.txt:6:report-triage/index.ts:27:  const res = await fetch('https://api.openai.com/v1/moderations', {",
+          "security/reports/phase2/evidence/run3-static-findings.txt:9:selfie-check/index.ts:53:      const det = await aws.send(new DetectFacesCommand({ Image: { Bytes: selfie }, Attributes: ['ALL'] }));",
+          "supabase/functions/report-triage/index.ts:37:signal: AbortSignal.timeout(TIMEOUT_MS),",
+          "supabase/functions/selfie-check/index.ts:17:const opts = () => ({ abortSignal: AbortSignal.timeout(TIMEOUT_MS) });"
+        ],
         "commands_output": [],
         "evidence_types": [
-          "doc_reference"
+          "code_snippet",
+          "tool_output"
         ],
         "evidence_sources": [
           "static_analysis"
@@ -276,9 +292,9 @@
         "tool_version": null,
         "fallback_applied": false,
         "fallback_reason": null,
-        "description": "Sem consumo de API externa no backend (pagamentos ainda não integrados)."
+        "description": "Robôs chamam OpenAI e AWS sem timeout (uma chamada travada segura o robô inteiro). RUN-0004: AbortSignal.timeout de 15 s em toda chamada externa, resposta da Moderation API validada, falhas registradas sem o texto das conversas."
       },
-      "remediation": "Sempre configurar timeout (30s default, menor em paths críticos). Nunca desabilitar TLS verification em produção. Validar response com zod/pydantic/joi antes de usar. Implementar circuit breaker (opossum, resilience4j, polly) para dependências críticas. Sanitizar errors de upstream antes de propagar. Usar secrets manager para API keys.",
+      "remediation": "Sempre configurar timeout (30s default, menor em paths críticos). Nunca desabilitar TLS verification em produção. Validar response com zod/pydantic/joi antes de usar. Implementar circuit breaker (opossum, resilience4j, polly) para dependências críticas. Sanitizar errors de upstream antes de propagar. Usar secrets manager para API keys. | Aplicado: timeouts nos robôs",
       "cross_refs": []
     }
   ]

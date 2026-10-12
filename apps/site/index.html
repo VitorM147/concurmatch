@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'sha256-2oTiQEaIo96SH067ZeioDqVLyeD1Uds0RnxCwlK5QdU='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://*.supabase.co; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ConMatch</title>
 <meta name="description" content="App de relacionamento para quem está construindo o próprio futuro: concursos, vestibular, OAB, residência e carreira. Entre na lista de espera da sua cidade.">
@@ -118,6 +119,7 @@ footer nav{display:flex;gap:18px;flex-wrap:wrap}
   .steps,.rules,.plans{grid-template-columns:1fr}
   section{padding-block:56px}
 }
+.hp{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}
 </style>
 </head>
 <body>
@@ -253,6 +255,11 @@ footer nav{display:flex;gap:18px;flex-wrap:wrap}
           <input id="consent" type="checkbox" required>
           <span>Tenho 18 anos ou mais e aceito receber o convite por e-mail. Usamos seus dados só para isso; você pode sair da lista quando quiser.</span>
         </label>
+        <!-- Campo-isca: invisível para pessoas; robô que preenche é descartado no servidor -->
+        <div class="hp" aria-hidden="true">
+          <label for="website">Site</label>
+          <input id="website" name="website" tabindex="-1" autocomplete="off">
+        </div>
         <button class="btn" type="submit" id="submit">Entrar na lista</button>
         <p class="msg" id="msg" role="status" aria-live="polite"></p>
       </form>
@@ -271,11 +278,12 @@ footer nav{display:flex;gap:18px;flex-wrap:wrap}
   </div>
 </footer>
 
+<script src="config.js"></script>
 <script>
-// Preencha com o projeto do Supabase. A chave aqui é a PÚBLICA (anon): ela
-// só consegue chamar join_waitlist(), que não devolve dados de ninguém.
-const SUPABASE_URL = '';
-const SUPABASE_ANON_KEY = '';
+// URL e chave PÚBLICA (anon) ficam em config.js, assim este script não muda
+// e o hash dele na Content-Security-Policy continua valendo.
+// A chave anon só consegue chamar join_waitlist(), que não devolve dados de ninguém.
+const { SUPABASE_URL = '', SUPABASE_ANON_KEY = '' } = window.CONMATCH_CONFIG || {};
 
 (() => {
   const STATES = ['DF','SP','RJ','MG','BA','PE','CE','PR'];
@@ -292,7 +300,7 @@ const SUPABASE_ANON_KEY = '';
     INVALID_EMAIL: 'Confira o e-mail.',
     INVALID_CITY: 'Escolha o estado e escreva a cidade.',
     CONSENT_REQUIRED: 'Marque a caixa para entrar na lista.',
-    RATE_LIMITED: 'Muita gente entrando agora. Tente de novo em um minuto.',
+    RATE_LIMITED: 'Muitas inscrições desta conexão. Tente de novo mais tarde.',
   };
 
   form.addEventListener('submit', async (ev) => {
@@ -309,7 +317,8 @@ const SUPABASE_ANON_KEY = '';
       const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/join_waitlist`, {
         method: 'POST',
         headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ p_email: email, p_state: state, p_city: city, p_gender: form.gender.value || null, p_consent: true }),
+        body: JSON.stringify({ p_email: email, p_state: state, p_city: city, p_gender: form.gender.value || null, p_consent: true,
+                               p_website: form.website.value || null }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {

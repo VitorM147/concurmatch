@@ -1,0 +1,155 @@
+{
+  "task_id": "SEC-026",
+  "domain": "business_logic",
+  "playbook_version": "1.2.1",
+  "checks_total": 4,
+  "checks_pass": 3,
+  "checks_fail": 0,
+  "checks_partial": 1,
+  "checks_na": 0,
+  "checks_error": 0,
+  "worst_severity": "NONE",
+  "duration_ms": 0,
+  "results": [
+    {
+      "check_id": "BL-001",
+      "check_name": "Bypass de workflow multi-step",
+      "status": "pass",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0002_functions.sql",
+          "supabase/migrations/0005_security_hardening.sql",
+          "security/reports/phase2/evidence/baseline-poc.txt",
+          "security/reports/phase2/evidence/post-remediation-poc.txt"
+        ],
+        "lines": [
+          "supabase/migrations/0002_functions.sql:487:update public.profiles set is_visible = false where id = p_target;",
+          "supabase/migrations/0005_security_hardening.sql:37:alter table public.profiles add column moderation_hidden_at timestamptz;",
+          "security/reports/phase2/evidence/baseline-poc.txt:2:E2 BL-001 desfazer ocultacao da moderacao: VULNERAVEL (perfil ocultado voltou a ficar visivel pelo proprio usuario)",
+          "security/reports/phase2/evidence/post-remediation-poc.txt:2:E2 BL-001 desfazer ocultacao da moderacao: BLOQUEADO (permission denied for table profiles)"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet",
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis",
+          "pglite_poc"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: a ocultação automática usava is_visible, que o próprio usuário religava no app (PoC E2). RUN-0002: coluna moderation_hidden_at sem grant; discover/like/chat respeitam."
+      },
+      "remediation": "Implementar state machine server-side com transições explícitas. Cada endpoint de step valida status atual antes de permitir ação. Rejeitar transições inválidas (ex: de 'pending' direto para 'completed' sem passar por 'paid'). Considerar Temporal/XState para fluxos complexos. Log de audit para mudanças de state (cross-ref LM-002).",
+      "cross_refs": []
+    },
+    {
+      "check_id": "BL-002",
+      "check_name": "Anti-automação ausente em fluxos críticos",
+      "status": "partial",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0005_security_hardening.sql",
+          "supabase/config.toml"
+        ],
+        "lines": [
+          "supabase/migrations/0005_security_hardening.sql:18:('likes_per_day_premium',          '1000', 'Teto diário de curtidas do Premium (anti-bot)'),",
+          "supabase/config.toml:34:[auth.captcha]"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet",
+          "config_artifact"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": true,
+        "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
+        "description": "Baseline: sem anti-automação (passes ilimitados, Premium sem teto, sem CAPTCHA). RUN-0002: rate limits e teto Premium; CAPTCHA configurado mas desligado até o app enviar o token."
+      },
+      "remediation": "Implementar CAPTCHA (hCaptcha, Turnstile, reCAPTCHA v3) em endpoints críticos. Velocity checks per user (máximo N ações por janela). Device fingerprinting (FingerprintJS). Considerar proof-of-work para fluxos muito abusados. Monitorar comportamento anômalo e bloquear proativamente.",
+      "cross_refs": [
+        "AP-001",
+        "AU-006"
+      ]
+    },
+    {
+      "check_id": "BL-003",
+      "check_name": "Race conditions (TOCTOU) em operações sensíveis",
+      "status": "pass",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "medium",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0002_functions.sql",
+          "supabase/migrations/0005_security_hardening.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0002_functions.sql:296:v_left := public.remaining_likes();",
+          "supabase/migrations/0005_security_hardening.sql:222:perform pg_advisory_xact_lock(hashtextextended('likes:' || me.id::text, 0));"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: swipe_like contava a cota e inseria sob lock apenas do PAR; requisições paralelas do mesmo usuário para alvos diferentes furavam o limite de 20 (TOCTOU). RUN-0002: pg_advisory_xact_lock por usuário antes da contagem."
+      },
+      "remediation": "Envolver operações críticas em transação explícita. Usar SELECT ... FOR UPDATE para lock pessimista OU version field para lock otimista. Atomic updates quando possível (UPDATE balance = balance - X WHERE balance >= X). Idempotency keys para retry seguro. Marcar cupom/voucher como usado na mesma transação que aplica o benefício.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "BL-004",
+      "check_name": "Abuso de fluxo de negócio permitido",
+      "status": "pass",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0002_functions.sql",
+          "supabase/migrations/0005_security_hardening.sql",
+          "security/reports/phase2/evidence/baseline-poc.txt",
+          "security/reports/phase2/evidence/post-remediation-poc.txt"
+        ],
+        "lines": [
+          "supabase/migrations/0002_functions.sql:484:if p_reason = 'menor_de_idade'",
+          "supabase/migrations/0005_security_hardening.sql:364:create function public.is_trusted_reporter(p_user uuid) returns boolean",
+          "security/reports/phase2/evidence/baseline-poc.txt:3:E3 BL-004 conta recem-criada derruba qualquer perfil com 1 denuncia: VULNERAVEL (perfil ocultado por 1 denuncia de conta sem foto criada agora)",
+          "security/reports/phase2/evidence/post-remediation-poc.txt:3:E3 BL-004 conta recem-criada derruba qualquer perfil com 1 denuncia: ok"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet",
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis",
+          "pglite_poc"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: uma denúncia de 'menor de idade' de qualquer conta, mesmo criada no minuto anterior e sem foto, ocultava qualquer perfil (PoC E3) — arma para derrubar concorrentes. RUN-0002: só denunciantes confiáveis (conta 24h+, com foto, fora de revisão) contam; 2 para 'menor', 3 para os demais; toda denúncia gera alerta para revisão humana."
+      },
+      "remediation": "Definir limits por usuário para fluxos de alto valor (N compras de produto limitado, M cupons por mês). Implementar detecção de múltiplas contas (mesmo device, mesmo IP, mesmo CPF). Soft-approval para ações de alto valor. Rate limit mais agressivo em endpoints de busca/catálogo. Considerar impact analysis no threat model.",
+      "cross_refs": []
+    }
+  ]
+}

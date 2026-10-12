@@ -10,8 +10,11 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 import { CompareFacesCommand, DetectFacesCommand, RekognitionClient } from 'npm:@aws-sdk/client-rekognition@3.645.0';
 import { decideVerification } from '../_shared/selfie-decision.js';
+import { sniffImage } from '../_shared/photo-decision.js';
 
 const BATCH = 5;
+const TIMEOUT_MS = 15_000;   // AP-009: chamada à AWS nunca trava o robô
+const opts = () => ({ abortSignal: AbortSignal.timeout(TIMEOUT_MS) });
 
 function sameSecret(a: string, b: string) {
   const x = new TextEncoder().encode(a), y = new TextEncoder().encode(b);
@@ -49,15 +52,31 @@ Deno.serve(async (req) => {
   const failures: string[] = [];
   for (const v of (pending ?? []) as { id: number; challenge: string; label: string; selfie: string; photos: string[] }[]) {
     try {
-      const selfie = await bytes(v.selfie);
-      const det = await aws.send(new DetectFacesCommand({ Image: { Bytes: selfie }, Attributes: ['ALL'] }));
+      let selfie: Uint8Array;
+      try { selfie = await bytes(v.selfie); }
+      catch {
+        // a pessoa apagou o arquivo antes da análise: recusa com orientação
+        await db.rpc('apply_verification_result', { p_request: v.id, p_decision: 'recusar',
+          p_note: 'Não encontramos a selfie. Tire de novo.', p_result: { missing: true } });
+        summary.recusar = (summary.recusar ?? 0) + 1;
+        continue;
+      }
+      if (!sniffImage(selfie)) {
+        // FU-001: o arquivo não é uma imagem de verdade
+        await db.rpc('apply_verification_result', { p_request: v.id, p_decision: 'recusar',
+          p_note: 'O arquivo enviado não é uma foto. Tire a selfie pelo app.', p_result: { not_image: true } });
+        await db.storage.from('photos').remove([v.selfie]);
+        summary.recusar = (summary.recusar ?? 0) + 1;
+        continue;
+      }
+      const det = await aws.send(new DetectFacesCommand({ Image: { Bytes: selfie }, Attributes: ['ALL'] }), opts());
       const similarities: number[] = [];
       if ((det.FaceDetails ?? []).length === 1) {
         for (const p of v.photos ?? []) {
           try {
             const cmp = await aws.send(new CompareFacesCommand({
               SourceImage: { Bytes: selfie }, TargetImage: { Bytes: await bytes(p) }, SimilarityThreshold: 0,
-            }));
+            }), opts());
             similarities.push(...(cmp.FaceMatches ?? []).map((m) => m.Similarity ?? 0));
           } catch {
             similarities.push(0); // foto do perfil sem rosto detectável

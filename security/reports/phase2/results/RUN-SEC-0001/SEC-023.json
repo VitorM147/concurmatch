@@ -136,7 +136,7 @@
           "apps/mobile/src/lib/api.ts"
         ],
         "lines": [
-          "apps/mobile/src/lib/api.ts:197:// LGPD: apaga os arquivos de foto do Storage antes de apagar a conta"
+          "apps/mobile/src/lib/api.ts:247:// LGPD: apaga os arquivos de foto do Storage antes de apagar a conta"
         ],
         "commands_output": [],
         "evidence_types": [

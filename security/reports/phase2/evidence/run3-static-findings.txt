@@ -1,0 +1,47 @@
+# RUN-SEC-0003 — achados estáticos no código de antes das correções (commit 2aca6d1)
+# Gerado com: git show 2aca6d1:<arquivo> | grep -n <padrão>
+
+## AP-009 / AI-006 — robô de denúncias: modelo flutuante e fetch sem timeout
+report-triage/index.ts:13:const MODEL = 'omni-moderation-latest';
+report-triage/index.ts:27:  const res = await fetch('https://api.openai.com/v1/moderations', {
+
+## AP-009 — robô de selfie: chamadas à AWS sem timeout
+selfie-check/index.ts:53:      const det = await aws.send(new DetectFacesCommand({ Image: { Bytes: selfie }, Attributes: ['ALL'] }));
+selfie-check/index.ts:58:            const cmp = await aws.send(new CompareFacesCommand({
+
+## AZ-004 / AU-003 — painel: login só com senha, sem segundo fator
+admin/index.html:128:      const { error } = await db.auth.signInWithPassword({ email: e.value.trim(), password: p.value });
+admin/index.html: ocorrências de 'mfa': 0
+
+## FE-001 — painel: sessão no localStorage (padrão do supabase-js)
+admin/index.html:108:  if (url && key) db = supabase.createClient(url, key);
+admin/index.html:120:        db = supabase.createClient(u.value.trim(), k.value.trim()); loginScreen();
+
+## SH-001..005 — site e painel sem cabeçalhos de segurança
+apps/site/index.html: Content-Security-Policy = 0
+apps/admin/index.html: Content-Security-Policy = 0
+apps/site/_headers: ausente
+apps/admin/_headers: ausente
+
+## DS-005 — actions referenciadas por tag móvel
+ci.yml:18:      - uses: actions/checkout@v4
+ci.yml:19:      - uses: actions/setup-node@v4
+ci.yml:29:      - uses: actions/checkout@v4
+ci.yml:30:      - uses: actions/setup-node@v4
+ci.yml:43:      - uses: actions/checkout@v4
+ci.yml:50:      - uses: actions/checkout@v4
+ci.yml:52:      - uses: gitleaks/gitleaks-action@v2
+ci.yml:61:      - uses: actions/checkout@v4
+ci.yml:71:      - uses: actions/checkout@v4
+ci.yml:72:      - uses: actions/setup-node@v4
+
+## FU-001 / FU-004 — fotos: nenhum conferidor de conteúdo
+supabase/functions: supabase/functions/_shared/report-decision.js supabase/functions/_shared/selfie-decision.js supabase/functions/report-triage/index.ts supabase/functions/selfie-check/index.ts 
+ocorrências de magic number / moderação de imagem: 0
+
+## LM-004 — alertas sem canal de notificação
+ocorrências de webhook de alerta: 0
+
+## DA-003 — lista de espera sem retenção
+0014_waitlist.sql:7:create table public.waitlist (
+retenção da lista de espera em purge_expired_data: 0

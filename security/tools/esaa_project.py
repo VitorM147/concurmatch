@@ -34,7 +34,13 @@ from checks_data import CHECKS  # noqa: E402
 RUNS = [
     {"run_id": "RUN-SEC-0001", "key": "base", "label": "Baseline (antes das correções)", "start": "2026-10-07T02:40:00Z"},
     {"run_id": "RUN-SEC-0002", "key": "final", "label": "Após remediação (0005/0006, app, CI)", "start": "2026-10-07T04:10:00Z"},
+    {"run_id": "RUN-SEC-0003", "key": "r3", "label": "Código novo 0008–0015, robôs, painel e site (antes das correções)",
+     "start": "2026-10-12T23:40:00Z"},
+    {"run_id": "RUN-SEC-0004", "key": "r4", "label": "Após remediação (0016/0017, robôs, painel com MFA, cabeçalhos, CI)",
+     "start": "2026-10-13T00:50:00Z"},
 ]
+LAST = RUNS[-1]["key"]
+PREV = {r["key"]: RUNS[i - 1]["key"] for i, r in enumerate(RUNS) if i}
 SEVERITY_WEIGHT = {"CRITICAL": 10, "HIGH": 7, "MEDIUM": 4, "LOW": 2, "INFO": 1}
 PRIORITY_WEIGHT = {"critical": 3.0, "high": 2.0, "medium": 1.0}
 SEV_ORDER = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]
@@ -42,6 +48,8 @@ STATUSES = {"pass", "fail", "partial", "not_applicable", "error"}
 STRONG_EVIDENCE = {"code_snippet", "tool_output", "runtime_probe"}
 # Arquivos que só existem depois da remediação: não entram como evidência do baseline
 FIX_ONLY = re.compile(r"(0005_|0006_|post-remediation|secureStorage|SECURITY\.md|CODEOWNERS|dependabot|pull_request_template|config\.toml|npm-audit-mobile-post)")
+# Idem para a RUN-SEC-0003: o código antigo está em run3-static-findings.txt (commit 2aca6d1)
+FIX_R3 = re.compile(r"(0016_|0017_|run4-post|security-run3|_headers|photo-decision|report-triage/index|selfie-check/index|apps/admin/index|ci\.yml)")
 DOMAIN_CIA = {  # impacto típico (Confidencialidade, Integridade, Disponibilidade) por domínio
     "secrets_config": "C", "dependencies_supply_chain": "CIA", "authentication": "CI", "authorization": "CI",
     "api_security": "CA", "input_validation": "CIA", "file_upload": "CI", "session_security": "C",
@@ -98,10 +106,12 @@ def load_contracts():
 
 
 # --------------------------------------------------------------------------- evidência
-def resolve_evidence(items, run_key):
+def resolve_evidence(items, run_key, exclude=None):
     files, lines, outputs = [], [], []
     for path, pattern in items:
         if run_key == "base" and FIX_ONLY.search(path):
+            continue
+        if exclude is not None and exclude.search(path):
             continue
         p = ROOT / path
         if not p.exists():
@@ -122,18 +132,36 @@ def resolve_evidence(items, run_key):
 
 
 def describe(text: str, run_key: str) -> str:
-    if run_key == "base" and " RUN-0002:" in text:
-        return text.split(" RUN-0002:")[0].strip()
+    marker = {"base": " RUN-0002:", "r3": " RUN-0004:"}.get(run_key)
+    if marker and marker in text:
+        return text.split(marker)[0].strip()
     return text
 
 
 # --------------------------------------------------------------------------- resultados (agente -> orquestrador)
 def build_check_result(c, meta, run_key):
     status = c[run_key]
-    conf = c["confidence_base"] if run_key == "base" else c["confidence"]
+    u = c.get("update") if run_key in ("r3", "r4") else None
+    conf = c["confidence_base"] if run_key == "base" else ((u and u.get("conf")) or c["confidence"])
     files, lines, outputs = resolve_evidence(c["evidence"], run_key)
+    if u:
+        f2, l2, o2 = resolve_evidence(u["ev"], run_key, FIX_R3 if run_key == "r3" else None)
+        files = (files + [f for f in f2 if f not in files])[:20]
+        lines, outputs = lines + l2, outputs + o2
     fallback = c["fallback"] if (c["fallback"] and status != "fail") else None
-    types = [t for t in c["evidence_types"] if run_key == "final" or t != "config_artifact" or files]
+    if u:
+        types = u["types"]
+        sources = u["src"]
+        text = describe(u["desc"], run_key)
+    else:
+        types = [t for t in c["evidence_types"] if run_key != "base" or t != "config_artifact" or files]
+        sources = c["evidence_sources"]
+        text = describe(c["description"], run_key)
+    applied = []
+    if run_key != "base" and c["fix"]:
+        applied.append(c["fix"])
+    if run_key == "r4" and u and u.get("fix"):
+        applied.append(u["fix"])
     return {
         "check_id": c["check_id"],
         "check_name": meta["name"],
@@ -145,14 +173,14 @@ def build_check_result(c, meta, run_key):
             "lines": lines,
             "commands_output": outputs,
             "evidence_types": types,
-            "evidence_sources": c["evidence_sources"],
+            "evidence_sources": sources,
             "tool_name": c["tool"],
             "tool_version": {"detect-secrets": "1.5.0", "npm audit": "10.9.4"}.get(c["tool"]),
             "fallback_applied": bool(fallback),
             "fallback_reason": fallback,
-            "description": describe(c["description"], run_key),
+            "description": text,
         },
-        "remediation": meta["remediation"] + (f" | Aplicado: {c['fix']}" if (c["fix"] and run_key == "final") else ""),
+        "remediation": meta["remediation"] + (f" | Aplicado: {'; '.join(applied)}" if applied else ""),
         "cross_refs": c["cross_refs"],
     }
 
@@ -280,9 +308,9 @@ def project_events(events, roadmap_contract):
         "meta": {"schema_version": roadmap_contract["meta"]["schema_version"], "immutable_done": True,
                  "run": {"run_id": run_id, "status": status, "last_event_seq": events[-1]["event_seq"],
                          "projection_hash_sha256": None, "verify_status": "unknown"}},
-        "project": {"name": "Probatório / ConcurMatch — auditoria ESAA-Security",
-                    "audit_scope": "Static-first sobre o repositório (app Expo, migrations Supabase, CI) cobrindo 17 domínios e 108 checks; "
-                                   "porções runtime não executadas (endpoint_base_url ausente)."},
+        "project": {"name": "ConMatch — auditoria ESAA-Security",
+                    "audit_scope": "Static-first sobre o repositório (app Expo, migrations e Edge Functions do Supabase, painel do suporte, "
+                                   "site e CI) cobrindo 17 domínios e 108 checks; porções runtime não executadas (endpoint_base_url ausente)."},
         "tasks": task_list,
         "indexes": {"by_status": by_status, "by_kind": by_kind, "checks_total": 108},
     }
@@ -298,26 +326,32 @@ def projection_hash(projected):
 STATUS_PT = {"pass": "ok", "fail": "FALHA", "partial": "parcial", "not_applicable": "n/a", "error": "erro"}
 
 
-def findings(task_results_final, task_results_base, meta_by_check):
-    base_status = {r["check_id"]: r["status"] for tr in task_results_base.values() for r in tr["results"]}
+def findings(results, meta_by_check):
+    """Achados = checks que falharam ou ficaram parciais em qualquer rodada. Baseline = 1ª rodada da última
+    remediação (RUN-SEC-0003); atual = última rodada. O histórico completo vai em `historico`."""
+    status = {k: {r["check_id"]: r["status"] for tr in v.values() for r in tr["results"]} for k, v in results.items()}
     out = []
-    for tr in task_results_final.values():
+    for tr in results[LAST].values():
         for r in tr["results"]:
-            b = base_status[r["check_id"]]
-            if r["status"] in ("fail", "partial") or b in ("fail", "partial"):
-                srcs = r["evidence"]["evidence_sources"]
-                out.append({
-                    "finding_id": f"F-{r['check_id']}", "check_id": r["check_id"], "title": r["check_name"],
-                    "domain": tr["domain"], "severity": r["severity_if_fail"],
-                    "status_baseline": b, "status_atual": r["status"],
-                    "resolved": r["status"] in ("pass", "not_applicable"),
-                    "confidence": r["confidence"],
-                    "likelihood": "alta" if "pglite_poc" in srcs else ("média" if r["confidence"] != "low" else "baixa"),
-                    "cia_impact": DOMAIN_CIA.get(tr["domain"], ""),
-                    "evidence_sources": srcs, "evidence_lines": r["evidence"]["lines"][:4],
-                    "description": r["evidence"]["description"], "remediation": r["remediation"],
-                    "cross_refs": r["cross_refs"],
-                })
+            cid = r["check_id"]
+            hist = {run["run_id"]: status[run["key"]][cid] for run in RUNS}
+            if not any(s in ("fail", "partial") for s in hist.values()):
+                continue
+            b = status[PREV[LAST]][cid]
+            srcs = r["evidence"]["evidence_sources"]
+            out.append({
+                "finding_id": f"F-{cid}", "check_id": cid, "title": r["check_name"],
+                "domain": tr["domain"], "severity": r["severity_if_fail"],
+                "status_baseline": b, "status_atual": r["status"], "historico": hist,
+                "resolved": r["status"] in ("pass", "not_applicable"),
+                "resolved_this_round": b in ("fail", "partial") and r["status"] in ("pass", "not_applicable"),
+                "confidence": r["confidence"],
+                "likelihood": "alta" if "pglite_poc" in srcs else ("média" if r["confidence"] != "low" else "baixa"),
+                "cia_impact": DOMAIN_CIA.get(tr["domain"], ""),
+                "evidence_sources": srcs, "evidence_lines": r["evidence"]["lines"][:6],
+                "description": r["evidence"]["description"], "remediation": r["remediation"],
+                "cross_refs": r["cross_refs"],
+            })
     out.sort(key=lambda f: (f["resolved"], SEV_ORDER.index(f["severity"]), f["check_id"]))
     return out
 
@@ -330,11 +364,11 @@ def md_table(rows, headers):
 
 
 def generate_reports(results, scores, meta_by_check, playbooks, proj_hash, run_final):
-    base, final = results["base"], results["final"]
-    fnd = findings(final, base, meta_by_check)
+    fnd = findings(results, meta_by_check)
     open_f = [f for f in fnd if not f["resolved"]]
-    fixed = [f for f in fnd if f["resolved"]]
-    sb, sf = scores["base"], scores["final"]
+    round_fixed = [f for f in fnd if f["resolved_this_round"]]
+    older_fixed = [f for f in fnd if f["resolved"] and not f["resolved_this_round"]]
+    sr, sl = scores[PREV[LAST]], scores[LAST]
     written = {}
 
     def W(path, content, as_json=False):
@@ -344,18 +378,22 @@ def generate_reports(results, scores, meta_by_check, playbooks, proj_hash, run_f
     W("phase3/vulnerability-inventory.json", {"run_id": run_final, "findings": fnd}, True)
     W("phase3/classified-vulnerabilities.json", {"run_id": run_final, "by_severity": {
         s: [f["finding_id"] for f in open_f if f["severity"] == s] for s in SEV_ORDER},
-        "resolved": [f["finding_id"] for f in fixed]}, True)
+        "resolved": [f["finding_id"] for f in fnd if f["resolved"]]}, True)
     matrix = [{"finding_id": f["finding_id"], "severity": f["severity"], "likelihood": f["likelihood"],
                "cia_impact": f["cia_impact"], "status": f["status_atual"], "remediation": f["remediation"]} for f in open_f]
     W("phase3/risk-matrix.json", {"run_id": run_final, "matrix": matrix}, True)
-    W("phase3/risk-matrix.md", "# Matriz de riscos (achados em aberto, RUN-SEC-0002)\n\n" + md_table(
+    W("phase3/risk-matrix.md", f"# Matriz de riscos (achados em aberto, {run_final})\n\n" + md_table(
         [(f["check_id"], f["title"], f["severity"], f["likelihood"], f["cia_impact"], STATUS_PT[f["status_atual"]]) for f in open_f],
         ["Check", "Achado", "Severidade", "Probabilidade", "CIA", "Status"]))
 
-    rem = "# Correções técnicas (SEC-040)\n\nAchados do baseline e o que foi aplicado. Provas de conceito em `reports/phase2/evidence/`.\n\n"
+    hist_hdr = [r["run_id"].replace("RUN-SEC-", "R") for r in RUNS]
+    rem = ("# Correções técnicas (SEC-040)\n\nTodos os achados das quatro rodadas e o que foi aplicado. "
+           "Provas de conceito em `reports/phase2/evidence/` (rodadas 1–2: `baseline-poc.txt`/`post-remediation-poc.txt`; "
+           "rodadas 3–4: `run3-baseline-poc.txt`/`run4-post-remediation-poc.txt`, reproduzíveis com `node supabase/tests/poc-run3.mjs`).\n\n")
     for f in fnd:
+        hist = " → ".join(f"{h}: {STATUS_PT[s]}" for h, s in zip(hist_hdr, f["historico"].values()))
         rem += (f"## {f['check_id']} — {f['title']} ({f['severity']})\n\n"
-                f"- **Baseline:** {STATUS_PT[f['status_baseline']]} · **Agora:** {STATUS_PT[f['status_atual']]}\n"
+                f"- **Histórico:** {hist}\n"
                 f"- **Evidência:** {f['description']}\n- **Correção:** {f['remediation']}\n")
         if f["evidence_lines"]:
             rem += "- **Onde:** " + "; ".join(f"`{x.split(':')[0]}:{x.split(':')[1]}`" for x in f["evidence_lines"]) + "\n"
@@ -367,86 +405,104 @@ def generate_reports(results, scores, meta_by_check, playbooks, proj_hash, run_f
 | Domínio | Prática | Referência |
 |---|---|---|
 | Autorização | Toda tabela nova com RLS e grants por coluna; nada herdado por padrão | OWASP API1/API3:2023, ASVS V4 |
-| Lógica de negócio | Regras de cota, denúncia e pagamento sempre no servidor, com lock quando há contagem | OWASP API6:2023 |
-| Moderação | Estado de moderação em colunas que o usuário não altera; ação automática só com sinais confiáveis | OWASP API6:2023 |
-| Anti-automação | Rate limit por ação + CAPTCHA no cadastro antes de campanhas pagas | OWASP API4/API6:2023 |
-| Sessão mobile | Tokens no Keychain/Keystore; access token curto; refresh rotativo | OWASP MASVS-STORAGE-1, MASVS-AUTH |
-| Uploads | Caminho e nome gerados e validados no servidor; moderação de imagem antes de publicar | OWASP File Upload Cheat Sheet |
-| Dados pessoais | Consentimento no servidor, exportação, exclusão e retenção automática | LGPD arts. 7, 11, 16, 18 |
-| Supply chain | `npm ci`, Dependabot, auditoria no CI, riscos aceitos com prazo | OWASP A06:2021, NIST SSDF PW.4 |
-| DevSecOps | Secrets scanning, SAST e testes de regressão de segurança em todo PR | NIST SSDF PW.7/PW.8 |
+| Painel administrativo | Ações de suporte só com segundo fator (aal2), motivo obrigatório e trilha em audit_logs | OWASP ASVS V2.8, V4.3 |
+| Lógica de negócio | Regras de cota, denúncia, verificação e pagamento sempre no servidor, com lock quando há contagem | OWASP API6:2023 |
+| Fluxos em etapas | Cada etapa confere a anterior no servidor (ex.: selfie enviada depois do desafio) | OWASP ASVS V11.1 |
+| Moderação | Estado de moderação em colunas que o usuário não altera; ação automática só com sinais confiáveis; banimento humano | OWASP API6:2023 |
+| IA / classificadores | Modelo fixado por versão, entrada limitada, decisão por limites no código, notas registradas | OWASP Top 10 for LLM (LLM01, LLM05, LLM10) |
+| APIs externas | Timeout em toda chamada, resposta validada, falha sem vazar conteúdo | OWASP API10:2023 |
+| Anti-automação | Rate limit por ação e por origem, campo-isca em formulários públicos, CAPTCHA antes de campanhas pagas | OWASP API4/API6:2023 |
+| Páginas web | CSP com hash, HSTS, X-Frame-Options, nosniff, Referrer-Policy; SRI em scripts de CDN | OWASP Secure Headers, W3C SRI |
+| Sessão | Tokens no Keychain/Keystore no app e sessionStorage no painel; access token curto; refresh rotativo | OWASP MASVS-STORAGE-1, MASVS-AUTH |
+| Uploads | Caminho e nome validados no servidor; tipo real pelos bytes; moderação de imagem | OWASP File Upload Cheat Sheet |
+| Dados pessoais | Consentimento no servidor, exportação, exclusão, retenção automática, hash de IP com prazo | LGPD arts. 7, 11, 16, 18 |
+| Supply chain | `npm ci`, Dependabot, auditoria no CI, actions por SHA, riscos aceitos com prazo | OWASP A06:2021, NIST SSDF PW.4 |
+| DevSecOps | Secrets scanning, SAST, deno check, conferência dos cabeçalhos e testes de regressão em todo PR | NIST SSDF PW.7/PW.8 |
 | Monitoramento | Alertas de segurança com canal de notificação e responsável | OWASP A09:2021 |
 """)
 
     top = open_f[:5]
+    score_rows = [(r["run_id"], r["label"], scores[r["key"]]["value"], scores[r["key"]]["classification"]) for r in RUNS]
     exec_md = f"""# Resumo executivo (SEC-042)
 
-**Score de segurança: {sb['value']} ({sb['classification']}) → {sf['value']} ({sf['classification']})**
+**Score de segurança atual: {sl['value']} ({sl['classification']})**
 
-A auditoria ESAA-Security executou os 108 checks dos 17 domínios em modo static-first sobre o app Expo, as migrations do Supabase e o CI.
-O baseline tinha {sum(1 for f in fnd if f['status_baseline']=='fail')} checks reprovados, incluindo falhas confirmadas por prova de conceito:
-uso da foto de outra pessoa no próprio perfil, desfazer a ocultação feita pela moderação, derrubar qualquer perfil com uma denúncia falsa
-de "menor de idade", descobrir bloqueios entre terceiros e varrer todos os perfis da região sem limite.
+{md_table(score_rows, ['Rodada', 'O que foi auditado', 'Score', 'Classificação'])}
+A auditoria ESAA-Security executa os 108 checks dos 17 domínios em modo static-first sobre o app Expo, as migrations do Supabase,
+as Edge Functions, o painel do suporte, o site e o CI.
 
-Todas essas falhas foram corrigidas nas migrations `0005`/`0006`, no app e no CI, e cada uma ganhou um teste de regressão
-(`supabase/tests/security.test.mjs`). Restam {len(open_f)} itens em aberto ou parciais, nenhum CRITICAL.
+**Rodadas 1–2 (07/10):** falhas confirmadas por prova de conceito, como usar a foto de outra pessoa no próprio perfil, desfazer a
+ocultação da moderação e derrubar qualquer perfil com uma denúncia falsa de "menor de idade". Todas corrigidas em `0005`/`0006`.
+
+**Rodadas 3–4 (12–13/10):** o código novo (verificação, triagem automática, painel do suporte, robôs, site e lista de espera) caiu
+para {sr['value']} ({sr['classification']}). Cinco ataques foram confirmados no banco embarcado: trocar a inscrição de outra pessoa na
+lista de espera, travar a lista com um robô, banir perfis com uma sessão sem segundo fator, e furar a verificação com foto antiga ou
+com arquivo inexistente. Também faltavam cabeçalhos de segurança no site e no painel, timeout nas chamadas à OpenAI e à AWS, modelo de IA
+fixado, conferência do conteúdo das fotos e canal de alertas. Tudo foi corrigido em `0016`/`0017`, nos robôs, no painel e no CI; cada
+correção tem teste em `supabase/tests/security-run3.test.mjs`.
+
+Restam {len(open_f)} itens em aberto ou parciais, nenhum CRITICAL.
 
 ## Principais riscos restantes
 
 {md_table([(f['check_id'], f['title'], f['severity'], STATUS_PT[f['status_atual']]) for f in top], ['Check', 'Risco', 'Severidade', 'Status'])}
 ## Próximos passos
 
-1. Moderação automática de fotos (FU-004) e CAPTCHA no cadastro (BL-002) antes da campanha de anúncios.
-2. Canal de notificação para `security_alerts` (LM-004) e tela de MFA (AU-003).
-3. Política de privacidade, termos e encarregado de dados publicados (DA-005).
-4. Proteção da branch `main` e configuração do painel do Supabase conforme `SECURITY.md`.
+1. Ligar o CAPTCHA no cadastro do app (BL-002) antes da campanha de anúncios.
+2. Publicar a Política de Privacidade revisada pelo advogado e nomear o encarregado (DA-005).
+3. Tela de MFA opcional para usuários do app (AU-003) e DAST contra um projeto de staging (DO-005).
+4. Publicar site e painel em hospedagem que respeite o arquivo `_headers` (Cloudflare Pages ou Netlify) e configurar `ALERT_WEBHOOK_URL`.
+5. Proteção da branch `main` e configuração do painel do Supabase conforme `SECURITY.md`.
 """
     W("phase4/executive-summary.md", exec_md)
 
     report = {
-        "header": {"report_id": f"RPT-SEC-20261007-{run_final}", "generated_at": "2026-10-07T05:00:00Z", "run_id": run_final,
+        "header": {"report_id": f"RPT-SEC-20261013-{run_final}", "generated_at": "2026-10-13T01:30:00Z", "run_id": run_final,
                    "projection_hash_sha256": proj_hash,
-                   "audit_scope": "Static-first, 17 domínios, 108 checks; endpoint_base_url ausente.",
+                   "audit_scope": "Static-first, 17 domínios, 108 checks; endpoint_base_url ausente; PoCs em PGlite.",
                    "target": {"repo_path": ".", "endpoint_base_url": None,
-                              "tech_stack_summary": "Expo SDK 57 / React Native 0.86 + Supabase (Postgres/RLS, Auth, Storage, Realtime)",
-                              "tool_capabilities_summary": "npm audit, detect-secrets e PGlite locais; gitleaks e Semgrep no CI"}},
-        "executive_summary": {"security_score": sf, "baseline_score": sb, "top_risks": [f["finding_id"] for f in top]},
+                              "tech_stack_summary": "Expo SDK 57 / React Native 0.86 + Supabase (Postgres/RLS, Auth, Storage, Realtime, "
+                                                    "Edge Functions) + site e painel estáticos",
+                              "tool_capabilities_summary": "npm audit, detect-secrets e PGlite locais; gitleaks, Semgrep e deno check no CI"}},
+        "executive_summary": {"security_score": sl, "round_baseline_score": sr,
+                              "history": [{"run_id": r["run_id"], "score": scores[r["key"]]["value"],
+                                           "classification": scores[r["key"]]["classification"]} for r in RUNS],
+                              "top_risks": [f["finding_id"] for f in top]},
         "findings": fnd,
-        "domains": [{"domain": d["domain"], "baseline": b["score"], "atual": d["score"]}
-                    for d, b in zip(sf["breakdown"], sb["breakdown"])],
+        "domains": [{"domain": d["domain"], **{r["run_id"]: scores[r["key"]]["breakdown"][i]["score"] for r in RUNS}}
+                    for i, d in enumerate(sl["breakdown"])],
     }
     W("final/security-audit-report.json", report, True)
 
-    dom_rows = [(d["domain"], d["priority"], b["score"] if b["score"] is not None else "n/a",
-                 d["score"] if d["score"] is not None else "n/a",
+    fmt = lambda v: v if v is not None else "n/a"
+    dom_rows = [(d["domain"], d["priority"], *[fmt(scores[r["key"]]["breakdown"][i]["score"]) for r in RUNS],
                  f"{d['checks_pass']}/{d['checks_partial']}/{d['checks_fail']}/{d['checks_na']}")
-                for d, b in zip(sf["breakdown"], sb["breakdown"])]
+                for i, d in enumerate(sl["breakdown"])]
     final_md = f"""# Relatório final de auditoria — ESAA-Security
 
-- **Relatório:** RPT-SEC-20261007-{run_final}
+- **Relatório:** RPT-SEC-20261013-{run_final}
 - **Hash da projeção (SHA-256):** `{proj_hash}`
-- **Rodadas:** RUN-SEC-0001 (baseline) e RUN-SEC-0002 (após remediação)
-- **Modo:** static-first, sem endpoint runtime. Checks híbridos executaram só a parte estática.
+- **Rodadas:** {', '.join(r['run_id'] for r in RUNS)}
+- **Modo:** static-first, sem endpoint runtime. Checks híbridos executaram só a parte estática; provas de conceito no Postgres embarcado (PGlite).
 
 ## Score
 
-| Rodada | Score | Classificação | Penalidades |
-|---|---|---|---|
-| RUN-SEC-0001 | {sb['value']} | {sb['classification']} | {', '.join(sb['penalties_applied']) or '—'} |
-| RUN-SEC-0002 | {sf['value']} | {sf['classification']} | {', '.join(sf['penalties_applied']) or '—'} |
+{md_table([(r['run_id'], r['label'], scores[r['key']]['value'], scores[r['key']]['classification'], ', '.join(scores[r['key']]['penalties_applied']) or '—') for r in RUNS], ['Rodada', 'Escopo', 'Score', 'Classificação', 'Penalidades'])}
+## Score por domínio (rodadas 1 → 4; ok/parcial/falha/n-a na rodada atual)
 
-## Score por domínio (baseline → atual; ok/parcial/falha/n-a)
+{md_table(dom_rows, ['Domínio', 'Prioridade', *hist_hdr, 'Checks'])}
+## Corrigidos nesta rodada ({len(round_fixed)})
 
-{md_table(dom_rows, ['Domínio', 'Prioridade', 'Baseline', 'Atual', 'Checks'])}
-## Achados corrigidos ({len(fixed)})
+{md_table([(f['check_id'], f['title'], f['severity'], STATUS_PT[f['status_baseline']], STATUS_PT[f['status_atual']]) for f in round_fixed], ['Check', 'Achado', 'Severidade', 'RUN-SEC-0003', 'RUN-SEC-0004'])}
+## Corrigidos nas rodadas anteriores ({len(older_fixed)})
 
-{md_table([(f['check_id'], f['title'], f['severity'], STATUS_PT[f['status_baseline']], STATUS_PT[f['status_atual']]) for f in fixed], ['Check', 'Achado', 'Severidade', 'Antes', 'Agora'])}
+{md_table([(f['check_id'], f['title'], f['severity'], ' → '.join(STATUS_PT[s] for s in f['historico'].values())) for f in older_fixed], ['Check', 'Achado', 'Severidade', 'Histórico (R1 → R4)'])}
 ## Em aberto ou parciais ({len(open_f)})
 
 {md_table([(f['check_id'], f['title'], f['severity'], STATUS_PT[f['status_atual']], f['description'][:160]) for f in open_f], ['Check', 'Achado', 'Severidade', 'Status', 'Situação'])}
 ## Rastreabilidade
 
-Cada resultado está em `reports/phase2/results/` (RUN-SEC-0002) e `reports/phase2/results/RUN-SEC-0001/` (baseline).
+Resultados por rodada em `reports/phase2/results/` (a mais recente na raiz; as anteriores em `RUN-SEC-000N/`).
 Cada arquivo gerado tem seu SHA-256 registrado em `.roadmap/activity.jsonl`. Para conferir que nada foi alterado:
 
 ```bash
@@ -463,26 +519,36 @@ def ts(start, minutes):
     return t.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+REMEDIATED = {
+    "final": ["supabase/migrations/0005_security_hardening.sql", "supabase/migrations/0006_platform_hardening.sql",
+              "supabase/config.toml", "supabase/tests/security.test.mjs", "apps/mobile/src/lib/secureStorage.ts",
+              "apps/mobile/src/lib/supabase.ts", "apps/mobile/src/lib/api.ts", "apps/mobile/app/entrar.tsx",
+              "apps/mobile/app/(tabs)/perfil.tsx", "apps/mobile/package.json", ".github/workflows/ci.yml",
+              ".github/dependabot.yml", ".github/CODEOWNERS", ".github/pull_request_template.md", "SECURITY.md"],
+    "r4": ["supabase/migrations/0016_security_run3.sql", "supabase/migrations/0017_platform_run3.sql",
+           "supabase/functions/report-triage/index.ts", "supabase/functions/selfie-check/index.ts",
+           "supabase/functions/_shared/photo-decision.js", "supabase/tests/security-run3.test.mjs",
+           "supabase/tests/poc-run3.mjs", "apps/admin/index.html", "apps/admin/_headers", "apps/site/index.html",
+           "apps/site/config.js", "apps/site/_headers", "apps/security-headers.py", ".github/workflows/ci.yml"],
+}
+
+
 def cmd_run():
     pb, roadmap_contract, meta_by_check, playbooks = load_contracts()
     results = {r["key"]: build_task_results(meta_by_check, playbooks, r["key"]) for r in RUNS}
     scores = {k: score(v, playbooks) for k, v in results.items()}
 
-    phase2_files = {}
+    phase2_files, score_files = {}, {}
     for run in RUNS:
-        d = REP / "phase2" / "results" / ("RUN-SEC-0001" if run["key"] == "base" else "")
+        d = REP / "phase2" / "results" / ("" if run["key"] == LAST else run["run_id"])
         phase2_files[run["key"]] = {tid: (rel(d / f"{tid}.json"), write_json(d / f"{tid}.json", tr))
                                     for tid, tr in results[run["key"]].items()}
-    write_json(REP / "phase3" / "RUN-SEC-0001-score.json", scores["base"])
+        if run["key"] != LAST:
+            sp = REP / "phase3" / f"{run['run_id']}-score.json"
+            write_json(sp, scores[run["key"]])
+            score_files[run["key"]] = rel(sp)
 
-    # projeção provisória para obter o hash final e gerar relatórios coerentes
-    es = EventStore()
     phase1 = [rel(p) for p in sorted((REP / "phase1").glob("*"))]
-    remediated_files = ["supabase/migrations/0005_security_hardening.sql", "supabase/migrations/0006_platform_hardening.sql",
-                        "supabase/config.toml", "supabase/tests/security.test.mjs", "apps/mobile/src/lib/secureStorage.ts",
-                        "apps/mobile/src/lib/supabase.ts", "apps/mobile/src/lib/api.ts", "apps/mobile/app/entrar.tsx",
-                        "apps/mobile/app/(tabs)/perfil.tsx", "apps/mobile/package.json", ".github/workflows/ci.yml",
-                        ".github/dependabot.yml", ".github/CODEOWNERS", ".github/pull_request_template.md", "SECURITY.md"]
     report_files = None
 
     for pass_no in (1, 2):           # 2ª passada grava os hashes dos relatórios finais
@@ -498,12 +564,13 @@ def cmd_run():
             start_payload = {"mode": "static_local_code", "endpoint_base_url": None, "label": run["label"],
                              "contracts": {"playbooks.security.json": sha256_file(RM / "playbooks.security.json"),
                                            "report-template.security.json": sha256_file(RM / "report-template.security.json")}}
-            if k == "final":
-                start_payload["remediation"] = {f: sha256_file(ROOT / f) for f in remediated_files if (ROOT / f).exists()}
+            if k in REMEDIATED:
+                start_payload["remediation"] = {f: sha256_file(ROOT / f) for f in REMEDIATED[k] if (ROOT / f).exists()}
             E("orchestrator", "run.start", payload=start_payload)
-            if k == "final":
-                fixed = [c["check_id"] for c in CHECKS if c["base"] in ("fail", "partial") and c["final"] in ("pass", "not_applicable")]
-                improved = [c["check_id"] for c in CHECKS if c["base"] == "fail" and c["final"] == "partial"]
+            if k in REMEDIATED:
+                prev = PREV[k]
+                fixed = [c["check_id"] for c in CHECKS if c[prev] in ("fail", "partial") and c[k] in ("pass", "not_applicable")]
+                improved = [c["check_id"] for c in CHECKS if c[prev] == "fail" and c[k] == "partial"]
                 E("agent-impl", "remediation.applied", payload={"resolved": fixed, "mitigated": improved})
             for t in roadmap_contract["tasks"]:
                 tid, kind = t["task_id"], t["task_kind"]
@@ -524,13 +591,13 @@ def cmd_run():
                         E("orchestrator", "orchestrator.file.write", tid, {"path": p, "sha256": sha256_file(ROOT / p)})
                 else:
                     payload = {"score": scores[k]["value"], "classification": scores[k]["classification"]} if tid == "SEC-042" else {}
-                    if k == "final" and report_files:
+                    if k == LAST and report_files:
                         mine = {"SEC-030": "vulnerability-inventory", "SEC-031": "classified", "SEC-032": "risk-matrix",
                                 "SEC-040": "technical-remediations", "SEC-041": "best-practices",
                                 "SEC-042": "executive-summary", "SEC-043": "final/"}[tid]
                         payload["outputs"] = sorted(p for p in report_files if mine in p)
-                    elif k == "base":
-                        payload["outputs"] = ["security/reports/phase3/RUN-SEC-0001-score.json"]
+                    elif k != LAST:
+                        payload["outputs"] = [score_files[k]]
                     E(agent, "complete", tid, payload)
                     for p in payload.get("outputs", []):
                         E("orchestrator", "orchestrator.file.write", tid, {"path": p, "sha256": sha256_file(ROOT / p)})

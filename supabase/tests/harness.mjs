@@ -17,18 +17,25 @@ const AUTH_STUB = `
   create function auth.uid() returns uuid language sql stable as $$
     select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid
   $$;
+  -- Claims do JWT (aal = nível de autenticação: aal2 quando passou pelo MFA)
+  create function auth.jwt() returns jsonb language sql stable as $$
+    select coalesce(nullif(current_setting('request.jwt.claims', true), ''), '{}')::jsonb
+  $$;
   grant usage on schema auth to anon, authenticated;
-  grant execute on function auth.uid() to anon, authenticated;
+  grant execute on function auth.uid(), auth.jwt() to anon, authenticated;
   grant usage on schema public to anon, authenticated;
 `;
 
-export async function createDb() {
+// opts.exclude: migrations a pular (ex.: reproduzir o baseline de uma rodada da auditoria)
+export async function createDb(opts = {}) {
   const db = new PGlite();
   await db.exec(AUTH_STUB);
   for (const f of ['0001_schema.sql', '0002_functions.sql', '0003_security.sql', '0005_security_hardening.sql',
                    '0007_message_likes_and_interests.sql', '0008_verified_first_and_moderation.sql',
                    '0009_unverified_actions.sql', '0010_report_auto_triage.sql',
-                   '0012_admin_panel_and_rules.sql', '0013_selfie_auto_check.sql', '0014_waitlist.sql']) {
+                   '0012_admin_panel_and_rules.sql', '0013_selfie_auto_check.sql', '0014_waitlist.sql',
+                   '0016_security_run3.sql']) {
+    if ((opts.exclude ?? []).includes(f)) continue;
     await db.exec(read(`migrations/${f}`));
   }
   await db.exec(read('seed.sql'));
@@ -36,9 +43,15 @@ export async function createDb() {
 }
 
 // Executa SQL "como" um usuário logado (role authenticated + JWT sub)
+// Contas que entram com segundo fator (MFA): o JWT delas sai com aal2
+export const MFA = new Set();
+export const withMfa = (uid) => { MFA.add(uid); return uid; };
+
 export async function asUser(db, uid, sql, params = []) {
   return db.transaction(async (tx) => {
     await tx.query(`select set_config('request.jwt.claim.sub', $1, true)`, [uid ?? '']);
+    await tx.query(`select set_config('request.jwt.claims', $1, true)`,
+      [JSON.stringify({ sub: uid ?? null, role: 'authenticated', aal: MFA.has(uid) ? 'aal2' : 'aal1' })]);
     await tx.exec('set local role authenticated');
     return tx.query(sql, params);
   });

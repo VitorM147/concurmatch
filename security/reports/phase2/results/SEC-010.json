@@ -195,7 +195,7 @@
           ".github/workflows/ci.yml"
         ],
         "lines": [
-          ".github/workflows/ci.yml:37:EXPO_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder"
+          ".github/workflows/ci.yml:39:EXPO_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder"
         ],
         "commands_output": [],
         "evidence_types": [

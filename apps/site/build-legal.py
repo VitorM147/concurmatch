@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Gera termos.html e privacidade.html a partir de docs/legal/*.md.
 Rode de novo sempre que o texto jurídico mudar: python3 apps/site/build-legal.py"""
-import html, pathlib, markdown
+import html, pathlib, sys, markdown
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 SITE = ROOT / 'apps' / 'site'
@@ -57,3 +57,7 @@ for src, out, title in PAGES:
     body = body.replace('<table>', '<div class="table"><table>').replace('</table>', '</table></div>')
     (SITE / out).write_text(TEMPLATE.format(title=html.escape(title), body=body), encoding='utf-8')
     print('gerado', out)
+
+# As páginas novas precisam da CSP: regenera os cabeçalhos de segurança
+import subprocess  # noqa: E402
+subprocess.run([sys.executable, str(ROOT / 'apps' / 'security-headers.py')], check=True)

@@ -1,0 +1,160 @@
+{
+  "task_id": "SEC-018",
+  "domain": "cryptography",
+  "playbook_version": "1.2.1",
+  "checks_total": 5,
+  "checks_pass": 4,
+  "checks_fail": 0,
+  "checks_partial": 1,
+  "checks_na": 0,
+  "checks_error": 0,
+  "worst_severity": "NONE",
+  "duration_ms": 0,
+  "results": [
+    {
+      "check_id": "CR-001",
+      "check_name": "HTTPS não obrigatório",
+      "status": "pass",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "apps/mobile/src/lib/supabase.ts"
+        ],
+        "lines": [
+          "apps/mobile/src/lib/supabase.ts:15:throw new Error('EXPO_PUBLIC_SUPABASE_URL precisa usar https://');"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": true,
+        "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
+        "description": "Baseline: o app aceitava qualquer URL, inclusive http://. RUN-0002: exige https:// fora do dev local."
+      },
+      "remediation": "Configurar redirect 301 HTTP→HTTPS. Adicionar HSTS header (max-age=31536000; includeSubDomains; preload). Considerar HSTS preload list.",
+      "cross_refs": [
+        "IF-001"
+      ]
+    },
+    {
+      "check_id": "CR-002",
+      "check_name": "Algoritmos criptográficos inseguros",
+      "status": "pass",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [],
+        "lines": [],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Nenhuma criptografia própria; TLS e bcrypt gerenciados."
+      },
+      "remediation": "Migrar para AES-256-GCM, SHA-256+. TLS 1.2 mínimo (preferencialmente 1.3). crypto.randomBytes/secrets.token para valores aleatórios seguros.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "CR-003",
+      "check_name": "Dados sensíveis sem criptografia",
+      "status": "pass",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "apps/mobile/src/lib/secureStorage.ts"
+        ],
+        "lines": [
+          "apps/mobile/src/lib/secureStorage.ts:10:keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: access e refresh token gravados no AsyncStorage (texto puro no aparelho). RUN-0002: Keychain/Keystore via expo-secure-store com acesso 'após o primeiro desbloqueio, só neste aparelho'. Dados no banco: criptografia em disco do provedor."
+      },
+      "remediation": "Criptografar campos sensíveis a nível de aplicação (envelope encryption). Habilitar encryption at-rest no DB. Criptografar backups.",
+      "cross_refs": [
+        "FE-001"
+      ]
+    },
+    {
+      "check_id": "CR-004",
+      "check_name": "Chaves criptográficas expostas",
+      "status": "pass",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "security/reports/phase2/evidence/detect-secrets.json"
+        ],
+        "lines": [
+          "security/reports/phase2/evidence/detect-secrets.json:131:\"results\": {"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": "detect-secrets",
+        "tool_version": "1.5.0",
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Nenhuma chave criptográfica no repositório (detect-secrets)."
+      },
+      "remediation": "Armazenar chaves em KMS/Vault. Se em arquivo, permissão 600 e fora do repo. Rotacionar chaves comprometidas imediatamente.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "CR-005",
+      "check_name": "Falta de rotação de chaves",
+      "status": "partial",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "medium",
+      "evidence": {
+        "files": [
+          "SECURITY.md"
+        ],
+        "lines": [
+          "SECURITY.md:35:## Rotação de chaves"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "doc_reference"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: sem processo de rotação. RUN-0002: runbook em SECURITY.md (manual, não automatizado)."
+      },
+      "remediation": "Implementar key versioning. Usar JWKS para JWT com kid header. Configurar auto-rotation em KMS. Documentar policy de rotação.",
+      "cross_refs": []
+    }
+  ]
+}

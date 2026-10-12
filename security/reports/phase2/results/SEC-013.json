@@ -3,10 +3,10 @@
   "domain": "authorization",
   "playbook_version": "1.2.1",
   "checks_total": 6,
-  "checks_pass": 5,
+  "checks_pass": 6,
   "checks_fail": 0,
   "checks_partial": 0,
-  "checks_na": 1,
+  "checks_na": 0,
   "checks_error": 0,
   "worst_severity": "NONE",
   "duration_ms": 0,
@@ -120,26 +120,44 @@
     {
       "check_id": "AZ-004",
       "check_name": "Admin routes expostas",
-      "status": "not_applicable",
+      "status": "pass",
       "severity_if_fail": "HIGH",
       "confidence": "high",
       "evidence": {
-        "files": [],
-        "lines": [],
+        "files": [
+          "supabase/migrations/0012_admin_panel_and_rules.sql",
+          "security/reports/phase2/evidence/run3-static-findings.txt",
+          "security/reports/phase2/evidence/run3-baseline-poc.txt",
+          "supabase/migrations/0016_security_run3.sql",
+          "apps/admin/index.html",
+          "security/reports/phase2/evidence/run4-post-remediation-poc.txt",
+          "supabase/tests/security-run3.test.mjs"
+        ],
+        "lines": [
+          "supabase/migrations/0012_admin_panel_and_rules.sql:23:create function public.require_admin() returns uuid",
+          "security/reports/phase2/evidence/run3-static-findings.txt:13:admin/index.html:128:      const { error } = await db.auth.signInWithPassword({ email: e.value.trim(), password: p.value });",
+          "security/reports/phase2/evidence/run3-baseline-poc.txt:4:E3 VULNERÁVEL: sessão sem segundo fator conseguiu banir um perfil",
+          "supabase/migrations/0016_security_run3.sql:36:raise exception 'MFA_REQUIRED' using errcode = '42501',",
+          "apps/admin/index.html:173:const { error } = await db.auth.mfa.challengeAndVerify({ factorId, code: code.value.trim() });",
+          "security/reports/phase2/evidence/run4-post-remediation-poc.txt:4:E3 protegido: bloqueado (MFA_REQUIRED)",
+          "supabase/tests/security-run3.test.mjs:59:test('E3: admin sem segundo fator não decide nada; com MFA decide', async () => {"
+        ],
         "commands_output": [],
         "evidence_types": [
-          "doc_reference"
+          "code_snippet",
+          "tool_output"
         ],
         "evidence_sources": [
-          "static_analysis"
+          "static_analysis",
+          "pglite_poc"
         ],
         "tool_name": null,
         "tool_version": null,
         "fallback_applied": true,
         "fallback_reason": "endpoint_not_provided: porção runtime não executada (static-first)",
-        "description": "Não existe painel nem rota administrativa no repositório."
+        "description": "Painel do suporte (apps/admin + funções admin_*) aceitava sessão só com senha: quem roubasse a senha de um admin banía perfis e lia selfies (PoC E3). RUN-0004: is_admin()/require_admin() exigem sessão aal2 (segundo fator TOTP); o painel cadastra e pede o código; a policy de leitura de selfies no Storage usa is_admin()."
       },
-      "remediation": "Proteger admin com auth + role admin. Mover para subdomain ou porta segregada. Implementar IP whitelist se possível. Adicionar MFA para admin.",
+      "remediation": "Proteger admin com auth + role admin. Mover para subdomain ou porta segregada. Implementar IP whitelist se possível. Adicionar MFA para admin. | Aplicado: 0016: is_admin() exige aal2; painel com TOTP",
       "cross_refs": []
     },
     {
@@ -187,7 +205,7 @@
           "apps/mobile/app/(tabs)/perfil.tsx"
         ],
         "lines": [
-          "apps/mobile/app/(tabs)/perfil.tsx:50:{ text: 'Excluir tudo', style: 'destructive', onPress: async () => {"
+          "apps/mobile/app/(tabs)/perfil.tsx:56:{ text: 'Excluir tudo', style: 'destructive', onPress: async () => {"
         ],
         "commands_output": [],
         "evidence_types": [

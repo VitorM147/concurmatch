@@ -53,8 +53,8 @@
           ".github/workflows/ci.yml"
         ],
         "lines": [
-          ".github/workflows/ci.yml:47:name: Secrets scanning (gitleaks)      # DO-003 / SC-001",
-          ".github/workflows/ci.yml:57:name: SAST (Semgrep)                   # DO-004"
+          ".github/workflows/ci.yml:49:name: Secrets scanning (gitleaks)      # DO-003 / SC-001",
+          ".github/workflows/ci.yml:76:name: SAST (Semgrep)                   # DO-004"
         ],
         "commands_output": [],
         "evidence_types": [
@@ -83,7 +83,7 @@
           ".github/workflows/ci.yml"
         ],
         "lines": [
-          ".github/workflows/ci.yml:52:- uses: gitleaks/gitleaks-action@v2"
+          ".github/workflows/ci.yml:54:- uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2"
         ],
         "commands_output": [],
         "evidence_types": [
@@ -112,7 +112,7 @@
           ".github/workflows/ci.yml"
         ],
         "lines": [
-          ".github/workflows/ci.yml:62:- run: semgrep scan --config p/typescript --config p/react --config p/secrets --error --metrics=off"
+          ".github/workflows/ci.yml:81:- run: semgrep scan --config p/typescript --config p/javascript --config p/react --config p/secrets --error --metrics=off"
         ],
         "commands_output": [],
         "evidence_types": [

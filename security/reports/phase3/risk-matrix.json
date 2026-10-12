@@ -1,21 +1,13 @@
 {
-  "run_id": "RUN-SEC-0002",
+  "run_id": "RUN-SEC-0004",
   "matrix": [
-    {
-      "finding_id": "F-AP-001",
-      "severity": "HIGH",
-      "likelihood": "alta",
-      "cia_impact": "CA",
-      "status": "partial",
-      "remediation": "Implementar rate limiting por IP e por user. Endpoints de auth: 5-10 req/min. APIs gerais: 100-1000 req/min conforme caso de uso. Retornar 429 com Retry-After header."
-    },
     {
       "finding_id": "F-BL-002",
       "severity": "HIGH",
-      "likelihood": "média",
+      "likelihood": "alta",
       "cia_impact": "IA",
       "status": "partial",
-      "remediation": "Implementar CAPTCHA (hCaptcha, Turnstile, reCAPTCHA v3) em endpoints críticos. Velocity checks per user (máximo N ações por janela). Device fingerprinting (FingerprintJS). Considerar proof-of-work para fluxos muito abusados. Monitorar comportamento anômalo e bloquear proativamente."
+      "remediation": "Implementar CAPTCHA (hCaptcha, Turnstile, reCAPTCHA v3) em endpoints críticos. Velocity checks per user (máximo N ações por janela). Device fingerprinting (FingerprintJS). Considerar proof-of-work para fluxos muito abusados. Monitorar comportamento anômalo e bloquear proativamente. | Aplicado: 0016: limite por IP + campo-isca"
     },
     {
       "finding_id": "F-DA-005",
@@ -42,14 +34,6 @@
       "remediation": "Atualizar dependências vulneráveis. Adicionar SRI em scripts de CDN. Configurar npm audit na CI."
     },
     {
-      "finding_id": "F-FU-001",
-      "severity": "HIGH",
-      "likelihood": "média",
-      "cia_impact": "CI",
-      "status": "partial",
-      "remediation": "Whitelist de extensões e MIME types permitidos. Validar magic bytes com library (file-type, python-magic). Rejeitar tudo que não está na whitelist."
-    },
-    {
       "finding_id": "F-IF-005",
       "severity": "HIGH",
       "likelihood": "baixa",
@@ -63,7 +47,7 @@
       "likelihood": "média",
       "cia_impact": "CI",
       "status": "partial",
-      "remediation": "Implementar TOTP com speakeasy/pyotp. Exigir MFA para admin. Oferecer MFA opt-in para todos. Fornecer recovery codes."
+      "remediation": "Implementar TOTP com speakeasy/pyotp. Exigir MFA para admin. Oferecer MFA opt-in para todos. Fornecer recovery codes. | Aplicado: 0016 + painel"
     },
     {
       "finding_id": "F-CR-005",
@@ -94,8 +78,8 @@
       "severity": "MEDIUM",
       "likelihood": "média",
       "cia_impact": "CI",
-      "status": "fail",
-      "remediation": "Integrar ClamAV ou serviço equivalente. Escanear antes de persistir. Quarentenar até scan completar. Rejeitar e alertar em caso de detecção."
+      "status": "partial",
+      "remediation": "Integrar ClamAV ou serviço equivalente. Escanear antes de persistir. Quarentenar até scan completar. Rejeitar e alertar em caso de detecção. | Aplicado: moderação de fotos no robô"
     },
     {
       "finding_id": "F-IF-006",
@@ -104,14 +88,6 @@
       "cia_impact": "A",
       "status": "partial",
       "remediation": "Implementar CDN com proteção DDoS (Cloudflare, AWS Shield). Rate limiting em nginx/load balancer. Não expor IP do origin server."
-    },
-    {
-      "finding_id": "F-LM-004",
-      "severity": "MEDIUM",
-      "likelihood": "média",
-      "cia_impact": "I",
-      "status": "partial",
-      "remediation": "Configurar alertas para: auth failures > threshold, error rate spikes, suspicious patterns. Integrar com Sentry/Datadog/PagerDuty."
     },
     {
       "finding_id": "F-AP-005",
@@ -128,14 +104,6 @@
       "cia_impact": "CI",
       "status": "fail",
       "remediation": "Implementar OWASP ZAP ou Nuclei em CI contra staging. Scan antes de deploy para produção. Triage findings antes de release."
-    },
-    {
-      "finding_id": "F-DS-005",
-      "severity": "LOW",
-      "likelihood": "média",
-      "cia_impact": "CIA",
-      "status": "partial",
-      "remediation": "Auditar dependências diretas periodicamente. Usar ferramentas como socket.dev ou snyk para visibilidade de supply chain. | Aplicado: dependabot.yml; pendente: fixar actions por SHA"
     },
     {
       "finding_id": "F-LM-003",

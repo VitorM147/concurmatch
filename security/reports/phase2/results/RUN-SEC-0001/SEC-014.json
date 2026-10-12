@@ -80,7 +80,7 @@
           "apps/mobile/app/entrar.tsx"
         ],
         "lines": [
-          "apps/mobile/app/entrar.tsx:31:// Mensagem genérica: não revela se o e-mail existe (AP-003)"
+          "apps/mobile/app/entrar.tsx:32:// Mensagem genérica: não revela se o e-mail existe (AP-003)"
         ],
         "commands_output": [],
         "evidence_types": [

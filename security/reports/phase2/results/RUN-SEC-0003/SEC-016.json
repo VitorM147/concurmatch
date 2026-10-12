@@ -1,0 +1,201 @@
+{
+  "task_id": "SEC-016",
+  "domain": "file_upload",
+  "playbook_version": "1.2.1",
+  "checks_total": 6,
+  "checks_pass": 4,
+  "checks_fail": 1,
+  "checks_partial": 1,
+  "checks_na": 0,
+  "checks_error": 0,
+  "worst_severity": "MEDIUM",
+  "duration_ms": 0,
+  "results": [
+    {
+      "check_id": "FU-001",
+      "check_name": "Uploads sem validação de tipo",
+      "status": "partial",
+      "severity_if_fail": "HIGH",
+      "confidence": "medium",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0004_supabase_platform.sql",
+          "supabase/migrations/0006_platform_hardening.sql",
+          "security/reports/phase2/evidence/run3-static-findings.txt"
+        ],
+        "lines": [
+          "supabase/migrations/0004_supabase_platform.sql:7:insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)",
+          "supabase/migrations/0006_platform_hardening.sql:13:and name ~ ('^' || auth.uid()::text || '/[A-Za-z0-9_-]{1,64}\\.(jpg|jpeg|png|webp)$')",
+          "security/reports/phase2/evidence/run3-static-findings.txt:40:ocorrências de magic number / moderação de imagem: 0"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet",
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Tipo validado só pela extensão e pelo Content-Type declarado."
+      },
+      "remediation": "Whitelist de extensões e MIME types permitidos. Validar magic bytes com library (file-type, python-magic). Rejeitar tudo que não está na whitelist.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "FU-002",
+      "check_name": "Uploads sem limite de tamanho",
+      "status": "pass",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0004_supabase_platform.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0004_supabase_platform.sql:8:values ('photos', 'photos', false, 5242880, array['image/jpeg', 'image/png', 'image/webp'])"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "config_artifact"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Limite de 5 MB no bucket e redimensionamento para 1080 px no app."
+      },
+      "remediation": "Configurar limite no web server (nginx: client_max_body_size 10M) e na aplicação. Limitar por tipo de arquivo. Rejeitar com 413 Payload Too Large.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "FU-003",
+      "check_name": "Uploads armazenados no servidor da aplicação",
+      "status": "pass",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0004_supabase_platform.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0004_supabase_platform.sql:7:insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Arquivos no Storage (objeto), nunca no servidor da aplicação."
+      },
+      "remediation": "Mover para object storage (S3, Azure Blob). Servir via CDN ou signed URLs com expiração. Se local necessário, fora do webroot com randomized filenames.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "FU-004",
+      "check_name": "Ausência de antivírus",
+      "status": "fail",
+      "severity_if_fail": "MEDIUM",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0001_schema.sql",
+          "security/reports/phase2/evidence/run3-static-findings.txt"
+        ],
+        "lines": [
+          "supabase/migrations/0001_schema.sql:117:approved     boolean not null default true,   -- moderação pode reprovar",
+          "security/reports/phase2/evidence/run3-static-findings.txt:40:ocorrências de magic number / moderação de imagem: 0"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet",
+          "tool_output"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Nenhuma checagem do conteúdo das fotos."
+      },
+      "remediation": "Integrar ClamAV ou serviço equivalente. Escanear antes de persistir. Quarentenar até scan completar. Rejeitar e alertar em caso de detecção.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "FU-005",
+      "check_name": "Possibilidade de upload executável",
+      "status": "pass",
+      "severity_if_fail": "CRITICAL",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0004_supabase_platform.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0004_supabase_platform.sql:8:values ('photos', 'photos', false, 5242880, array['image/jpeg', 'image/png', 'image/webp'])"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "config_artifact"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Bucket privado, só MIME de imagem, entregue por URL assinada; nada é executado."
+      },
+      "remediation": "Whitelist rigorosa de extensões. Servir uploads de domínio separado. Content-Type correto + Content-Disposition: attachment. Randomizar filenames.",
+      "cross_refs": []
+    },
+    {
+      "check_id": "FU-006",
+      "check_name": "Filenames não sanitizados",
+      "status": "pass",
+      "severity_if_fail": "HIGH",
+      "confidence": "high",
+      "evidence": {
+        "files": [
+          "supabase/migrations/0006_platform_hardening.sql",
+          "supabase/migrations/0005_security_hardening.sql"
+        ],
+        "lines": [
+          "supabase/migrations/0006_platform_hardening.sql:13:and name ~ ('^' || auth.uid()::text || '/[A-Za-z0-9_-]{1,64}\\.(jpg|jpeg|png|webp)$')",
+          "supabase/migrations/0005_security_hardening.sql:29:alter table public.photos add constraint photos_path_owner"
+        ],
+        "commands_output": [],
+        "evidence_types": [
+          "code_snippet"
+        ],
+        "evidence_sources": [
+          "static_analysis"
+        ],
+        "tool_name": null,
+        "tool_version": null,
+        "fallback_applied": false,
+        "fallback_reason": null,
+        "description": "Baseline: a policy só exigia a pasta do usuário; qualquer nome de arquivo era aceito. RUN-0002: regex de nome e extensão na policy do Storage e na tabela."
+      },
+      "remediation": "Substituir filename por UUID + extensão validada. Armazenar nome original apenas em DB (sanitizado). Nunca usar filename original em path do filesystem.",
+      "cross_refs": [
+        "AZ-002"
+      ]
+    }
+  ]
+}

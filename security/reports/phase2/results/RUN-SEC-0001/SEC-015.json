@@ -126,7 +126,7 @@
           "apps/mobile/app/chat/[id].tsx"
         ],
         "lines": [
-          "apps/mobile/app/chat/[id].tsx:97:<Text style={[font.body, { color: mine ? c.onPrimary : c.text }]}>{item.body}</Text>"
+          "apps/mobile/app/chat/[id].tsx:90:<Text style={[font.body, { color: mine ? c.onPrimary : c.text }]}>{item.body}</Text>"
         ],
         "commands_output": [],
         "evidence_types": [

@@ -117,6 +117,8 @@ const friendly: Record<string, string> = {
   ALREADY_VERIFIED: 'Seu perfil já está verificado.',
   PHOTO_REQUIRED: 'Adicione uma foto do rosto no perfil antes de verificar.',
   NO_VERIFICATION_CHALLENGE: 'Comece a verificação de novo para receber o gesto.',
+  SELFIE_NOT_FOUND: 'Não encontramos a selfie enviada. Tire a foto de novo.',
+  SELFIE_TOO_OLD: 'A selfie precisa ser tirada agora, depois de ver o pedido.',
   NOT_UNDER_REVIEW: 'Seu perfil não está em análise.',
   APPEAL_ALREADY_OPEN: 'Você já enviou sua explicação. Nossa equipe vai analisar.',
   RATE_LIMITED: 'Calma! Muitas ações em pouco tempo. Tente de novo em instantes.',
