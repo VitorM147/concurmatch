@@ -138,7 +138,7 @@
           "SECURITY.md"
         ],
         "lines": [
-          "SECURITY.md:35:## Rotação de chaves"
+          "SECURITY.md:41:## Rotação de chaves"
         ],
         "commands_output": [],
         "evidence_types": [

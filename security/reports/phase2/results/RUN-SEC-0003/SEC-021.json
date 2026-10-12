@@ -128,7 +128,7 @@
           "SECURITY.md"
         ],
         "lines": [
-          "SECURITY.md:31:3. **Database → Backups:** confirmar backup diário (plano Pro) e testar uma restauração."
+          "SECURITY.md:37:3. **Database → Backups:** confirmar backup diário (plano Pro) e testar uma restauração."
         ],
         "commands_output": [],
         "evidence_types": [

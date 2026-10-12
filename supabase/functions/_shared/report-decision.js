@@ -23,8 +23,13 @@ export const THRESHOLDS = {
   },
 };
 
-/** Junta os resultados (um por texto) pegando a maior nota de cada categoria. */
+/**
+ * Junta os resultados (um por texto) pegando a maior nota de cada categoria.
+ * @param {Array<{ category_scores?: Record<string, number> }>} results
+ * @returns {Record<string, number>}
+ */
 export function maxScores(results) {
+  /** @type {Record<string, number>} */
   const out = {};
   for (const r of results ?? []) {
     for (const [k, v] of Object.entries(r?.category_scores ?? {})) {

@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     try {
       // AI-007: entrada limitada (50 textos de até 4.000 caracteres por denúncia)
       const texts = (r.texts ?? []).filter((t) => t?.trim()).map((t) => t.slice(0, 4000)).slice(0, 50);
-      const scores = texts.length ? await moderate(texts, apiKey) : {};
+      const scores: Record<string, number> = texts.length ? await moderate(texts, apiKey) : {};
       const { severity, reasons } = decideReport({ texts, scores });
       const { data, error: e } = await db.rpc('apply_report_triage', {
         p_report: r.id, p_severity: severity, p_scores: { model: MODEL, scores, reasons },

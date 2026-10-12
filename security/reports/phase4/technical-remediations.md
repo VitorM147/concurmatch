@@ -35,7 +35,7 @@ Todos os achados das quatro rodadas e o que foi aplicado. Provas de conceito em 
 - **Histórico:** R0001: parcial → R0002: parcial → R0003: parcial → R0004: parcial
 - **Evidência:** Backup depende do plano do Supabase e não é verificável no repo; exigência registrada em SECURITY.md.
 - **Correção:** Configurar backups automatizados (diário DB, semanal full). Testar restore mensalmente. Armazenar off-site/cross-region. Criptografar backups.
-- **Onde:** `SECURITY.md:31`
+- **Onde:** `SECURITY.md:37`
 
 ## AU-003 — Ausência de MFA (MEDIUM)
 
@@ -49,7 +49,7 @@ Todos os achados das quatro rodadas e o que foi aplicado. Provas de conceito em 
 - **Histórico:** R0001: FALHA → R0002: parcial → R0003: parcial → R0004: parcial
 - **Evidência:** Baseline: sem processo de rotação. RUN-0002: runbook em SECURITY.md (manual, não automatizado).
 - **Correção:** Implementar key versioning. Usar JWKS para JWT com kid header. Configurar auto-rotation em KMS. Documentar policy de rotação.
-- **Onde:** `SECURITY.md:35`
+- **Onde:** `SECURITY.md:41`
 
 ## DO-001 — Ausência de code review (MEDIUM)
 
