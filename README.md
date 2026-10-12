@@ -11,7 +11,7 @@ App de relacionamento para quem estuda para concursos, vestibular, OAB e residê
 | Parte | Conteúdo |
 |---|---|
 | **Banco (Supabase/Postgres)** | Schema, RLS, regras de negócio em funções SQL, catálogo de concursos e configurações |
-| **Testes do banco** | 70 testes automatizados com Postgres embarcado: match, cotas diárias, verificação, curtida com mensagem, filtro de programa/cobrança, denúncia com evidência, recurso, interesses, discovery, chat, bloqueio, denúncia, RLS, LGPD e regressões de segurança |
+| **Testes do banco** | 80 testes automatizados com Postgres embarcado: match, cotas diárias, verificação, curtida com mensagem, filtro de programa/cobrança, denúncia com evidência, recurso, interesses, discovery, chat, bloqueio, denúncia, RLS, LGPD e regressões de segurança |
 | **App (Expo / React Native)** | Cadastro e login, onboarding com consentimento LGPD, Descobrir (swipe + curtida com mensagem), tela de match, abas Conexões e Mensagens, chat em tempo real com sugestões para conversar, denunciar, bloquear e desfazer match, perfil com fotos, "Sobre mim", interesses e preferências, Premium (tela, só verificado), verificação por gesto + selfie, perfil em análise com recurso, Central de segurança, excluir conta |
 | **CI** | GitHub Actions rodando os testes do banco e o typecheck do app |
 
@@ -106,9 +106,8 @@ npm test          # 41 testes (regras + segurança + curtida com mensagem), sem 
 |---|---|
 | Cobrança do Premium (R$ 24,90) | RevenueCat (assinaturas Apple/Google) + webhook gravando em `entitlements` |
 | Push de "novo match" e "nova mensagem" | Database Webhook → Edge Function → Expo Push |
-| Verificação de selfie (selo ✓) | Edge Function + AWS Rekognition (Face Liveness) |
+| Prova de vida na verificação (Face Liveness) | Componente nativo da AWS no app; hoje a selfie com desafio + CompareFaces já roda (`selfie-check`) |
 | Moderação automática de fotos | Edge Function + Rekognition `DetectModerationLabels` → `photos.approved` |
-| Painel admin de denúncias | Supabase Studio no início; depois, uma página web simples |
 | Apagar arquivos de foto ao excluir conta | Edge Function agendada limpando arquivos órfãos do Storage |
 | Login com Google/Apple | Supabase Auth OAuth (a Apple exige "Sign in with Apple" se houver login social) |
 
@@ -135,3 +134,28 @@ A Edge Function `supabase/functions/report-triage` roda a cada minuto (pg_cron, 
 5. Para ver o que sobrou para decidir: `select public.moderation_queue();`. Para decidir: `select public.moderation_resolve('<user_id>', 'banir' | 'restaurar', 'motivo');`.
 
 Os limites de gravidade ficam em `supabase/functions/_shared/report-decision.js`. A Política de Privacidade precisa informar que, em caso de denúncia, o texto da conversa é analisado por um serviço automático fora do Brasil (OpenAI).
+
+## Painel do suporte (`apps/admin`)
+
+Uma página só (`apps/admin/index.html`), sem build. Abra no navegador ou publique em qualquer hospedagem estática (ex.: `suporte.conmatch.com.br`, protegida por senha no provedor).
+
+1. No SQL Editor, torne sua conta admin: `insert into public.admins (user_id) values ('<seu user id>');`
+2. Abra a página, informe a URL e a chave **pública** (anon) do projeto e entre com seu e-mail e senha do app.
+3. A fila mostra só o que precisa de uma pessoa, em ordem: menor de idade, casos graves, recursos, selfies. Cada caso traz a conversa guardada na denúncia, as notas da triagem e as fotos.
+4. Toda decisão exige um motivo e fica em `audit_logs` com o seu id.
+
+## Verificação automática de selfie (`supabase/functions/selfie-check`)
+
+Pronta e **desligada** até existir conta na AWS. Enquanto isso, as selfies aparecem no painel do suporte.
+
+- O app sorteia um desafio de rosto (sorrir, ficar sério, virar o rosto…). O robô confere o desafio com `DetectFaces` e compara a selfie com até 3 fotos do perfil (`CompareFaces`).
+- Mesmo rosto (≥ 92%) e desafio cumprido = aprovada na hora. Rosto diferente, foto escura ou desafio não feito = recusada, com a orientação. Na 3ª recusa em 24h, ou com idade aparente abaixo de 18, vai para uma pessoa.
+- Depois de decidir, a selfie é apagada; ficam só as notas.
+- Para ligar: crie um usuário IAM com permissão só para `rekognition:DetectFaces` e `rekognition:CompareFaces`, depois `supabase secrets set AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=... AWS_REGION=sa-east-1 SELFIE_CHECK_SECRET=...`, `supabase functions deploy selfie-check --no-verify-jwt` e os dois segredos no Vault (`selfie_check_url`, `selfie_check_secret`), como descrito na migration `0015`.
+- Custo de referência: US$ 0,001 por imagem analisada (até 4 por verificação).
+
+## Site e lista de espera (`apps/site`)
+
+`apps/site/index.html` é o conmatch.com.br: apresentação, planos e lista de espera por cidade (gravada em `public.waitlist` pela função `join_waitlist`, que não devolve dados de ninguém). Preencha `SUPABASE_URL` e `SUPABASE_ANON_KEY` no fim do arquivo e publique a pasta em qualquer hospedagem estática (Cloudflare Pages, Netlify, Vercel) apontando o domínio do Registro.br.
+
+`termos.html` e `privacidade.html` são gerados de `docs/legal/*.md` (rascunho para o advogado): rode `python3 apps/site/build-legal.py` sempre que o texto mudar. O app abre esses links no cadastro.

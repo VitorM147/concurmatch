@@ -62,3 +62,7 @@ file_size_limit = "5MiB"
 # x-worker-secret (REPORT_TRIAGE_SECRET), não com JWT de usuário.
 [functions.report-triage]
 verify_jwt = false
+
+# Robô de selfie (AWS Rekognition): mesmo esquema do report-triage
+[functions.selfie-check]
+verify_jwt = false

@@ -19,7 +19,8 @@ Apps de relacionamento novos tendem a virar "submundo": perfis falsos, spam, gol
    - a pessoa ocultada pode mandar a versão dela;
    - o suporte decide entre restaurar e banir, e a decisão fica em `audit_logs`;
    - **triagem automática** (migration 0010): a Moderation API da OpenAI dá nota ao que a pessoa denunciada escreveu. Se a evidência é grave, o perfil é escondido na hora. Se não há evidência, a denúncia é arquivada, e o perfil é restaurado quando não sobra nenhuma aberta. Perfil falso se resolve verificando o rosto. O humano só confirma banimentos, sem urgência, porque quem tem evidência grave já está escondido.
-7. **Verificação por selfie** continua manual por enquanto. A automação com AWS Rekognition (prova de vida + comparação de rosto) fica para depois.
+7. **Verificação por selfie:** revisão humana pelo painel do suporte (`apps/admin`). A automação com AWS Rekognition (desafio de rosto + comparação, migrations 0013/0015) está pronta e desligada até existir conta na AWS. A prova de vida em vídeo (Face Liveness) fica para depois.
+8. **Compromisso:** o cadastro exige aceitar as regras da comunidade (4º consentimento, migration 0012).
 
 ## Consequências
 

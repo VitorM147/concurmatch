@@ -112,7 +112,7 @@ test('DA-005: titular exporta os próprios dados (LGPD art. 18)', async () => {
   await asUser(db, a, 'insert into public.messages (match_id, sender_id, body) values ($1, $2, $3)', [match_id, a, 'oi']);
   const data = (await rpc(db, a, 'export_my_data'))[0].export_my_data;
   assert.equal(data.profile.id, a);
-  assert.equal(data.consents.length, 3);
+  assert.equal(data.consents.length, 4);
   assert.equal(data.likes_given.length, 1);
   assert.equal(data.messages_sent[0].body, 'oi');
   assert.ok(!('banned_at' in data.profile) && !('moderation_hidden_at' in data.profile), 'não expõe campos internos de moderação');

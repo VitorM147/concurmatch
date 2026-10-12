@@ -1,8 +1,9 @@
-// Verificação de perfil: o servidor sorteia um gesto, a pessoa tira uma selfie
-// fazendo o gesto e o suporte compara com as fotos do perfil. Aprovou uma vez,
-// vale para sempre. Sem verificação a pessoa só curte e passa.
+// Verificação de perfil: o servidor sorteia um desafio de rosto (sorrir, virar o
+// rosto...), a pessoa tira uma selfie e o robô (AWS Rekognition) confere o desafio
+// e compara com as fotos do perfil, em cerca de um minuto. Sem robô configurado,
+// o suporte confere pelo painel. Aprovou uma vez, vale para sempre.
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
 import { Button, H1, Highlight, P, Screen } from '@/components/ui';
 import { api, ApiError, type ModerationStatus } from '@/lib/api';
@@ -35,6 +36,15 @@ export default function Verificacao() {
     }).catch(() => {});
   }, [refreshProfile]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  // Enquanto a selfie está em análise, confere de novo a cada 8 s (por até 3 min)
+  const pending = st?.verification?.status === 'pendente' && !st?.verified;
+  useEffect(() => {
+    if (!pending) return;
+    let n = 0;
+    const t = setInterval(() => { n += 1; if (n > 22) clearInterval(t); else load(); }, 8000);
+    return () => clearInterval(t);
+  }, [pending, load]);
 
   const start = async () => {
     setBusy(true);
@@ -76,7 +86,7 @@ export default function Verificacao() {
         ) : v === 'pendente' ? (
           <>
             <H1>Selfie <Highlight>em análise</Highlight></H1>
-            <P muted>Nossa equipe compara a selfie com as fotos do seu perfil, normalmente em até 24 horas. Enquanto isso você pode curtir e passar perfis.</P>
+            <P muted>Estamos comparando a selfie com as fotos do seu perfil. Normalmente leva cerca de um minuto; se precisar de uma pessoa, até 24 horas. Enquanto isso você pode curtir e passar perfis.</P>
             <Button title="Ok" onPress={() => router.back()} />
           </>
         ) : (
@@ -100,7 +110,7 @@ export default function Verificacao() {
 
             {gesture ? (
               <View style={{ gap: space.md, backgroundColor: c.primary, borderRadius: radius.lg, padding: space.xl }}>
-                <Text style={[font.label, { color: c.onPrimary, opacity: 0.8 }]}>Faça este gesto na selfie</Text>
+                <Text style={[font.label, { color: c.onPrimary, opacity: 0.8 }]}>Faça isto na selfie</Text>
                 <Text style={[font.h2, { color: c.onPrimary }]}>{gesture}</Text>
                 <Text style={[font.small, { color: c.onPrimary, opacity: 0.85 }]}>
                   Rosto inteiro, boa luz, sem óculos escuros. A selfie só é vista pela equipe de segurança e não aparece no seu perfil.

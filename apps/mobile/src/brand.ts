@@ -25,6 +25,8 @@ export const brand = {
   premiumPrice: 'R$ 24,90/mês',
   emptyDeck: 'Você viu todo mundo por hoje. Volte mais tarde ou aumente sua distância.',
   termsVersion: '2026-10',
+  termsUrl: 'https://conmatch.com.br/termos.html',
+  privacyUrl: 'https://conmatch.com.br/privacidade.html',
 };
 
 export const statusLabels: Record<string, string> = {
@@ -81,6 +83,16 @@ export const interestLabels: Record<string, string> = {
   cozinhar: 'Cozinhar', natureza: 'Natureza', voluntariado: 'Voluntariado', xadrez: 'Xadrez',
 };
 export const MAX_INTERESTS = 10;
+
+// Regras da comunidade: aparecem no cadastro (tela "Nosso compromisso") e na Central de segurança
+export const communityRules: [string, string][] = [
+  ['Seja você', 'Fotos reais, do seu rosto, e informações verdadeiras. Perfil falso é removido.'],
+  ['Respeito sempre', 'Nada de assédio, ameaça, insistência depois de um "não" ou discurso de ódio.'],
+  ['Nada sexual sem convite', 'Nada de foto ou mensagem sexual que a outra pessoa não pediu.'],
+  ['Aqui não se vende nada', 'Proibido oferecer programa, conteúdo pago, pedir Pix ou qualquer cobrança.'],
+  ['Só maiores de 18', 'Menores de idade não podem usar o ConMatch, nem aparecer em fotos.'],
+  ['Denuncie', 'Viu algo errado? Denuncie. A pessoa é bloqueada na hora e o caso é analisado.'],
+];
 
 // "Sugestões para conversar" no chat vazio
 export const chatSuggestions = [

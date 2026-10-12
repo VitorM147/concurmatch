@@ -1,5 +1,6 @@
 import { ScrollView, Text, View } from 'react-native';
 import { Screen } from '@/components/ui';
+import { communityRules } from '@/brand';
 import { font, radius, space, useColors } from '@/theme';
 
 const TIPS = [
@@ -16,6 +17,14 @@ export default function Seguranca() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ padding: space.xl, gap: space.md }}>
+        <Text style={[font.label, { color: c.textMuted }]}>Regras da comunidade</Text>
+        {communityRules.map(([t, d]) => (
+          <View key={t} style={{ gap: 2, paddingHorizontal: space.xs }}>
+            <Text style={[font.bodyBold, { color: c.text }]}>{t}</Text>
+            <Text style={[font.small, { color: c.textMuted, lineHeight: 19 }]}>{d}</Text>
+          </View>
+        ))}
+        <Text style={[font.label, { color: c.textMuted, marginTop: space.lg }]}>Dicas de segurança</Text>
         {TIPS.map(([t, d]) => (
           <View key={t} style={{ backgroundColor: c.surface, borderRadius: radius.md, padding: space.lg, gap: space.xs, borderWidth: 1, borderColor: c.border }}>
             <Text style={[font.bodyBold, { color: c.text }]}>{t}</Text>

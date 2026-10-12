@@ -27,7 +27,8 @@ export async function createDb() {
   await db.exec(AUTH_STUB);
   for (const f of ['0001_schema.sql', '0002_functions.sql', '0003_security.sql', '0005_security_hardening.sql',
                    '0007_message_likes_and_interests.sql', '0008_verified_first_and_moderation.sql',
-                   '0009_unverified_actions.sql', '0010_report_auto_triage.sql']) {
+                   '0009_unverified_actions.sql', '0010_report_auto_triage.sql',
+                   '0012_admin_panel_and_rules.sql', '0013_selfie_auto_check.sql', '0014_waitlist.sql']) {
     await db.exec(read(`migrations/${f}`));
   }
   await db.exec(read('seed.sql'));
@@ -57,7 +58,7 @@ export async function createUser(db, overrides = {}) {
   await db.query('insert into auth.users (id, email) values ($1, $2)', [id, `${id}@t.dev`]);
   if (u.consent !== false) {
     await asUser(db, id, `insert into public.consents (user_id, kind, version)
-      select $1, k, '2026-10' from unnest(array['termos','privacidade','dados_sensiveis']) k`, [id]);
+      select $1, k, '2026-10' from unnest(array['termos','privacidade','dados_sensiveis','regras_comunidade']) k`, [id]);
   }
   const comp = await db.query(
     `select c.id, c.area_id from public.competitions c where c.name = $1 order by c.id limit 1`, [u.competition]);

@@ -2,14 +2,14 @@
 import { Image } from 'expo-image';
 import * as Location from 'expo-location';
 import { useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, ChipGroup, Field, H1, P, Screen } from '@/components/ui';
 import { api, ApiError, type Gender, type ProfileInput, type StudyPeriod, type StudyStatus } from '@/lib/api';
 import { pickAndUploadPhoto, signedUrls } from '@/lib/photos';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
-import { brand, genderLabels, periodLabels, statesOrdered, statusLabels } from '@/brand';
+import { brand, communityRules, genderLabels, periodLabels, statesOrdered, statusLabels } from '@/brand';
 import { font, radius, space, useColors } from '@/theme';
 
 const STEPS = 6;
@@ -40,6 +40,7 @@ export default function Onboarding() {
   // consentimento
   const [terms, setTerms] = useState(false);
   const [sensitive, setSensitive] = useState(false);
+  const [rules, setRules] = useState(false);
   // você
   const [name, setName] = useState('');
   const [birth, setBirth] = useState('');
@@ -94,7 +95,7 @@ export default function Onboarding() {
 
   const birthIso = parseBirth(birth);
   const valid = [
-    terms && sensitive,
+    terms && sensitive && rules,
     name.trim().length >= 2 && !!birthIso && ageOf(birthIso) >= 18 && !!gender && interest.length > 0,
     !!state && city.trim().length >= 2,
     !!areaId,
@@ -120,7 +121,7 @@ export default function Onboarding() {
       status,
       study_period: period,
     };
-    await api.createProfile(input, ['termos', 'privacidade', 'dados_sensiveis'], brand.termsVersion);
+    await api.createProfile(input, ['termos', 'privacidade', 'dados_sensiveis', 'regras_comunidade'], brand.termsVersion);
     setProfileCreated(true);
   };
 
@@ -165,10 +166,29 @@ export default function Onboarding() {
           <ScrollView contentContainerStyle={{ padding: space.xl, gap: space.xl }} keyboardShouldPersistTaps="handled">
             {step === 0 && (
               <>
-                <H1>Antes de começar</H1>
+                <H1>Nosso compromisso</H1>
+                <P muted>O ConMatch é um lugar para conhecer gente que também está construindo o próprio futuro. Para continuar assim, todo mundo aqui combina:</P>
+                <View style={{ backgroundColor: c.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: c.border, padding: space.lg, gap: space.md }}>
+                  {communityRules.map(([t, d]) => (
+                    <View key={t} style={{ gap: 2 }}>
+                      <Text style={[font.bodyBold, { color: c.text }]}>{t}</Text>
+                      <Text style={[font.small, { color: c.textMuted, lineHeight: 18 }]}>{d}</Text>
+                    </View>
+                  ))}
+                </View>
+                <Consent value={rules} onChange={setRules}
+                  text="Eu me comprometo a seguir as regras da comunidade. Sei que quem quebrar pode ser removido." />
                 <P muted>Seus dados são usados só para encontrar pessoas compatíveis. Você pode baixar ou apagar tudo quando quiser.</P>
                 <Consent value={terms} onChange={setTerms}
                   text="Tenho 18 anos ou mais e aceito os Termos de Uso e a Política de Privacidade." />
+                <View style={{ flexDirection: 'row', gap: space.lg }}>
+                  <Pressable accessibilityRole="link" onPress={() => Linking.openURL(brand.termsUrl)}>
+                    <Text style={[font.small, { color: c.accent, textDecorationLine: 'underline' }]}>Ler os Termos de Uso</Text>
+                  </Pressable>
+                  <Pressable accessibilityRole="link" onPress={() => Linking.openURL(brand.privacyUrl)}>
+                    <Text style={[font.small, { color: c.accent, textDecorationLine: 'underline' }]}>Ler a Política de Privacidade</Text>
+                  </Pressable>
+                </View>
                 <Consent value={sensitive} onChange={setSensitive}
                   text="Autorizo o uso do meu gênero e de quem tenho interesse (dado sensível, LGPD art. 11) apenas para mostrar perfis compatíveis." />
               </>
