@@ -24,13 +24,14 @@ O ConMatch é o app de relacionamento para quem está se preparando para concurs
 **Segurança em primeiro lugar**
 - Apenas maiores de 18 anos.
 - Denúncia anônima em um toque, com bloqueio imediato e revisão humana.
-- Mensagens da curtida não aceitam links, telefone ou @perfis: menos spam e menos golpe.
+- Só perfis verificados mandam mensagem e conversam: você sabe com quem está falando.
+- Mensagens não aceitam links, telefone, @perfis, Pix ou oferta de serviço: menos spam, menos golpe, zero programa.
 - Sua localização exata nunca aparece: só a cidade e uma distância aproximada.
 - Seus dados seguem a LGPD. Exclua sua conta e tudo some quando você quiser.
 
 **Premium**
-Grátis: 20 curtidas e 5 curtidas com mensagem por dia, matches e conversas ilimitadas.
-Premium (R$ 24,90/mês): curtidas ilimitadas, 20 curtidas com mensagem por dia e veja quem curtiu você.
+Grátis: 50 ações por dia (curtir ou passar) e, com perfil verificado, 5 curtidas com mensagem por dia e conversas ilimitadas.
+Premium (R$ 24,90/mês, só para perfis verificados): 250 ações e 100 curtidas com mensagem por dia, e veja quem curtiu você.
 
 ConMatch. Pessoas que constroem mais juntas.
 

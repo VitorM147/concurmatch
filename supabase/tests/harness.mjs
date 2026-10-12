@@ -26,7 +26,7 @@ export async function createDb() {
   const db = new PGlite();
   await db.exec(AUTH_STUB);
   for (const f of ['0001_schema.sql', '0002_functions.sql', '0003_security.sql', '0005_security_hardening.sql',
-                   '0007_message_likes_and_interests.sql']) {
+                   '0007_message_likes_and_interests.sql', '0008_verified_first_and_moderation.sql']) {
     await db.exec(read(`migrations/${f}`));
   }
   await db.exec(read('seed.sql'));
@@ -71,6 +71,10 @@ export async function createUser(db, overrides = {}) {
   // contas "antigas" (24h+) contam como denunciantes confiáveis
   if (u.ageHours) {
     await db.query(`update public.profiles set created_at = now() - make_interval(hours => $2) where id = $1`, [id, u.ageHours]);
+  }
+  // Por padrão o perfil já é verificado (o caso comum nos testes); use verified: false para testar as travas
+  if (u.verified !== false) {
+    await db.query('update public.profiles set verified = true where id = $1', [id]);
   }
   if (u.photo !== false) {
     await asUser(db, id, `insert into public.photos (user_id, storage_path, position) values ($1, $2, 0)`,

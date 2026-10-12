@@ -74,3 +74,28 @@ export async function pickAndUploadPhoto(userId: string, position: number): Prom
   if (dbError) throw dbError;
   return path;
 }
+
+/**
+ * Selfie da verificação: câmera frontal, sem galeria (precisa ser na hora, com o gesto).
+ * Vai para a pasta do dono, mas NÃO entra em public.photos: só o suporte enxerga.
+ */
+export async function takeAndUploadSelfie(userId: string): Promise<string | null> {
+  const perm = await ImagePicker.requestCameraPermissionsAsync();
+  if (!perm.granted) throw new Error('CAMERA_DENIED');
+  const shot = await ImagePicker.launchCameraAsync({
+    mediaTypes: ['images'],
+    cameraType: ImagePicker.CameraType.front,
+    quality: 1,
+  });
+  if (shot.canceled || !shot.assets[0]) return null;
+  const resized = await ImageManipulator.manipulateAsync(
+    shot.assets[0].uri,
+    [{ resize: { width: 1080 } }],
+    { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG },
+  );
+  const body = await (await fetch(resized.uri)).arrayBuffer();
+  const path = `${userId}/verificacao-${Date.now()}.jpg`;
+  const { error } = await supabase.storage.from(BUCKET).upload(path, body, { contentType: 'image/jpeg' });
+  if (error) throw error;
+  return path;
+}

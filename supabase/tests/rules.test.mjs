@@ -33,18 +33,21 @@ test('não é possível curtir a si mesmo', async () => {
 });
 
 // ---------------------------------------------------------------- Limite / Premium
-test('plano gratuito: 20 curtidas por dia; premium ilimitado', async () => {
-  const me = await man({ state: 'SP', city: 'São Paulo', lat: -23.55, lng: -46.63 });
+test('ações do dia: grátis 50 (curtir + passar); Premium 250', async () => {
+  const sp = { state: 'SP', city: 'São Paulo', lat: -23.55, lng: -46.63 };
+  const me = await man(sp);
   const targets = [];
-  for (let i = 0; i < 21; i++) targets.push(await woman({ state: 'SP', city: 'São Paulo', lat: -23.55, lng: -46.63 }));
-  for (let i = 0; i < 20; i++) await like(me, targets[i]);
+  for (let i = 0; i < 51; i++) targets.push(await woman({ ...sp, photo: false }));
+  for (let i = 0; i < 25; i++) await like(me, targets[i]);
+  for (let i = 25; i < 50; i++) await rpc(db, me, 'swipe_pass', [targets[i]]);   // passar também conta
   assert.equal((await rpc(db, me, 'remaining_likes'))[0].remaining_likes, 0);
-  await rejects(like(me, targets[20]), 'LIKE_LIMIT_REACHED');
+  await rejects(like(me, targets[50]), 'ACTION_LIMIT_REACHED');
+  await rejects(rpc(db, me, 'swipe_pass', [targets[50]]), 'ACTION_LIMIT_REACHED');
 
   await db.query(`insert into public.entitlements (user_id, premium_until, source)
                   values ($1, now() + interval '30 days', 'manual')`, [me]);
-  assert.equal((await rpc(db, me, 'remaining_likes'))[0].remaining_likes, null);
-  assert.equal((await like(me, targets[20])).remaining, null);
+  assert.equal((await rpc(db, me, 'remaining_likes'))[0].remaining_likes, 200);
+  assert.equal((await like(me, targets[50])).remaining, 199);
 });
 
 // ---------------------------------------------------------------- Discovery
@@ -163,10 +166,10 @@ test('3 denúncias de contas confiáveis ocultam o perfil até revisão humana',
 
 test('denúncia de menor de idade: 2 denunciantes confiáveis ocultam na hora e geram alerta', async () => {
   const x = await man();
-  await rpc(db, await woman({ ageHours: 48 }), 'report_user', [x, 'menor_de_idade', null, null]);
+  await rpc(db, await woman({ ageHours: 48, verified: false }), 'report_user', [x, 'menor_de_idade', null, null]);
   let r = await db.query('select moderation_hidden_at from public.profiles where id = $1', [x]);
   assert.equal(r.rows[0].moderation_hidden_at, null, 'uma denúncia só gera alerta');
-  await rpc(db, await woman({ ageHours: 48 }), 'report_user', [x, 'menor_de_idade', null, null]);
+  await rpc(db, await woman({ ageHours: 48, verified: false }), 'report_user', [x, 'menor_de_idade', null, null]);
   r = await db.query('select moderation_hidden_at from public.profiles where id = $1', [x]);
   assert.ok(r.rows[0].moderation_hidden_at);
   const a = await db.query(`select count(*)::int n from public.security_alerts where subject_id = $1 and kind = 'minor_report'`, [x]);

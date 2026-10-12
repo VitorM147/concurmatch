@@ -11,14 +11,16 @@ App de relacionamento para quem estuda para concursos, vestibular, OAB e residê
 | Parte | Conteúdo |
 |---|---|
 | **Banco (Supabase/Postgres)** | Schema, RLS, regras de negócio em funções SQL, catálogo de concursos e configurações |
-| **Testes do banco** | 41 testes automatizados com Postgres embarcado: match, limite de curtidas, curtida com mensagem, interesses, discovery, chat, bloqueio, denúncia, RLS, LGPD e regressões de segurança |
-| **App (Expo / React Native)** | Cadastro e login, onboarding com consentimento LGPD, Descobrir (swipe + curtida com mensagem), tela de match, abas Conexões e Mensagens, chat em tempo real com sugestões para conversar, denunciar, bloquear e desfazer match, perfil com fotos, "Sobre mim", interesses e preferências, Premium (tela), Central de segurança, excluir conta |
+| **Testes do banco** | 57 testes automatizados com Postgres embarcado: match, cotas diárias, verificação, curtida com mensagem, filtro de programa/cobrança, denúncia com evidência, recurso, interesses, discovery, chat, bloqueio, denúncia, RLS, LGPD e regressões de segurança |
+| **App (Expo / React Native)** | Cadastro e login, onboarding com consentimento LGPD, Descobrir (swipe + curtida com mensagem), tela de match, abas Conexões e Mensagens, chat em tempo real com sugestões para conversar, denunciar, bloquear e desfazer match, perfil com fotos, "Sobre mim", interesses e preferências, Premium (tela, só verificado), verificação por gesto + selfie, perfil em análise com recurso, Central de segurança, excluir conta |
 | **CI** | GitHub Actions rodando os testes do banco e o typecheck do app |
 
 ### Regras de negócio implementadas
 
-- **20 curtidas por dia** no plano grátis. O limite renova à meia-noite de Brasília e é configurável em `app_config`. O Premium tem curtidas ilimitadas.
-- **Curtida com mensagem (botão ★).** Recado de até 100 caracteres junto da curtida. A pessoa vê o recado no card, e quem mandou recado aparece primeiro no Descobrir. Se der match, os recados viram as primeiras mensagens da conversa. Sem links, e-mails, @perfis ou telefone; 5 por dia no grátis e 20 no Premium (configurável em `app_config`). A curtida conta na cota diária.
+- **Mostrou a cara, ganhou voz.** Sem verificação a pessoa só curte e passa: não manda nem recebe curtida com mensagem, não conversa depois do match (o chat só abre entre dois verificados) e não assina o Premium. A verificação é um gesto sorteado + selfie, revisada pelo suporte (`moderation_review_verification`), e vale para sempre.
+- **Ações por dia = curtir + passar.** 50 no grátis e 250 no Premium, renovando à meia-noite de Brasília (configurável em `app_config`). Passar conta para ninguém "folhear" perfis só atrás de @ na bio.
+- **Curtida com mensagem (botão ★).** Recado de até 100 caracteres junto da curtida, só entre perfis verificados. A pessoa vê o recado no card, e quem mandou recado aparece primeiro no Descobrir. Se der match, os recados viram as primeiras mensagens da conversa. Sem links, e-mails, @perfis, telefone, Pix ou preço; 5 por dia no grátis e 100 no Premium. A curtida conta nas ações do dia.
+- **Sem programa nem cobrança.** Termos típicos ("faço programa", "atendo com local", "cachê", "valores no pv", OnlyFans, sugar...) são barrados na bio, no recado e no chat; na bio e no recado também Pix e preço. A bio não aceita telefone, link ou e-mail (o @ do Instagram pode). Há um motivo de denúncia próprio, com alerta prioritário.
 - **Interesses.** Até 10, de um catálogo fixo (`interest_catalog()`); os em comum aparecem destacados no card.
 - **Match atômico.** Um lock por par impede que dois likes simultâneos deixem de gerar o match.
 - **Discovery** com:
@@ -33,6 +35,8 @@ App de relacionamento para quem estuda para concursos, vestibular, OAB e residê
 - **Segurança:**
   - denunciar já bloqueia a pessoa;
   - 3 denunciantes confiáveis (conta com 24h+ e foto) ocultam o perfil até revisão humana; para "menor de idade" bastam 2;
+  - a denúncia guarda como evidência **só a conversa daquele par** (e o recado da curtida), congelada antes do bloqueio;
+  - a pessoa ocultada vê que está em análise (sem saber quem denunciou nem o motivo) e pode mandar a versão dela; o suporte decide com `moderation_resolve` (restaurar ou banir), tudo registrado em `audit_logs`;
   - toda denúncia gera alerta em `security_alerts`, e o usuário ocultado não consegue se reexibir;
   - limites de mensagens, curtidas, passes e denúncias (anti-spam e anti-raspagem);
   - sessão guardada no Keychain/Keystore;

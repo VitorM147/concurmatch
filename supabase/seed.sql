@@ -3,7 +3,6 @@
 -- =====================================================================
 
 insert into public.app_config (key, value, description) values
-  ('free_likes_per_day',      '20', 'Curtidas diárias no plano gratuito (renova à meia-noite de Brasília)'),
   ('messages_per_minute',     '30', 'Anti-spam: mensagens por minuto por usuário'),
   ('auto_hide_after_reports', '3',  'Denunciantes distintos para ocultar perfil até revisão humana'),
   ('discovery_active_days',   '30', 'Só mostra perfis ativos nos últimos N dias'),

@@ -3,11 +3,11 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, Share, StyleSheet, Switch, Text, View } from 'react-native';
 import { Button, ChipGroup, Field, H1, Screen } from '@/components/ui';
-import { api, type StudyStatus } from '@/lib/api';
+import { api, type ModerationStatus, type StudyStatus } from '@/lib/api';
 import { pickAndUploadPhoto, useSignedUrls } from '@/lib/photos';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
-import { interestLabels, MAX_INTERESTS, statusLabels } from '@/brand';
+import { brand, interestLabels, MAX_INTERESTS, statusLabels } from '@/brand';
 import { font, radius, space, useColors } from '@/theme';
 
 const DISTANCES = [10, 25, 50, 100, 300].map((d) => ({ value: d, label: `${d} km` }));
@@ -26,8 +26,12 @@ export default function Perfil() {
   const [bio, setBio] = useState(profile?.bio ?? '');
   useEffect(() => { setBio(profile?.bio ?? ''); }, [profile?.bio]);
 
+  const [mod, setMod] = useState<ModerationStatus | null>(null);
   const loadPhotos = useCallback(() => { api.myPhotos().then(setPhotos).catch(() => {}); }, []);
-  useFocusEffect(useCallback(() => { loadPhotos(); }, [loadPhotos]));
+  useFocusEffect(useCallback(() => {
+    loadPhotos();
+    api.moderationStatus().then(setMod).catch(() => {});
+  }, [loadPhotos]));
 
   if (!profile) return <Screen />;
 
@@ -69,7 +73,29 @@ export default function Perfil() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ padding: space.xl, gap: space.xl }}>
-        <H1>{profile.display_name}</H1>
+        <H1>{profile.display_name}{profile.verified ? ' ✓' : ''}</H1>
+
+        {mod?.under_review ? (
+          <Pressable onPress={() => router.push('/analise')} accessibilityRole="button"
+            style={[styles.card, { backgroundColor: c.surface, borderColor: c.danger }]}>
+            <Text style={[font.bodyBold, { color: c.danger }]}>Seu perfil está em análise</Text>
+            <Text style={[font.small, { color: c.textMuted }]}>Toque para ver o que aconteceu e mandar sua explicação.</Text>
+          </Pressable>
+        ) : null}
+
+        {!profile.verified ? (
+          <Pressable onPress={() => router.push('/verificacao')} accessibilityRole="button"
+            style={[styles.card, { backgroundColor: c.primary, borderColor: c.primary }]}>
+            <Text style={[font.bodyBold, { color: c.onPrimary }]}>
+              {mod?.verification?.status === 'pendente' ? 'Selfie em análise' : 'Verifique seu perfil'}
+            </Text>
+            <Text style={[font.small, { color: c.onPrimary, opacity: 0.85 }]}>
+              {mod?.verification?.status === 'pendente'
+                ? 'Logo você poderá mandar mensagens e conversar.'
+                : 'Sem verificação você só curte. Verificado manda mensagem, conversa e pode assinar o Premium.'}
+            </Text>
+          </Pressable>
+        ) : null}
 
         {/* Fotos (até 6) */}
         <View style={styles.grid}>
@@ -128,7 +154,7 @@ export default function Perfil() {
         </View>
 
         <View style={{ gap: space.md }}>
-          <Button title="Premium — curtidas ilimitadas" onPress={() => router.push('/premium')} />
+          <Button title={`Premium — ${brand.premiumActions} ações por dia`} onPress={() => router.push('/premium')} />
           <Button title="Central de segurança" variant="ghost" onPress={() => router.push('/seguranca')} />
           <Button title="Baixar meus dados" variant="ghost" onPress={exportData} />
           <Button title="Sair" variant="ghost" onPress={() => supabase.auth.signOut()} />
@@ -157,4 +183,5 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   row: { flexDirection: 'row', alignItems: 'center' },
+  card: { borderRadius: radius.md, borderWidth: 1, padding: space.lg, gap: space.xs },
 });

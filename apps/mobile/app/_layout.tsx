@@ -54,6 +54,8 @@ function Gate() {
       <Stack.Screen name="chat/[id]" options={{ title: '' }} />
       <Stack.Screen name="premium" options={{ presentation: 'modal', title: 'Premium' }} />
       <Stack.Screen name="seguranca" options={{ title: 'Central de segurança' }} />
+      <Stack.Screen name="verificacao" options={{ title: 'Verificação' }} />
+      <Stack.Screen name="analise" options={{ title: 'Perfil em análise' }} />
     </Stack>
   );
 }

@@ -7,7 +7,7 @@ import { MatchModal } from '@/components/MatchModal';
 import { StarMessageModal } from '@/components/StarMessageModal';
 import { SwipeDeck, type SwipeDeckHandle, type SwipeDir } from '@/components/SwipeDeck';
 import { Button, Empty, Screen } from '@/components/ui';
-import { api, ApiError, type Candidate } from '@/lib/api';
+import { api, ApiError, type Candidate, type Limits } from '@/lib/api';
 import { signedUrls } from '@/lib/photos';
 import { useSession } from '@/lib/session';
 import { brand } from '@/brand';
@@ -24,7 +24,7 @@ export default function Discover() {
   const [items, setItems] = useState<Candidate[]>([]);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [remaining, setRemaining] = useState<number | null>(null);
+  const [limits, setLimits] = useState<Limits | null>(null);
   const [match, setMatch] = useState<{ who: Candidate; id: string } | null>(null);
   const [myPhoto, setMyPhoto] = useState<string | undefined>();
   const [starFor, setStarFor] = useState<Candidate | null>(null);
@@ -33,8 +33,8 @@ export default function Discover() {
     if (loadingMore.current) return;
     loadingMore.current = true;
     try {
-      const [list, left] = await Promise.all([api.discover(20), api.remainingLikes()]);
-      setRemaining(left);
+      const [list, lim] = await Promise.all([api.discover(20), api.myLimits()]);
+      setLimits(lim);
       const fresh = await signedUrls(list.flatMap((x) => x.photos));
       setUrls((prev) => (append ? { ...prev, ...fresh } : fresh));
       setItems((prev) => {
@@ -60,22 +60,53 @@ export default function Discover() {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTitle: () => <Logo size={22} />,
-      headerRight: () => remaining === null ? (
-        <Text style={[styles.badge, { backgroundColor: c.primary, color: c.onPrimary }]}>Premium</Text>
-      ) : (
-        <Pressable onPress={() => router.push('/premium')} accessibilityLabel={`${remaining} curtidas restantes hoje`}>
-          <Text style={[styles.badge, { borderColor: c.border, color: c.primary, borderWidth: 1 }]}>♥ {remaining}</Text>
+      headerRight: () => limits ? (
+        <Pressable onPress={() => router.push(limits.verified ? '/premium' : '/verificacao')}
+          accessibilityLabel={`${limits.actions_left} ações e ${limits.messages_left} curtidas com mensagem restantes hoje`}
+          style={styles.badges}>
+          <Text style={[styles.badge, limits.premium
+            ? { backgroundColor: c.primary, color: c.onPrimary }
+            : { borderColor: c.border, color: c.primary, borderWidth: 1 }]}>♥ {limits.actions_left}</Text>
+          <Text style={[styles.badge, { borderColor: c.border, color: limits.verified ? c.accent : c.textMuted, borderWidth: 1 }]}>
+            {limits.verified ? `★ ${limits.messages_left}` : '★ 🔒'}
+          </Text>
         </Pressable>
-      ),
+      ) : null,
     });
-  }, [navigation, remaining, c, router]);
+  }, [navigation, limits, c, router]);
 
-  const likeLimit = () => {
-    setRemaining(0);
-    Alert.alert(brand.likeLimitTitle, brand.likeLimitBody, [
-      { text: 'Agora não', style: 'cancel' },
-      { text: 'Ver Premium', onPress: () => router.push('/premium') },
-    ]);
+  const spend = (r: { remaining: number | null }, message = false) => setLimits((l) => l && ({
+    ...l,
+    actions_left: r.remaining ?? Math.max(l.actions_left - 1, 0),
+    messages_left: message ? Math.max(l.messages_left - 1, 0) : l.messages_left,
+  }));
+
+  const actionLimit = () => {
+    setLimits((l) => l && { ...l, actions_left: 0 });
+    const premium = !!limits?.premium;
+    Alert.alert(brand.actionLimitTitle(limits?.actions_max ?? brand.freeActions),
+      premium ? brand.actionLimitBodyPremium : brand.actionLimitBody,
+      premium ? [{ text: 'Ok' }] : [
+        { text: 'Agora não', style: 'cancel' },
+        { text: 'Ver Premium', onPress: () => router.push('/premium') },
+      ]);
+  };
+
+  const askVerify = () => Alert.alert(brand.verifyTitle, brand.verifyPitch, [
+    { text: 'Agora não', style: 'cancel' },
+    { text: 'Verificar agora', onPress: () => router.push('/verificacao') },
+  ]);
+
+  // Estrela: só entre perfis verificados (quem não verificou não manda nem recebe recado)
+  const openStar = () => {
+    const top = items[0];
+    if (!top) return;
+    if (!limits?.verified) return askVerify();
+    if (!top.verified) {
+      return Alert.alert('Ainda sem verificação',
+        `${top.display_name} ainda não verificou o perfil e não recebe mensagens. Você pode curtir normalmente.`);
+    }
+    setStarFor(top);
   };
 
   // Estrela: a curtida com mensagem é enviada ANTES da animação, assim um erro
@@ -85,12 +116,13 @@ export default function Discover() {
     if (!cand) return;
     try {
       const r = await api.like(cand.id, message);
-      setRemaining(r.remaining);
+      spend(r, true);
       setStarFor(null);
       deck.current?.swipe('star');
       if (r.matched && r.match_id) setMatch({ who: cand, id: r.match_id });
     } catch (e) {
-      if (e instanceof ApiError && e.code === 'LIKE_LIMIT_REACHED') { setStarFor(null); likeLimit(); }
+      if (e instanceof ApiError && e.code === 'ACTION_LIMIT_REACHED') { setStarFor(null); actionLimit(); }
+      else if (e instanceof ApiError && e.code === 'VERIFICATION_REQUIRED') { setStarFor(null); askVerify(); }
       else Alert.alert('Não foi possível enviar', e instanceof ApiError ? e.message : 'Tente novamente.');
     }
   };
@@ -102,15 +134,16 @@ export default function Discover() {
     try {
       if (dir === 'pass') {
         await api.pass(cand.id);
+        spend({ remaining: null });
         return;
       }
       const r = await api.like(cand.id);
-      setRemaining(r.remaining);
+      spend(r);
       if (r.matched && r.match_id) setMatch({ who: cand, id: r.match_id });
     } catch (e) {
-      if (e instanceof ApiError && e.code === 'LIKE_LIMIT_REACHED') {
+      if (e instanceof ApiError && e.code === 'ACTION_LIMIT_REACHED') {
         setItems((prev) => [cand, ...prev]);          // devolve o card
-        likeLimit();
+        actionLimit();
       } else {
         Alert.alert('Ops', e instanceof ApiError ? e.message : 'Tente novamente.');
       }
@@ -132,8 +165,8 @@ export default function Discover() {
           <View style={styles.actions}>
             <RoundButton label="Passar" glyph="✕" color={c.pass} onPress={() => deck.current?.swipe('pass')} />
             <RoundButton label="Curtir" glyph="♥" color={c.like} onPress={() => deck.current?.swipe('like')} big filled />
-            <RoundButton label="Curtir com mensagem" glyph="★" color={c.star}
-              onPress={() => items[0] && setStarFor(items[0])} />
+            <RoundButton label={limits?.verified && items[0]?.verified ? 'Curtir com mensagem' : 'Curtir com mensagem (exige verificação)'}
+              glyph="★" color={limits?.verified && items[0]?.verified ? c.star : c.pass} onPress={openStar} />
           </View>
         </>
       )}
@@ -173,5 +206,6 @@ function RoundButton({ label, glyph, color, onPress, big, filled }: {
 const styles = StyleSheet.create({
   actions: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: space.xl, paddingBottom: space.lg },
   round: { borderRadius: radius.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  badge: { fontSize: 13, fontFamily: fonts.bold, paddingHorizontal: space.md, paddingVertical: space.xs, borderRadius: radius.pill, marginRight: space.lg, overflow: 'hidden' },
+  badges: { flexDirection: 'row', gap: space.xs, marginRight: space.lg },
+  badge: { fontSize: 13, fontFamily: fonts.bold, paddingHorizontal: space.md, paddingVertical: space.xs, borderRadius: radius.pill, overflow: 'hidden' },
 });

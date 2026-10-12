@@ -16,8 +16,15 @@ const BLOCKED = [
   /(^|\s)@[a-z0-9._]{2,}/i,
   /([0-9][\s().+-]*){8,}/,
 ];
+// Programa / cobrança (versão resumida de sexual_service_signal_strict)
+const SELLING = [
+  /(^|[^a-z0-9])(pix|acompanhantes?|cach[eê]s?|only ?fans|privacy|sugar ?(daddy|baby))([^a-z0-9]|$)/i,
+  /(fa[cç]o|fazer) programa|atendo (com|em|no|na) |valores? (no|na|pelo|por) /i,
+  /r\$ ?[0-9]/i,
+];
 export const messageProblem = (t: string) =>
-  BLOCKED.some((r) => r.test(t)) ? 'Sem links, e-mails, @perfis ou telefone por aqui.' : null;
+  BLOCKED.some((r) => r.test(t)) ? 'Sem links, e-mails, @perfis ou telefone por aqui.'
+    : SELLING.some((r) => r.test(t)) ? 'Sem Pix, valores ou oferta de serviço por aqui.' : null;
 
 export function StarMessageModal({ who, onSend, onClose }: {
   who: Candidate | null;

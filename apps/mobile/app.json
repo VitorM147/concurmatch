@@ -35,7 +35,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Para você escolher as fotos do seu perfil."
+          "photosPermission": "Para você escolher as fotos do seu perfil.",
+          "cameraPermission": "Para a selfie de verificação do perfil. Ela só é vista pela equipe de segurança."
         }
       ],
       [

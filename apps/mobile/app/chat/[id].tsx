@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SafetySheet } from '@/components/SafetySheet';
-import { Screen } from '@/components/ui';
+import { Button, Screen } from '@/components/ui';
 import { api, ApiError, type Message } from '@/lib/api';
 import { useSession } from '@/lib/session';
 import { brand, chatSuggestions } from '@/brand';
@@ -17,7 +17,7 @@ export default function Chat() {
   const c = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { session } = useSession();
+  const { session, profile } = useSession();
   const me = session?.user.id ?? '';
   const { id, name, other } = useLocalSearchParams<{ id: string; name: string; other: string }>();
 
@@ -25,6 +25,9 @@ export default function Chat() {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [safety, setSafety] = useState(false);
+  // Chat só entre dois perfis verificados
+  const [otherLocked, setOtherLocked] = useState(false);
+  const meLocked = !profile?.verified;
   const list = useRef<FlatList<Message>>(null);
 
   useEffect(() => {
@@ -47,7 +50,9 @@ export default function Chat() {
       setMsgs((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
       setText('');
     } catch (e) {
-      Alert.alert('Mensagem não enviada', e instanceof ApiError ? e.message : 'Tente novamente.');
+      if (e instanceof ApiError && e.code === 'OTHER_NOT_VERIFIED') setOtherLocked(true);
+      else if (e instanceof ApiError && e.code === 'VERIFICATION_REQUIRED') router.push('/verificacao');
+      else Alert.alert('Mensagem não enviada', e instanceof ApiError ? e.message : 'Tente novamente.');
     } finally { setSending(false); }
   };
 
@@ -92,7 +97,21 @@ export default function Chat() {
           }}
         />
 
-        {msgs.length < 3 ? (
+        {meLocked || otherLocked ? (
+          <View style={[styles.lock, { backgroundColor: c.surfaceAlt, paddingBottom: insets.bottom + space.lg }]}>
+            <Text style={[font.bodyBold, { color: c.text, textAlign: 'center' }]}>
+              {meLocked ? 'Verifique seu perfil para conversar' : `${name ?? 'Essa pessoa'} ainda não verificou o perfil`}
+            </Text>
+            <Text style={[font.small, { color: c.textMuted, textAlign: 'center', lineHeight: 18 }]}>
+              {meLocked
+                ? 'No ConMatch, só perfis verificados conversam. Leva um minuto: um gesto e uma selfie.'
+                : 'A conversa abre assim que a verificação for concluída. Assim as duas pessoas sabem com quem estão falando.'}
+            </Text>
+            {meLocked ? <Button title="Verificar meu perfil" variant="accent" onPress={() => router.push('/verificacao')} /> : null}
+          </View>
+        ) : null}
+
+        {!(meLocked || otherLocked) && msgs.length < 3 ? (
           <View style={{ gap: space.xs, paddingTop: space.sm }}>
             <Text style={[font.label, { color: c.textMuted, paddingHorizontal: space.lg }]}>Sugestões para conversar</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}
@@ -108,7 +127,7 @@ export default function Chat() {
           </View>
         ) : null}
 
-        <View style={[styles.composer, { borderTopColor: c.border, paddingBottom: insets.bottom + space.sm, backgroundColor: c.bg }]}>
+        {meLocked || otherLocked ? null : <View style={[styles.composer, { borderTopColor: c.border, paddingBottom: insets.bottom + space.sm, backgroundColor: c.bg }]}>
           <TextInput
             value={text}
             onChangeText={setText}
@@ -123,7 +142,7 @@ export default function Chat() {
             style={[styles.send, { backgroundColor: c.primary, opacity: text.trim() ? 1 : 0.4 }]}>
             <Text style={{ color: c.onPrimary, fontFamily: fonts.bold, fontSize: 18 }}>↑</Text>
           </Pressable>
-        </View>
+        </View>}
       </KeyboardAvoidingView>
 
       <SafetySheet visible={safety} targetId={other} targetName={name ?? 'esta pessoa'} matchId={id}
@@ -138,5 +157,6 @@ const styles = StyleSheet.create({
   ice: { borderRadius: radius.pill, paddingHorizontal: space.lg, paddingVertical: space.sm + 2 },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm, paddingHorizontal: space.md, paddingTop: space.sm, borderTopWidth: StyleSheet.hairlineWidth },
   input: { flex: 1, minHeight: 44, maxHeight: 120, borderWidth: 1, borderRadius: radius.lg, paddingHorizontal: space.lg, paddingTop: 12, paddingBottom: 12, fontSize: 16, fontFamily: fonts.regular },
+  lock: { padding: space.xl, gap: space.sm },
   send: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
 });

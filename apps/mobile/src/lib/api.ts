@@ -62,6 +62,27 @@ export interface LikeResult {
   duplicate?: boolean;
 }
 
+export interface Limits {
+  premium: boolean;
+  verified: boolean;
+  /** Ações do dia = curtir + passar */
+  actions_max: number;
+  actions_left: number;
+  /** Curtidas com mensagem (só verificados) */
+  messages_max: number;
+  messages_left: number;
+}
+
+export type VerificationStatus = 'aguardando_selfie' | 'pendente' | 'aprovada' | 'recusada';
+
+export interface ModerationStatus {
+  verified: boolean;
+  verification: { status: VerificationStatus; gesture: string; note: string | null } | null;
+  under_review: boolean;
+  under_review_since: string | null;
+  appeal: { status: 'aberto' | 'aceito' | 'recusado'; at: string } | null;
+}
+
 export interface ProfileInput {
   display_name: string;
   birthdate: string; // YYYY-MM-DD
@@ -88,7 +109,16 @@ export type Profile = ProfileInput & { id: string; verified: boolean; is_visible
 
 // Erros do banco → mensagens para o usuário
 const friendly: Record<string, string> = {
-  LIKE_LIMIT_REACHED: 'LIKE_LIMIT_REACHED',
+  ACTION_LIMIT_REACHED: 'ACTION_LIMIT_REACHED',
+  VERIFICATION_REQUIRED: 'Verifique seu perfil para mandar mensagens e conversar.',
+  TARGET_NOT_VERIFIED: 'Essa pessoa ainda não verificou o perfil e não recebe mensagens. Você pode curtir normalmente.',
+  OTHER_NOT_VERIFIED: 'A conversa abre quando a outra pessoa verificar o perfil.',
+  BIO_NOT_ALLOWED: 'A bio não pode ter telefone, link, e-mail nem oferta de serviço ou cobrança.',
+  ALREADY_VERIFIED: 'Seu perfil já está verificado.',
+  PHOTO_REQUIRED: 'Adicione uma foto do rosto no perfil antes de verificar.',
+  NO_VERIFICATION_CHALLENGE: 'Comece a verificação de novo para receber o gesto.',
+  NOT_UNDER_REVIEW: 'Seu perfil não está em análise.',
+  APPEAL_ALREADY_OPEN: 'Você já enviou sua explicação. Nossa equipe vai analisar.',
   RATE_LIMITED: 'Calma! Muitas ações em pouco tempo. Tente de novo em instantes.',
   ACCOUNT_BANNED: 'Sua conta está suspensa. Fale com o suporte.',
   TARGET_UNAVAILABLE: 'Esse perfil não está mais disponível.',
@@ -99,7 +129,7 @@ const friendly: Record<string, string> = {
   ACCOUNT_UNDER_REVIEW: 'Sua conta está em revisão pela nossa equipe de segurança.',
   INVALID_MATCH: 'Não foi possível vincular essa conversa à denúncia.',
   MESSAGE_TOO_LONG: 'A mensagem pode ter no máximo 100 caracteres.',
-  MESSAGE_NOT_ALLOWED: 'Sem links, e-mails, @perfis ou telefone na primeira mensagem. Combine isso depois do match.',
+  MESSAGE_NOT_ALLOWED: 'Mensagem não permitida: sem links, e-mails, @perfis, telefone, Pix, cobrança ou oferta de serviço.',
   MESSAGE_LIKE_LIMIT: 'Você já usou as curtidas com mensagem de hoje. Elas renovam à meia-noite.',
   profiles_interests_valid: 'Escolha até 10 interesses da lista.',
 };
@@ -165,7 +195,8 @@ export const api = {
 
   // ---- Discovery / swipe
   discover: (limit = 20) => call<Candidate[]>('discover', { p_limit: limit }),
-  remainingLikes: () => call<number | null>('remaining_likes'),
+  /** Cotas do dia: ações (curtir + passar) e curtidas com mensagem */
+  myLimits: () => call<Limits>('my_limits'),
   like: (target: string, message?: string) => call<LikeResult>('swipe_like', {
     p_target: target,
     p_message: message?.trim() ? message.trim().slice(0, 100) : null,
@@ -198,6 +229,12 @@ export const api = {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   },
+
+  // ---- Verificação e moderação
+  moderationStatus: () => call<ModerationStatus>('my_moderation_status'),
+  verificationChallenge: () => call<{ id: number; gesture: string; status: VerificationStatus }>('verification_challenge'),
+  submitVerification: (selfiePath: string) => call<{ status: VerificationStatus }>('submit_verification', { p_selfie_path: selfiePath }),
+  submitAppeal: (message: string) => call<void>('submit_appeal', { p_message: message.trim() }),
 
   // ---- Segurança / LGPD
   block: (target: string) => call<void>('block_user', { p_target: target }),

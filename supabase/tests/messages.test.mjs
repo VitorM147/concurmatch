@@ -103,7 +103,7 @@ test('limite diário de curtidas com mensagem (5 no grátis) e a curtida conta n
   // curtida comum ainda funciona
   await like(a, await woman());
   const left = await rpc(db, a, 'remaining_likes');
-  assert.equal(left[0].remaining_likes, 20 - 6);
+  assert.equal(left[0].remaining_likes, 50 - 6);
 });
 
 test('interesses: até 10, do catálogo, sem repetição', async () => {
