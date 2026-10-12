@@ -47,9 +47,18 @@ export default function Analise() {
       <ScrollView contentContainerStyle={{ padding: space.xl, gap: space.xl }}>
         <H1>Perfil <Highlight>em análise</Highlight></H1>
         <P muted>
-          Recebemos denúncias sobre sua conta. Por segurança, seu perfil saiu do Descobrir e as conversas estão pausadas
-          até nossa equipe revisar. Ninguém é banido sem análise humana.
+          Recebemos denúncias sobre sua conta. Por segurança, seu perfil saiu do Descobrir e as conversas estão pausadas.
+          A análise começa na hora: se as denúncias não se confirmarem, seu perfil volta sozinho. Ninguém é banido sem
+          análise humana.
         </P>
+        {!st.verified ? (
+          <>
+            <Text style={[font.body, { color: c.text, lineHeight: 22 }]}>
+              Se a denúncia foi de perfil falso, verificar seu rosto resolve: o perfil volta na hora da aprovação.
+            </Text>
+            <Button title="Verificar meu perfil" onPress={() => router.push('/verificacao')} />
+          </>
+        ) : null}
         {st.appeal?.status === 'aberto' ? (
           <Text style={[font.body, { color: c.text, lineHeight: 22 }]}>
             Recebemos sua explicação. A equipe vai analisar junto com as conversas envolvidas e te responder por aqui.

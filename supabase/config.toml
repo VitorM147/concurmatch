@@ -57,3 +57,8 @@ verify_enabled = true
 
 [storage]
 file_size_limit = "5MiB"
+
+# Robô de triagem de denúncias: chamado pelo pg_cron com o cabeçalho
+# x-worker-secret (REPORT_TRIAGE_SECRET), não com JWT de usuário.
+[functions.report-triage]
+verify_jwt = false

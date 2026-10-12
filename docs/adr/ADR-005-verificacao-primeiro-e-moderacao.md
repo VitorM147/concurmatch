@@ -17,7 +17,9 @@ Apps de relacionamento novos tendem a virar "submundo": perfis falsos, spam, gol
    - 3 denunciantes confiáveis ocultam o perfil até a revisão, e ninguém é banido sem análise humana;
    - a denúncia guarda como evidência só a conversa daquele par;
    - a pessoa ocultada pode mandar a versão dela;
-   - o suporte decide entre restaurar e banir, e a decisão fica em `audit_logs`.
+   - o suporte decide entre restaurar e banir, e a decisão fica em `audit_logs`;
+   - **triagem automática** (migration 0010): a Moderation API da OpenAI dá nota ao que a pessoa denunciada escreveu. Se a evidência é grave, o perfil é escondido na hora. Se não há evidência, a denúncia é arquivada, e o perfil é restaurado quando não sobra nenhuma aberta. Perfil falso se resolve verificando o rosto. O humano só confirma banimentos, sem urgência, porque quem tem evidência grave já está escondido.
+7. **Verificação por selfie** continua manual por enquanto. A automação com AWS Rekognition (prova de vida + comparação de rosto) fica para depois.
 
 ## Consequências
 

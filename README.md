@@ -11,7 +11,7 @@ App de relacionamento para quem estuda para concursos, vestibular, OAB e residê
 | Parte | Conteúdo |
 |---|---|
 | **Banco (Supabase/Postgres)** | Schema, RLS, regras de negócio em funções SQL, catálogo de concursos e configurações |
-| **Testes do banco** | 58 testes automatizados com Postgres embarcado: match, cotas diárias, verificação, curtida com mensagem, filtro de programa/cobrança, denúncia com evidência, recurso, interesses, discovery, chat, bloqueio, denúncia, RLS, LGPD e regressões de segurança |
+| **Testes do banco** | 70 testes automatizados com Postgres embarcado: match, cotas diárias, verificação, curtida com mensagem, filtro de programa/cobrança, denúncia com evidência, recurso, interesses, discovery, chat, bloqueio, denúncia, RLS, LGPD e regressões de segurança |
 | **App (Expo / React Native)** | Cadastro e login, onboarding com consentimento LGPD, Descobrir (swipe + curtida com mensagem), tela de match, abas Conexões e Mensagens, chat em tempo real com sugestões para conversar, denunciar, bloquear e desfazer match, perfil com fotos, "Sobre mim", interesses e preferências, Premium (tela, só verificado), verificação por gesto + selfie, perfil em análise com recurso, Central de segurança, excluir conta |
 | **CI** | GitHub Actions rodando os testes do banco e o typecheck do app |
 
@@ -36,6 +36,7 @@ App de relacionamento para quem estuda para concursos, vestibular, OAB e residê
   - denunciar já bloqueia a pessoa;
   - 3 denunciantes confiáveis (conta com 24h+ e foto) ocultam o perfil até revisão humana; para "menor de idade" bastam 2;
   - a denúncia guarda como evidência **só a conversa daquele par** (e o recado da curtida), congelada antes do bloqueio;
+  - **triagem automática** (Moderation API da OpenAI, gratuita): a cada minuto um robô analisa o que a pessoa denunciada escreveu. Grave (ameaça, assédio sexual, programa) → some do app na hora, com uma denúncia só; sem evidência → a denúncia é arquivada e, se não sobrar nenhuma, o perfil volta sozinho; perfil falso → resolve verificando o rosto. Para uma pessoa sobra só `moderation_queue()`: confirmar banimentos, casos de menor de idade, recursos e selfies;
   - a pessoa ocultada vê que está em análise (sem saber quem denunciou nem o motivo) e pode mandar a versão dela; o suporte decide com `moderation_resolve` (restaurar ou banir), tudo registrado em `audit_logs`;
   - toda denúncia gera alerta em `security_alerts`, e o usuário ocultado não consegue se reexibir;
   - limites de mensagens, curtidas, passes e denúncias (anti-spam e anti-raspagem);
@@ -114,3 +115,23 @@ npm test          # 41 testes (regras + segurança + curtida com mensagem), sem 
 ## Custos (MVP)
 
 Ver `docs/adr/ADR-001`. Estimativa: R$ 300 a R$ 400 por mês de infraestrutura, dentro do orçamento de R$ 3.000 por mês.
+
+## Robô de triagem de denúncias
+
+A Edge Function `supabase/functions/report-triage` roda a cada minuto (pg_cron, migration `0011`). Para ligar no projeto:
+
+1. Crie uma chave em platform.openai.com → API keys (a Moderation API é gratuita).
+2. Gere um segredo aleatório para o robô, por exemplo com `openssl rand -hex 32`.
+3. Configure e publique a função:
+   ```bash
+   supabase secrets set OPENAI_API_KEY=sk-... REPORT_TRIAGE_SECRET=<segredo>
+   supabase functions deploy report-triage --no-verify-jwt
+   ```
+4. No SQL Editor, guarde a URL e o mesmo segredo no Vault e aplique a `0011`:
+   ```sql
+   select vault.create_secret('https://<projeto>.supabase.co/functions/v1/report-triage', 'report_triage_url');
+   select vault.create_secret('<segredo>', 'report_triage_secret');
+   ```
+5. Para ver o que sobrou para decidir: `select public.moderation_queue();`. Para decidir: `select public.moderation_resolve('<user_id>', 'banir' | 'restaurar', 'motivo');`.
+
+Os limites de gravidade ficam em `supabase/functions/_shared/report-decision.js`. A Política de Privacidade precisa informar que, em caso de denúncia, o texto da conversa é analisado por um serviço automático fora do Brasil (OpenAI).
