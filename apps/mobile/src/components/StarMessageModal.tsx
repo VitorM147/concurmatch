@@ -81,7 +81,7 @@ export function StarMessageModal({ who, onSend, onClose }: {
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(46,14,20,0.55)' },
+  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(11,37,69,0.55)' },
   sheet: {
     borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg,
     padding: space.xl, paddingBottom: space.xxl, gap: space.md,

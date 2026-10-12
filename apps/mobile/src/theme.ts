@@ -1,52 +1,54 @@
-// Design tokens — identidade ConMatch: vinho, rosa antigo, champanhe e marfim.
+// Design tokens — identidade ConMatch, opção "Azul profundo": confiança, foco e modernidade.
+// Azul profundo como base, rosa como destaque (o lado romântico), azul claro e cinza como fundo.
 // Títulos em Playfair Display, interface em Inter (carregadas em app/_layout.tsx).
 import { useColorScheme } from 'react-native';
 
 export const palette = {
-  vinho: '#6B1E29',        // principal
-  rosa: '#B85C6B',         // rosa antigo
-  champanhe: '#C9A89A',
-  marfim: '#F8F2EC',       // fundo
-  vinhoEscuro: '#2E0E14',  // texto
+  azul: '#0B2545',         // azul profundo — principal
+  azulModerno: '#1E40AF',  // secundária
+  rosa: '#F43F5E',         // destaque
+  azulClaro: '#E0E7FF',    // fundo de chips e áreas de apoio
+  claro: '#F8FAFC',        // cinza claro — superfície / texto sobre azul
+  grafite: '#1F2937',      // texto
   white: '#FFFFFF',
 };
 
 export const light = {
-  bg: palette.marfim,
+  bg: palette.claro,
   surface: palette.white,
-  surfaceAlt: '#F1E6DD',
-  text: palette.vinhoEscuro,
-  textMuted: '#7A5A5F',
-  border: '#E6D6CC',
-  primary: palette.vinho,
-  onPrimary: palette.marfim,
+  surfaceAlt: palette.azulClaro,
+  text: palette.grafite,
+  textMuted: '#4B5563',
+  border: '#D6DEF0',
+  primary: palette.azul,
+  onPrimary: palette.white,
   accent: palette.rosa,
   onAccent: palette.white,
-  chip: '#F3E4E1',
-  onChip: palette.vinho,
-  like: palette.vinho,
-  star: palette.rosa,
-  pass: '#8C7B76',
-  danger: '#B3261E',
+  chip: palette.azulClaro,
+  onChip: palette.azul,
+  like: palette.rosa,
+  star: palette.azul,
+  pass: '#64748B',
+  danger: '#B91C1C',
 };
 
 export const dark: typeof light = {
-  bg: '#1E0A0E',
-  surface: palette.vinhoEscuro,
-  surfaceAlt: '#3A161D',
-  text: palette.marfim,
-  textMuted: '#C9A89A',
-  border: '#4A2028',
-  primary: palette.marfim,
-  onPrimary: palette.vinho,
-  accent: '#D27A88',
-  onAccent: palette.vinhoEscuro,
-  chip: '#4A2028',
-  onChip: palette.marfim,
-  like: '#E59AA6',
-  star: '#D27A88',
-  pass: '#C9A89A',
-  danger: '#F2B8B5',
+  bg: '#061629',
+  surface: palette.azul,
+  surfaceAlt: '#13315C',
+  text: palette.claro,
+  textMuted: '#B6C2DA',
+  border: '#1E3A66',
+  primary: palette.claro,
+  onPrimary: palette.azul,
+  accent: palette.rosa,
+  onAccent: palette.white,
+  chip: '#13315C',
+  onChip: palette.azulClaro,
+  like: palette.rosa,
+  star: palette.azulClaro,
+  pass: '#B6C2DA',
+  danger: '#FCA5A5',
 };
 
 export type Colors = typeof light;

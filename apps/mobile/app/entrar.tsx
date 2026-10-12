@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BrandSymbol, Logo } from '@/components/Brand';
-import { Button, Field, H1, P, Screen } from '@/components/ui';
+import { Button, Field, H1, Screen } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { brand } from '@/brand';
-import { font, palette, space, useColors } from '@/theme';
+import { font, palette, radius, space, useColors } from '@/theme';
 
 export default function Entrar() {
   const c = useColors();
@@ -42,10 +42,10 @@ export default function Entrar() {
       <SafeAreaView style={{ flex: 1 }}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: space.xl, gap: space.xl }}>
-            <View style={{ gap: space.md }}>
-              <BrandSymbol size={56} left={c.surface} right={palette.rosa} outline={c.primary} />
-              <Logo size={40} />
-              <P muted>{brand.tagline}</P>
+            <View style={{ gap: space.md, backgroundColor: palette.azul, borderRadius: radius.lg, padding: space.xl }}>
+              <BrandSymbol size={56} />
+              <Logo size={40} onDark />
+              <Text style={[font.body, { color: palette.azulClaro, lineHeight: 22 }]}>{brand.tagline}</Text>
             </View>
 
             <View style={{ gap: space.lg }}>
@@ -55,7 +55,7 @@ export default function Entrar() {
               <Field label="Senha" value={password} onChangeText={setPassword} secureTextEntry
                 autoComplete={mode === 'cadastro' ? 'new-password' : 'current-password'}
                 hint={mode === 'cadastro' ? 'Mínimo de 8 caracteres, com maiúscula, minúscula e número.' : undefined} />
-              <Button title={mode === 'cadastro' ? 'Criar conta' : 'Entrar'} onPress={submit} loading={busy} />
+              <Button title={mode === 'cadastro' ? 'Criar conta' : 'Entrar'} onPress={submit} loading={busy} variant="accent" />
               <Pressable accessibilityRole="button" onPress={() => setMode(mode === 'login' ? 'cadastro' : 'login')}>
                 <Text style={[font.body, { color: c.text, textAlign: 'center', textDecorationLine: 'underline' }]}>
                   {mode === 'login' ? 'Ainda não tem conta? Criar conta' : 'Já tem conta? Entrar'}

@@ -1,8 +1,10 @@
 # ConMatch — MVP
 
-App de relacionamento para quem estuda para concursos, vestibular, OAB e residência (18+). *Pessoas que compartilham mais.* Para trocar o nome, edite `apps/mobile/src/brand.ts` e `apps/mobile/app.json`.
+App de relacionamento para quem estuda para concursos, vestibular, OAB e residência (18+). *Pessoas que constroem mais juntas.* Para trocar o nome, edite `apps/mobile/src/brand.ts` e `apps/mobile/app.json`.
 
 > Deu match? **"Deu ConMatch! Vocês querem se conhecer."**
+
+**Identidade:** paleta *Azul profundo* — `#0B2545` principal, `#1E40AF` secundária, `#F43F5E` destaque (rosa), `#E0E7FF` fundo, `#F8FAFC` superfície, `#1F2937` texto. Títulos em Playfair Display, interface em Inter. Tokens em `apps/mobile/src/theme.ts`; símbolo e ícones em `brand/`.
 
 ## O que já está pronto
 

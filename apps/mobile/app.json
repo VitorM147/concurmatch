@@ -21,7 +21,7 @@
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#6B1E29"
+        "backgroundColor": "#0B2545"
       }
     },
     "plugins": [
@@ -44,7 +44,7 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 220,
           "resizeMode": "contain",
-          "backgroundColor": "#6B1E29"
+          "backgroundColor": "#0B2545"
         }
       ],
       "expo-font"

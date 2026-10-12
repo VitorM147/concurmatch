@@ -32,9 +32,9 @@ export function MatchModal({ who, photoUrl, myPhotoUrl, onChat, onClose }: {
 
         <View style={{ alignSelf: 'stretch', gap: space.md, marginTop: space.md }}>
           <Button title={brand.matchSend} onPress={onChat}
-            style={{ backgroundColor: palette.marfim }} textColor={palette.vinho} />
+            style={{ backgroundColor: palette.claro }} textColor={palette.azul} />
           <Button title={brand.matchContinue} variant="ghost" onPress={onClose}
-            style={{ borderColor: 'rgba(248,242,236,0.45)' }} textColor={palette.marfim} />
+            style={{ borderColor: 'rgba(248,250,252,0.45)' }} textColor={palette.claro} />
         </View>
       </View>
     </Modal>
@@ -43,21 +43,21 @@ export function MatchModal({ who, photoUrl, myPhotoUrl, onChat, onClose }: {
 
 const styles = StyleSheet.create({
   backdrop: {
-    flex: 1, backgroundColor: 'rgba(107,30,41,0.97)', alignItems: 'center', justifyContent: 'center',
+    flex: 1, backgroundColor: 'rgba(11,37,69,0.97)', alignItems: 'center', justifyContent: 'center',
     padding: space.xxl, gap: space.sm,
   },
   photos: { flexDirection: 'row', marginBottom: space.xl, alignItems: 'center' },
   photo: {
-    width: 130, height: 170, borderRadius: radius.md, borderWidth: 4, borderColor: palette.marfim,
-    backgroundColor: palette.vinhoEscuro,
+    width: 130, height: 170, borderRadius: radius.md, borderWidth: 4, borderColor: palette.claro,
+    backgroundColor: palette.grafite,
   },
   badge: {
     position: 'absolute', left: 88, bottom: -26, // centro da dupla de fotos (130 + 130 - 28) / 2 - 28
-    width: 56, height: 56, borderRadius: 28, backgroundColor: palette.vinho,
-    alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: palette.marfim,
+    width: 56, height: 56, borderRadius: 28, backgroundColor: palette.azul,
+    alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: palette.claro,
   },
-  title: { color: palette.marfim, fontSize: 38, fontFamily: fonts.display, textAlign: 'center' },
-  subtitle: { color: palette.marfim, fontSize: 18, fontFamily: fonts.semibold, textAlign: 'center' },
-  cta: { color: 'rgba(248,242,236,0.8)', fontSize: 15, fontFamily: fonts.regular, textAlign: 'center' },
-  common: { color: palette.champanhe, fontSize: 13, fontFamily: fonts.semibold, textAlign: 'center', marginTop: space.sm },
+  title: { color: palette.claro, fontSize: 38, fontFamily: fonts.display, textAlign: 'center' },
+  subtitle: { color: palette.claro, fontSize: 18, fontFamily: fonts.semibold, textAlign: 'center' },
+  cta: { color: 'rgba(248,250,252,0.8)', fontSize: 15, fontFamily: fonts.regular, textAlign: 'center' },
+  common: { color: palette.azulClaro, fontSize: 13, fontFamily: fonts.semibold, textAlign: 'center', marginTop: space.sm },
 });

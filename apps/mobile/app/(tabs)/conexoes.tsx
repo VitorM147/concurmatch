@@ -65,7 +65,7 @@ export default function Conexoes() {
 
 const styles = StyleSheet.create({
   card: { flex: 1, aspectRatio: 3 / 4, borderRadius: radius.md, overflow: 'hidden', maxWidth: '48.5%' },
-  caption: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: space.md, backgroundColor: 'rgba(46,14,20,0.6)' },
-  name: { color: palette.marfim, fontSize: 18, fontFamily: fonts.display },
-  comp: { color: 'rgba(248,242,236,0.85)', fontSize: 12, fontFamily: fonts.medium },
+  caption: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: space.md, backgroundColor: 'rgba(11,37,69,0.6)' },
+  name: { color: palette.claro, fontSize: 18, fontFamily: fonts.display },
+  comp: { color: 'rgba(248,250,252,0.85)', fontSize: 12, fontFamily: fonts.medium },
 });

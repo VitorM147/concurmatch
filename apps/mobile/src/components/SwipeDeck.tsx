@@ -73,10 +73,10 @@ export const SwipeDeck = forwardRef<SwipeDeckHandle, Props>(function SwipeDeck({
         >
           <Card c={top} urls={urls} mine={myInterests} />
           <Animated.View style={[styles.stamp, styles.stampLike, { opacity: likeOpacity }]}>
-            <Text style={[styles.stampText, { color: palette.marfim }]}>CURTIR</Text>
+            <Text style={[styles.stampText, { color: palette.claro }]}>CURTIR</Text>
           </Animated.View>
           <Animated.View style={[styles.stamp, styles.stampPass, { opacity: passOpacity }]}>
-            <Text style={[styles.stampText, { color: palette.marfim }]}>PASSAR</Text>
+            <Text style={[styles.stampText, { color: palette.claro }]}>PASSAR</Text>
           </Animated.View>
         </Animated.View>
       ) : null}
@@ -161,34 +161,34 @@ const styles = StyleSheet.create({
   card: { borderRadius: radius.lg, overflow: 'hidden' },
   info: {
     position: 'absolute', left: 0, right: 0, bottom: 0, padding: space.xl, gap: space.xs,
-    backgroundColor: 'rgba(46,14,20,0.66)',
+    backgroundColor: 'rgba(11,37,69,0.66)',
   },
-  name: { color: palette.marfim, fontSize: 30, fontFamily: fonts.display },
-  comp: { color: palette.marfim, fontSize: 14, fontFamily: fonts.medium },
-  highlight: { backgroundColor: palette.marfim, color: palette.vinho, fontFamily: fonts.bold },
-  meta: { color: 'rgba(248,242,236,0.85)', fontSize: 13, fontFamily: fonts.medium },
+  name: { color: palette.claro, fontSize: 30, fontFamily: fonts.display },
+  comp: { color: palette.claro, fontSize: 14, fontFamily: fonts.medium },
+  highlight: { backgroundColor: palette.claro, color: palette.azul, fontFamily: fonts.bold },
+  meta: { color: 'rgba(248,250,252,0.85)', fontSize: 13, fontFamily: fonts.medium },
   reasons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginTop: space.xs },
   reason: {
-    color: palette.marfim, fontSize: 12, fontFamily: fonts.semibold, paddingHorizontal: space.sm, paddingVertical: 3,
+    color: palette.claro, fontSize: 12, fontFamily: fonts.semibold, paddingHorizontal: space.sm, paddingVertical: 3,
     borderRadius: radius.pill, borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)', overflow: 'hidden',
   },
   interest: {
-    color: palette.vinho, backgroundColor: 'rgba(248,242,236,0.92)', fontSize: 12, fontFamily: fonts.semibold,
+    color: palette.azul, backgroundColor: 'rgba(248,250,252,0.92)', fontSize: 12, fontFamily: fonts.semibold,
     paddingHorizontal: space.sm + 2, paddingVertical: 4, borderRadius: radius.pill, overflow: 'hidden',
   },
   interestShared: { backgroundColor: palette.rosa, color: palette.white },
-  bio: { color: 'rgba(248,242,236,0.92)', fontSize: 14, fontFamily: fonts.regular, marginTop: space.xs },
+  bio: { color: 'rgba(248,250,252,0.92)', fontSize: 14, fontFamily: fonts.regular, marginTop: space.xs },
   bubble: {
     position: 'absolute', top: space.xl, left: space.lg, right: space.lg, padding: space.md, gap: 2,
-    backgroundColor: palette.marfim, borderRadius: radius.md, borderBottomLeftRadius: 4,
+    backgroundColor: palette.claro, borderRadius: radius.md, borderBottomLeftRadius: 4,
     shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 4,
   },
   bubbleLabel: { color: palette.rosa, fontSize: 12, fontFamily: fonts.semibold },
-  bubbleText: { color: palette.vinhoEscuro, fontSize: 16, fontFamily: fonts.medium, lineHeight: 21 },
+  bubbleText: { color: palette.grafite, fontSize: 16, fontFamily: fonts.medium, lineHeight: 21 },
   dots: { position: 'absolute', top: space.md, left: space.md, right: space.md, flexDirection: 'row', gap: 4 },
   dot: { flex: 1, height: 3, borderRadius: 2 },
   stamp: { position: 'absolute', top: 48, borderWidth: 4, borderRadius: radius.sm, paddingHorizontal: space.md, paddingVertical: space.xs },
-  stampLike: { left: 24, borderColor: palette.marfim, backgroundColor: 'rgba(107,30,41,0.85)', transform: [{ rotate: '-14deg' }] },
-  stampPass: { right: 24, borderColor: palette.marfim, backgroundColor: 'rgba(46,14,20,0.7)', transform: [{ rotate: '14deg' }] },
+  stampLike: { left: 24, borderColor: palette.claro, backgroundColor: 'rgba(11,37,69,0.85)', transform: [{ rotate: '-14deg' }] },
+  stampPass: { right: 24, borderColor: palette.claro, backgroundColor: 'rgba(11,37,69,0.7)', transform: [{ rotate: '14deg' }] },
   stampText: { fontSize: 28, fontFamily: fonts.bold, letterSpacing: 2 },
 });

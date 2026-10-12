@@ -1,7 +1,7 @@
 // Marca e textos centralizados — trocar o nome do app é editar este arquivo + app.json.
 export const brand = {
   name: 'ConMatch',
-  tagline: 'Pessoas que compartilham mais.',
+  tagline: 'Pessoas que constroem mais juntas.',
   matchTitle: 'Deu ConMatch!',
   matchSubtitle: 'Vocês querem se conhecer.',
   matchCta: 'Ambições parecidas. Agora é com vocês.',

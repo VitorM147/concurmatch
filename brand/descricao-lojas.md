@@ -1,7 +1,7 @@
 # ConMatch — textos para as lojas
 
 **Nome:** ConMatch
-**Subtítulo (App Store, até 30):** Pessoas que compartilham mais
+**Subtítulo (App Store, até 30):** Pessoas que constroem juntas
 **Descrição curta (Google Play, até 80):** Conheça quem estuda para concurso, vestibular, OAB ou residência como você.
 
 ## Descrição completa
@@ -32,6 +32,6 @@ O ConMatch é o app de relacionamento para quem está se preparando para concurs
 Grátis: 20 curtidas e 5 curtidas com mensagem por dia, matches e conversas ilimitadas.
 Premium (R$ 24,90/mês): curtidas ilimitadas, 20 curtidas com mensagem por dia e veja quem curtiu você.
 
-ConMatch. Pessoas que compartilham mais.
+ConMatch. Pessoas que constroem mais juntas.
 
 **Palavras-chave:** concurso, concurseiro, vestibular, OAB, residência, namoro, relacionamento, encontros, estudos, servidor público
