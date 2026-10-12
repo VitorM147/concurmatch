@@ -29,6 +29,17 @@ test('sem verificação: curte e passa, mas não manda curtida com mensagem', as
   assert.equal(l.messages_max, 0);
 });
 
+test('sem verificação: só 10 ações por dia (curtir + passar)', async () => {
+  const lurker = await man({ verified: false });
+  assert.equal((await limits(lurker)).actions_max, 10);
+  for (let i = 0; i < 5; i++) await like(lurker, await woman({ photo: false }));
+  for (let i = 0; i < 5; i++) await rpc(db, lurker, 'swipe_pass', [await woman({ photo: false })]);
+  await rejects(like(lurker, await woman({ photo: false })), /ACTION_LIMIT_REACHED/);
+  await rejects(rpc(db, lurker, 'swipe_pass', [await woman({ photo: false })]), /ACTION_LIMIT_REACHED/);
+  await db.query('update public.profiles set verified = true where id = $1', [lurker]);
+  assert.equal((await limits(lurker)).actions_left, 40, 'verificou: sobe para 50 no mesmo dia');
+});
+
 test('sem verificação: também não recebe curtida com mensagem', async () => {
   const sender = await man(), target = await woman({ verified: false });
   await rejects(like(sender, target, 'Oi!'), /TARGET_NOT_VERIFIED/);

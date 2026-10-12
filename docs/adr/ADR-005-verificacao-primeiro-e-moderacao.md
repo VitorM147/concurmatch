@@ -8,9 +8,9 @@ Apps de relacionamento novos tendem a virar "submundo": perfis falsos, spam, gol
 
 ## Decisão
 
-1. **Mostrou a cara, ganhou voz.** Sem verificação, a pessoa só curte e passa. Ela não manda nem recebe curtida com mensagem e não conversa depois do match: o chat só abre entre dois perfis verificados. Assinar o Premium também exige verificação (trava no app e trigger em `entitlements`).
+1. **Mostrou a cara, ganhou voz.** Sem verificação, a pessoa só curte e passa, até 10 vezes por dia (migration 0009). Ela não manda nem recebe curtida com mensagem e não conversa depois do match: o chat só abre entre dois perfis verificados. Assinar o Premium também exige verificação (trava no app e trigger em `entitlements`).
 2. **Verificação** por gesto sorteado + selfie, revisada pelo suporte. Aprovada uma vez, vale para sempre. A selfie fica no bucket privado, fora de `public.photos`, e só o `service_role` consegue lê-la.
-3. **Ações por dia = curtir + passar.** São 50 no grátis e 250 no Premium. Passar conta para impedir quem só "folheia" perfis atrás de @ na bio e leva a conversa para fora.
+3. **Ações por dia = curtir + passar.** São 10 sem verificação, 50 no grátis verificado e 250 no Premium. Passar conta para impedir quem só "folheia" perfis atrás de @ na bio e leva a conversa para fora.
 4. **Curtida com mensagem:** 5 por dia no grátis e 100 no Premium.
 5. **Sem programa nem cobrança.** Termos típicos são barrados na bio, no recado da curtida e no chat. Na bio e no recado também ficam barrados Pix e preço; no chat, não, porque "dividir no Pix" é conversa normal. A bio não aceita telefone, link ou e-mail, mas o @ do Instagram pode. A denúncia tem um motivo próprio, com alerta prioritário.
 6. **Denúncia:**

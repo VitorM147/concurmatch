@@ -30,7 +30,7 @@ O ConMatch é o app de relacionamento para quem está se preparando para concurs
 - Seus dados seguem a LGPD. Exclua sua conta e tudo some quando você quiser.
 
 **Premium**
-Grátis: 50 ações por dia (curtir ou passar) e, com perfil verificado, 5 curtidas com mensagem por dia e conversas ilimitadas.
+Grátis: 10 ações por dia (curtir ou passar) sem verificação; com perfil verificado, 50 ações, 5 curtidas com mensagem por dia e conversas ilimitadas.
 Premium (R$ 24,90/mês, só para perfis verificados): 250 ações e 100 curtidas com mensagem por dia, e veja quem curtiu você.
 
 ConMatch. Pessoas que constroem mais juntas.

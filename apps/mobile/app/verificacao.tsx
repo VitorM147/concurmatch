@@ -12,6 +12,7 @@ import { brand } from '@/brand';
 import { font, radius, space, useColors } from '@/theme';
 
 const PERKS = [
+  [`${brand.freeActions} ações por dia`, `Sem verificação são só ${brand.unverifiedActions} (curtir ou passar).`],
   ['★ Curtir com mensagem', `${brand.freeMessages} por dia no grátis, ${brand.premiumMessages} no Premium.`],
   ['Receber mensagens', 'Quem não verificou não recebe curtidas com mensagem.'],
   ['Conversar depois do match', 'O chat só abre entre dois perfis verificados.'],

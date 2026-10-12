@@ -11,14 +11,14 @@ App de relacionamento para quem estuda para concursos, vestibular, OAB e residê
 | Parte | Conteúdo |
 |---|---|
 | **Banco (Supabase/Postgres)** | Schema, RLS, regras de negócio em funções SQL, catálogo de concursos e configurações |
-| **Testes do banco** | 57 testes automatizados com Postgres embarcado: match, cotas diárias, verificação, curtida com mensagem, filtro de programa/cobrança, denúncia com evidência, recurso, interesses, discovery, chat, bloqueio, denúncia, RLS, LGPD e regressões de segurança |
+| **Testes do banco** | 58 testes automatizados com Postgres embarcado: match, cotas diárias, verificação, curtida com mensagem, filtro de programa/cobrança, denúncia com evidência, recurso, interesses, discovery, chat, bloqueio, denúncia, RLS, LGPD e regressões de segurança |
 | **App (Expo / React Native)** | Cadastro e login, onboarding com consentimento LGPD, Descobrir (swipe + curtida com mensagem), tela de match, abas Conexões e Mensagens, chat em tempo real com sugestões para conversar, denunciar, bloquear e desfazer match, perfil com fotos, "Sobre mim", interesses e preferências, Premium (tela, só verificado), verificação por gesto + selfie, perfil em análise com recurso, Central de segurança, excluir conta |
 | **CI** | GitHub Actions rodando os testes do banco e o typecheck do app |
 
 ### Regras de negócio implementadas
 
-- **Mostrou a cara, ganhou voz.** Sem verificação a pessoa só curte e passa: não manda nem recebe curtida com mensagem, não conversa depois do match (o chat só abre entre dois verificados) e não assina o Premium. A verificação é um gesto sorteado + selfie, revisada pelo suporte (`moderation_review_verification`), e vale para sempre.
-- **Ações por dia = curtir + passar.** 50 no grátis e 250 no Premium, renovando à meia-noite de Brasília (configurável em `app_config`). Passar conta para ninguém "folhear" perfis só atrás de @ na bio.
+- **Mostrou a cara, ganhou voz.** Sem verificação a pessoa só curte e passa, até 10 vezes por dia: não manda nem recebe curtida com mensagem, não conversa depois do match (o chat só abre entre dois verificados) e não assina o Premium. A verificação é um gesto sorteado + selfie, revisada pelo suporte (`moderation_review_verification`), e vale para sempre.
+- **Ações por dia = curtir + passar.** 10 sem verificação, 50 verificado grátis e 250 no Premium, renovando à meia-noite de Brasília (configurável em `app_config`). Passar conta para ninguém "folhear" perfis só atrás de @ na bio.
 - **Curtida com mensagem (botão ★).** Recado de até 100 caracteres junto da curtida, só entre perfis verificados. A pessoa vê o recado no card, e quem mandou recado aparece primeiro no Descobrir. Se der match, os recados viram as primeiras mensagens da conversa. Sem links, e-mails, @perfis, telefone, Pix ou preço; 5 por dia no grátis e 100 no Premium. A curtida conta nas ações do dia.
 - **Sem programa nem cobrança.** Termos típicos ("faço programa", "atendo com local", "cachê", "valores no pv", OnlyFans, sugar...) são barrados na bio, no recado e no chat; na bio e no recado também Pix e preço. A bio não aceita telefone, link ou e-mail (o @ do Instagram pode). Há um motivo de denúncia próprio, com alerta prioritário.
 - **Interesses.** Até 10, de um catálogo fixo (`interest_catalog()`); os em comum aparecem destacados no card.

@@ -92,7 +92,7 @@ export default function Perfil() {
             <Text style={[font.small, { color: c.onPrimary, opacity: 0.85 }]}>
               {mod?.verification?.status === 'pendente'
                 ? 'Logo você poderá mandar mensagens e conversar.'
-                : 'Sem verificação você só curte. Verificado manda mensagem, conversa e pode assinar o Premium.'}
+                : 'Sem verificação você só curte e passa, até 10 por dia. Verificado tem 50, manda mensagem, conversa e pode assinar o Premium.'}
             </Text>
           </Pressable>
         ) : null}

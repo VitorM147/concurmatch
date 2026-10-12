@@ -84,6 +84,12 @@ export default function Discover() {
   const actionLimit = () => {
     setLimits((l) => l && { ...l, actions_left: 0 });
     const premium = !!limits?.premium;
+    if (limits && !limits.verified) {
+      return Alert.alert(brand.actionLimitTitle(limits.actions_max), brand.actionLimitBodyUnverified, [
+        { text: 'Agora não', style: 'cancel' },
+        { text: 'Verificar agora', onPress: () => router.push('/verificacao') },
+      ]);
+    }
     Alert.alert(brand.actionLimitTitle(limits?.actions_max ?? brand.freeActions),
       premium ? brand.actionLimitBodyPremium : brand.actionLimitBody,
       premium ? [{ text: 'Ok' }] : [
