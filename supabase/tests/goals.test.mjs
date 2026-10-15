@@ -19,7 +19,7 @@ async function course(slug) {
 }
 
 test('migração preserva concursos antigos e reconhece perfis militares sem perder a seleção', async () => {
-  const legacy = await createDb({ exclude: ['0018_study_goals.sql'] });
+  const legacy = await createDb({ exclude: ['0018_study_goals.sql', '0019_beta_operations.sql'] });
   try {
     const a = await createUser(legacy);
     const b = await createUser(legacy, { competition: 'Escolas Militares (EsPCEx, EsSA, EEAR...)' });

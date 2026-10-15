@@ -5,12 +5,14 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { Button, H1, P, Screen } from '@/components/ui';
 import { SessionProvider, useSession } from '@/lib/session';
+import { supabase } from '@/lib/supabase';
 import { fonts, useColors } from '@/theme';
 
 // Guarda de rotas: sem sessão → /entrar; sem perfil ou sem foto → /onboarding; senão → app
 function Gate() {
-  const { ready, session, profile, hasPhoto } = useSession();
+  const { ready, session, profile, hasPhoto, profileError, refreshProfile, recovery } = useSession();
   const segments = useSegments();
   const router = useRouter();
   const c = useColors();
@@ -20,16 +22,21 @@ function Gate() {
   });
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || profileError) return;
     const root = segments[0];
+    if (root === 'auth') return;
+    if (recovery && session) {
+      if (root !== 'redefinir-senha') router.replace('/redefinir-senha');
+      return;
+    }
     if (!session) {
-      if (root !== 'entrar') router.replace('/entrar');
+      if (root !== 'entrar' && root !== 'redefinir-senha') router.replace('/entrar');
     } else if (!profile || !hasPhoto) {
       if (root !== 'onboarding') router.replace('/onboarding');
     } else if (root === 'entrar' || root === 'onboarding') {
       router.replace('/');
     }
-  }, [ready, session, profile, hasPhoto, segments, router]);
+  }, [ready, session, profile, hasPhoto, profileError, recovery, segments, router]);
 
   // Se a fonte falhar, segue com a do sistema em vez de travar na abertura
   if (!ready || (!fontsLoaded && !fontError)) {
@@ -40,6 +47,22 @@ function Gate() {
     );
   }
 
+  if (profileError && segments[0] !== 'auth') return <Screen>
+    <View style={{ flex: 1, justifyContent: 'center', padding: 24, gap: 16 }}>
+      <H1>Não conseguimos carregar seu perfil</H1>
+      <P>Confira a conexão e tente novamente. Seu cadastro foi preservado.</P>
+      <Button title="Tentar novamente" onPress={refreshProfile} />
+    </View>
+  </Screen>;
+
+  if (session && profile?.banned_at && segments[0] !== 'auth' && !recovery) return <Screen>
+    <View style={{ flex: 1, justifyContent: 'center', padding: 24, gap: 16 }}>
+      <H1>Conta indisponível</H1>
+      <P>Se você solicitou a exclusão, ela está sendo processada. Para outros casos, entre em contato com o suporte.</P>
+      <Button title="Sair" onPress={() => supabase.auth.signOut({ scope: 'local' })} />
+    </View>
+  </Screen>;
+
   return (
     <Stack screenOptions={{
       headerStyle: { backgroundColor: c.bg },
@@ -49,6 +72,8 @@ function Gate() {
       contentStyle: { backgroundColor: c.bg },
     }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="auth/callback" options={{ title: 'Confirmar acesso' }} />
+      <Stack.Screen name="redefinir-senha" options={{ title: 'Nova senha' }} />
       <Stack.Screen name="entrar" options={{ headerShown: false }} />
       <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="chat/[id]" options={{ title: '' }} />

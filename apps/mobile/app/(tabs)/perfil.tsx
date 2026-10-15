@@ -22,7 +22,7 @@ export default function Perfil() {
   const c = useColors();
   const router = useRouter();
   const { profile, refreshProfile, session } = useSession();
-  const [photos, setPhotos] = useState<{ storage_path: string; position: number }[]>([]);
+  const [photos, setPhotos] = useState<{ storage_path: string; position: number; approved: boolean; auto_checked_at: string | null }[]>([]);
   const [busy, setBusy] = useState(false);
   const urls = useSignedUrls(photos.map((p) => p.storage_path));
   const [bio, setBio] = useState(profile?.bio ?? '');
@@ -48,18 +48,19 @@ export default function Perfil() {
   const setPhoto = async (position: number) => {
     if (!session) return;
     setBusy(true);
-    try { await pickAndUploadPhoto(session.user.id, position); loadPhotos(); }
+    try { await pickAndUploadPhoto(session.user.id, position); loadPhotos(); await refreshProfile(); }
     catch { Alert.alert('Falha no envio', 'Tente outra foto.'); }
     finally { setBusy(false); }
   };
 
   const deleteAccount = () => Alert.alert(
     'Excluir conta',
-    'Isso apaga permanentemente seu perfil, fotos, matches e conversas. Não dá para desfazer.',
+    'Seu perfil será ocultado agora. O servidor removerá seus arquivos e concluirá a exclusão da conta. Não dá para desfazer.',
     [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Excluir tudo', style: 'destructive', onPress: async () => {
-        try { await api.deleteAccount(); await supabase.auth.signOut(); }
+        try { await api.deleteAccount(); await supabase.auth.signOut({ scope: 'local' });
+          Alert.alert('Exclusão solicitada', 'Seu perfil foi ocultado. O servidor concluirá a remoção dos arquivos e da conta.'); }
         catch (e: any) { Alert.alert('Ops', e.message); }
       } },
     ],
@@ -113,6 +114,7 @@ export default function Perfil() {
         ) : null}
 
         {/* Fotos (até 6) */}
+        <Text style={[font.small, { color: c.textMuted }]}>Fotos novas passam por análise. Ao trocar uma foto, será necessário verificar o perfil novamente.</Text>
         <View style={styles.grid}>
           {Array.from({ length: 6 }).map((_, pos) => {
             const p = photos.find((x) => x.position === pos);
@@ -123,6 +125,10 @@ export default function Perfil() {
                 {p && urls[p.storage_path]
                   ? <Image source={{ uri: urls[p.storage_path] }} style={StyleSheet.absoluteFill} contentFit="cover" />
                   : <Text style={[font.h2, { color: c.textMuted }]}>+</Text>}
+                {p ? <Text style={{ position: 'absolute', bottom: 0, left: 0, right: 0,
+                  backgroundColor: 'rgba(0,0,0,0.65)', color: '#fff', fontSize: 11, padding: 4 }}>
+                  {p.approved ? 'Aprovada' : p.auto_checked_at ? 'Recusada — trocar' : 'Em análise'}
+                </Text> : null}
               </Pressable>
             );
           })}

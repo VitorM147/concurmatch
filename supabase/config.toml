@@ -66,3 +66,6 @@ verify_jwt = false
 # Robô de selfie (AWS Rekognition): mesmo esquema do report-triage
 [functions.selfie-check]
 verify_jwt = false
+
+[functions.storage-maintenance]
+verify_jwt = false

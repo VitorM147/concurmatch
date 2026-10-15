@@ -14,7 +14,7 @@ O controlador dos dados é [RAZÃO SOCIAL], CNPJ [CNPJ], [ENDEREÇO]. Encarregad
 | Nome, data de nascimento, cidade, bio, interesses, concurso e fase de estudo | Montar seu perfil e calcular compatibilidade | Execução de contrato (art. 7º, V) | Enquanto a conta existir |
 | Gênero e "tenho interesse em" | Mostrar perfis compatíveis (revela orientação sexual) | Consentimento específico (art. 11, I) | Enquanto a conta existir |
 | Fotos do perfil | Exibir seu perfil | Execução de contrato (art. 7º, V) | Enquanto a conta existir |
-| Selfie de verificação | Confirmar que as fotos são suas (dado biométrico) | Consentimento específico (art. 11, I) e prevenção à fraude (art. 11, II, g) | Apagada depois da decisão; guardamos só o resultado |
+| Selfie de verificação | Confirmar que as fotos são suas (dado biométrico) | Consentimento específico (art. 11, I) e prevenção à fraude (art. 11, II, g) | Exclusão agendada após a decisão, com novas tentativas em caso de falha; guardamos o resultado |
 | Localização aproximada (cerca de 1 km) | Mostrar pessoas perto de você | Consentimento (art. 7º, I) | Enquanto a conta existir; você pode desligar |
 | Curtidas, passes, matches e mensagens | Fazer o app funcionar | Execução de contrato (art. 7º, V) | Conversas de matches desfeitos: 180 dias; passes: 365 dias |
 | Denúncias e a conversa guardada como evidência | Segurança e moderação | Legítimo interesse (art. 7º, IX) e exercício de direitos (art. 7º, VI) | 5 anos depois de resolvida [confirmar] |
@@ -25,7 +25,7 @@ Não recebemos dados do seu cartão: o pagamento é feito pela Apple ou pelo Goo
 
 ## 3. O que outras pessoas veem
 
-Outros usuários veem seu nome, idade, cidade, distância aproximada ("a ~15 km"), fotos aprovadas, bio, interesses, concurso, fase de estudo e o selo de verificado. Nunca mostramos sua data de nascimento, seu e-mail nem sua localização exata.
+Outros usuários veem seu nome, idade, cidade, distância aproximada ("a ~15 km"), fotos aprovadas, bio, interesses, objetivo de preparação, prova ou seleção, curso e instituição desejados, fase de estudo e o selo de verificado. Nunca mostramos sua data de nascimento, seu e-mail nem sua localização exata.
 
 ## 4. Decisões automáticas
 
@@ -65,7 +65,7 @@ Você pode, a qualquer momento (LGPD art. 18):
 
 Pedidos por e-mail são respondidos em até 15 dias.
 
-Ao excluir a conta, apagamos tudo, exceto o que a lei nos obriga a guardar (registros de acesso por 6 meses) e denúncias em aberto ou recentes, guardadas pelo prazo da seção 2 para proteger outras pessoas.
+Ao solicitar a exclusão, seu perfil é ocultado e suas ações são bloqueadas. O servidor remove os arquivos e conclui a exclusão da conta; falhas de processamento são tentadas novamente. Apagamos os dados, exceto o que a lei nos obriga a guardar (registros de acesso por 6 meses) e denúncias em aberto ou recentes, guardadas pelo prazo da seção 2 para proteger outras pessoas.
 
 ## 8. Segurança
 

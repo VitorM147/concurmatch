@@ -110,7 +110,7 @@ test('foto: decisão pelas notas da Moderation API', () => {
 });
 
 test('foto reprovada sai do perfil; sinal de menor esconde o perfil e abre denúncia automática', async () => {
-  const u = await woman();
+  const u = await woman({ photoPending: true });
   const ph = (await db.query('select id from public.photos where user_id = $1', [u])).rows[0].id;
   const pend = (await db.query('select public.photo_check_pending(50) j')).rows[0].j;
   assert.ok(pend.some((x) => x.id === ph), 'foto nova entra na fila do robô');
@@ -129,7 +129,7 @@ test('alertas: cada alerta importante vai para o canal uma vez só, sem conteúd
   await rpc(db, a, 'report_user', [b, 'servico_sexual_ou_cobranca', 'pediu pix', null]);
   const first = (await db.query('select public.alerts_to_notify(200) j')).rows[0].j;
   assert.ok(first.some((x) => x.kind === 'sexual_service_report'));
-  assert.ok(first.every((x) => Object.keys(x).sort().join() === 'at,kind'), 'só tipo e horário');
+  assert.ok(first.every((x) => Object.keys(x).sort().join() === 'at,id,kind,token'), 'só metadados de entrega, nunca conteúdo de conversa');
   const again = (await db.query('select public.alerts_to_notify(200) j')).rows[0].j;
   assert.equal(again.length, 0);
 });

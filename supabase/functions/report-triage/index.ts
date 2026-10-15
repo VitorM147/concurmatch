@@ -12,6 +12,7 @@
 //         (a proteção é o cabeçalho x-worker-secret, não o JWT de usuário)
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 import { decideReport, maxScores } from '../_shared/report-decision.js';
+import { deliverAlerts } from '../_shared/worker-tasks.js';
 import { decidePhoto, sniffImage } from '../_shared/photo-decision.js';
 
 // AI-006: modelo fixado numa versão datada; trocar = mudança revisada (os limites dependem dele)
@@ -53,7 +54,6 @@ Deno.serve(async (req) => {
     return new Response('forbidden', { status: 403 });
   }
   const apiKey = Deno.env.get('OPENAI_API_KEY');
-  if (!apiKey) return new Response('OPENAI_API_KEY ausente', { status: 500 });
 
   const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
     auth: { persistSession: false },
@@ -62,6 +62,7 @@ Deno.serve(async (req) => {
   const count = (k: string) => { summary[k] = (summary[k] ?? 0) + 1; };
   const failures: string[] = [];   // só ids e mensagens de erro: nunca o texto das conversas
 
+  if (apiKey) {
   // ---------------------------------------------------------------- 1. denúncias
   const { data: reports, error } = await db.rpc('report_triage_pending', { p_limit: REPORT_BATCH });
   if (error) return new Response(`pending: ${error.message}`, { status: 500 });
@@ -82,7 +83,8 @@ Deno.serve(async (req) => {
   }
 
   // ---------------------------------------------------------------- 2. fotos
-  const { data: photos } = await db.rpc('photo_check_pending', { p_limit: PHOTO_BATCH });
+  const { data: photos, error: photoError } = await db.rpc('photo_check_pending', { p_limit: PHOTO_BATCH });
+  if (photoError) failures.push('PHOTO_QUEUE_FAILED');
   for (const ph of (photos ?? []) as { id: string; path: string }[]) {
     try {
       const { data: file, error: de } = await db.storage.from('photos').download(ph.path);
@@ -113,28 +115,17 @@ Deno.serve(async (req) => {
     }
   }
 
+  } else { summary.moderacao_automatica_desativada = 1; }
+
   // ---------------------------------------------------------------- 3. alertas
   const hook = Deno.env.get('ALERT_WEBHOOK_URL');
   if (hook) {
     try {
-      const { data: alerts } = await db.rpc('alerts_to_notify', { p_limit: 50 });
-      const list = (alerts ?? []) as { kind: string; at: string }[];
-      if (list.length) {
-        const by: Record<string, number> = {};
-        for (const a of list) by[a.kind] = (by[a.kind] ?? 0) + 1;
-        const text = `ConMatch · ${list.length} alerta(s) de segurança: ` +
-          Object.entries(by).map(([k, n]) => `${k} ×${n}`).join(', ') + '. Abra o painel do suporte.';
-        await fetch(hook, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, content: text }),   // Slack/Google Chat usam text; Discord usa content
-          signal: AbortSignal.timeout(TIMEOUT_MS),
-        });
-        summary.alertas_enviados = list.length;
-      }
+      summary.alertas_enviados = await deliverAlerts(db, hook);
     } catch (e) {
       failures.push(`alertas: ${(e as Error).message}`);
     }
   }
 
-  return Response.json({ model: MODEL, summary, failures });
+  return Response.json({ model: MODEL, summary, failures }, { status: failures.length ? 500 : 200 });
 });

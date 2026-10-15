@@ -71,7 +71,7 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with: { deno-version: v2.x }
-      - run: deno check supabase/functions/report-triage/index.ts supabase/functions/selfie-check/index.ts
+      - run: deno check supabase/functions/report-triage/index.ts supabase/functions/selfie-check/index.ts supabase/functions/storage-maintenance/index.ts
 
   sast:
     name: SAST (Semgrep)                   # DO-004

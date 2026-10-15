@@ -247,6 +247,7 @@ export default function Onboarding() {
             {step === 5 && (
               <>
                 <H1>Sua melhor foto</H1>
+                <P muted>A foto será analisada antes de aparecer para outras pessoas. Você pode acompanhar o resultado no seu perfil.</P>
                 <P muted>Rosto visível, sem óculos escuros. Perfis com foto real recebem muito mais curtidas.</P>
                 <Pressable accessibilityRole="button" accessibilityLabel="Escolher foto" onPress={addPhoto}
                   style={{ alignSelf: 'center', width: 220, height: 290, borderRadius: radius.lg, borderWidth: 2,

@@ -218,6 +218,9 @@ test('LGPD: excluir conta apaga perfil, fotos, likes e matches', async () => {
   await like(a, b);
   await like(b, a);
   await rpc(db, a, 'delete_my_account');
+  assert.equal((await db.query('select is_visible from public.profiles where id = $1', [a])).rows[0].is_visible, false);
+  // Simula a etapa final do worker, após a Storage API confirmar a remoção.
+  await db.query('delete from auth.users where id = $1', [a]);
   for (const [t, col] of [['profiles', 'id'], ['photos', 'user_id'], ['likes', 'liker_id'], ['matches', 'user_a'], ['matches', 'user_b']]) {
     const { rows } = await db.query(`select count(*)::int n from public.${t} where ${col} = $1`, [a]);
     assert.equal(rows[0].n, 0, `${t}.${col}`);
