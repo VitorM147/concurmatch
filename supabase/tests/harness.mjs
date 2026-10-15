@@ -34,7 +34,8 @@ export async function createDb(opts = {}) {
                    '0007_message_likes_and_interests.sql', '0008_verified_first_and_moderation.sql',
                    '0009_unverified_actions.sql', '0010_report_auto_triage.sql',
                    '0012_admin_panel_and_rules.sql', '0013_selfie_auto_check.sql', '0014_waitlist.sql',
-                   '0016_security_run3.sql', '0018_study_goals.sql', '0019_beta_operations.sql']) {
+                   '0016_security_run3.sql', '0018_study_goals.sql', '0019_beta_operations.sql',
+                   '20261015024541_harden_helper_search_paths.sql']) {
     if ((opts.exclude ?? []).includes(f)) continue;
     await db.exec(read(`migrations/${f}`));
   }

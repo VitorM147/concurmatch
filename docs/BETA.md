@@ -1,5 +1,7 @@
 # ConMatch — preparação e teste manual do beta
 
+O estado real do projeto hospedado e as pendências estão em [HOMOLOGACAO.md](HOMOLOGACAO.md).
+
 ## Estado da entrega
 
 Esta branch prepara um beta gratuito e fechado. Não é uma confirmação de que o
