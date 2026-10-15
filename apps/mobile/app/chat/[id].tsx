@@ -3,12 +3,13 @@
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
-  Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
+  ActivityIndicator, AppState, Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SafetySheet } from '@/components/SafetySheet';
 import { Button, Screen } from '@/components/ui';
 import { api, ApiError, type Message } from '@/lib/api';
+import { mergeMessages } from '@/lib/messageHistory';
 import { useSession } from '@/lib/session';
 import { brand, chatSuggestions } from '@/brand';
 import { font, fonts, radius, space, useColors } from '@/theme';
@@ -30,16 +31,72 @@ export default function Chat() {
   const meLocked = !profile?.verified;
   const list = useRef<FlatList<Message>>(null);
 
+  const [loading, setLoading] = useState(true);
+  const [historyError, setHistoryError] = useState(false);
+  const [hasOlder, setHasOlder] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const syncRef = useRef<() => void>(() => {});
+  const newest = useRef(0);
+  const scrollToLatest = useRef(true);
+
   useEffect(() => {
-    let alive = true;
-    api.messages(id).then((m) => { if (alive) setMsgs(m); }).catch(() => {});
-    api.markRead(id).catch(() => {});
-    const unsub = api.subscribeMessages(id, (m) => {
-      setMsgs((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
-      if (m.sender_id !== me) api.markRead(id).catch(() => {});
-    });
-    return () => { alive = false; unsub(); };
+    let alive = true, syncing = false, needsSync = false;
+    setMsgs([]); newest.current = 0; setLoading(true); setHistoryError(false); setHasOlder(false);
+    const receive = (messages: Message[]) => {
+      if (!alive) return;
+      newest.current = Math.max(newest.current, ...messages.map((m) => m.id));
+      setMsgs((previous) => mergeMessages(previous, messages));
+    };
+    const sync = async () => {
+      if (!alive) return;
+      if (syncing) { needsSync = true; return; }
+      syncing = true;
+      try {
+        if (!newest.current) {
+          const page = await api.messages(id);
+          if (alive) setHasOlder(page.length === 50);
+          receive(page);
+        } else {
+          // Repair gaps after reconnect, not just the last 50 messages.
+          let cursor = newest.current;
+          while (alive) {
+            const page = await api.messagesSince(id, cursor);
+            receive(page);
+            if (page.length < 100) break;
+            cursor = page[page.length - 1].id;
+          }
+          // Refresh read receipts for the recent page as well.
+          receive(await api.messages(id));
+        }
+        await api.markRead(id);
+        if (alive) { setHistoryError(false); setOtherLocked(false); }
+      } catch { if (alive) setHistoryError(true); }
+      finally {
+        syncing = false; if (alive) setLoading(false);
+        if (needsSync && alive) { needsSync = false; void sync(); }
+      }
+    };
+    syncRef.current = () => { void sync(); };
+    const unsub = api.subscribeMessages(id, (message) => {
+      // Realtime must not advance the catch-up cursor while a gap is being repaired.
+      if (alive) setMsgs((previous) => mergeMessages(previous, [message]));
+      if (message.sender_id !== me && !message.read_at) api.markRead(id).catch(() => { if (alive) setHistoryError(true); });
+    }, () => { void sync(); });
+    const appState = AppState.addEventListener('change', (state) => { if (state === 'active') void sync(); });
+    void sync();
+    return () => { alive = false; unsub(); appState.remove(); };
   }, [id, me]);
+
+  const loadOlder = async () => {
+    if (loadingOlder || !msgs.length || !hasOlder) return;
+    setLoadingOlder(true);
+    try {
+      const page = await api.messages(id, msgs[0].id);
+      setMsgs((previous) => mergeMessages(previous, page));
+      setHasOlder(page.length === 50);
+    } catch { Alert.alert('Não foi possível carregar o histórico', 'Tente novamente.'); }
+    finally { setLoadingOlder(false); }
+  };
 
   const send = async (body = text) => {
     const t = body.trim();
@@ -47,7 +104,8 @@ export default function Chat() {
     setSending(true);
     try {
       const m = await api.send(id, me, t);
-      setMsgs((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
+      setMsgs((prev) => mergeMessages(prev, [m]));
+      list.current?.scrollToOffset({ offset: 0, animated: true });
       setText('');
     } catch (e) {
       if (e instanceof ApiError && e.code === 'OTHER_NOT_VERIFIED') setOtherLocked(true);
@@ -67,15 +125,22 @@ export default function Chat() {
         ),
       }} />
 
+      {historyError ? <View style={{ padding: space.md, gap: space.sm }}>
+        <Text style={[font.small, { color: c.text }]}>Não conseguimos sincronizar a conversa. Suas mensagens foram preservadas.</Text>
+        <Button title="Tentar sincronizar" variant="ghost" onPress={() => syncRef.current()} />
+      </View> : null}
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
         <FlatList
           ref={list}
-          data={msgs}
+          inverted
+          data={[...msgs].reverse()}
           keyExtractor={(m) => String(m.id)}
           contentContainerStyle={{ padding: space.lg, gap: space.sm, flexGrow: 1 }}
-          onContentSizeChange={() => list.current?.scrollToEnd({ animated: true })}
-          ListEmptyComponent={
+          onScroll={(event) => { scrollToLatest.current = event.nativeEvent.contentOffset.y < 100; }}
+          onContentSizeChange={() => { if (scrollToLatest.current) list.current?.scrollToOffset({ offset: 0 }); }}
+          ListFooterComponent={hasOlder ? <Button title="Carregar mensagens anteriores" variant="ghost" onPress={loadOlder} loading={loadingOlder} /> : null}
+          ListEmptyComponent={loading ? <ActivityIndicator /> :
             <View style={{ flex: 1, justifyContent: 'flex-end', gap: space.sm, paddingBottom: space.lg }}>
               <Text style={[font.h2, { color: c.text, textAlign: 'center' }]}>{brand.matchSubtitle}</Text>
               <Text style={[font.small, { color: c.textMuted, textAlign: 'center' }]}>{brand.matchCta}</Text>

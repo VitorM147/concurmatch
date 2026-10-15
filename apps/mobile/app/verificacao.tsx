@@ -1,7 +1,7 @@
 // Verificação de perfil: o servidor sorteia um desafio de rosto (sorrir, virar o
 // rosto...), a pessoa tira uma selfie e o robô (AWS Rekognition) confere o desafio
 // e compara com as fotos do perfil, em cerca de um minuto. Sem robô configurado,
-// o suporte confere pelo painel. Aprovou uma vez, vale para sempre.
+// o suporte confere pelo painel. Trocar fotos exige uma nova verificação.
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
@@ -80,7 +80,7 @@ export default function Verificacao() {
         {st.verified ? (
           <>
             <H1>Perfil <Highlight>verificado</Highlight> ✓</H1>
-            <P muted>Tudo liberado: curtida com mensagem, conversas e Premium. A verificação vale para sempre.</P>
+            <P muted>Tudo liberado: curtida com mensagem, conversas e Premium. Se trocar fotos, será necessário verificar novamente.</P>
             <Button title="Voltar" onPress={() => router.back()} />
           </>
         ) : v === 'pendente' ? (

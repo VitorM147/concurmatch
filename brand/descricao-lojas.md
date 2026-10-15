@@ -2,13 +2,13 @@
 
 **Nome:** ConMatch
 **Subtítulo (App Store, até 30):** Pessoas que constroem juntas
-**Descrição curta (Google Play, até 80):** Conheça quem estuda para concurso, vestibular, OAB ou residência como você.
+**Descrição curta (Google Play, até 80):** Namoro para quem prepara seu futuro: concursos, ENEM e carreira militar.
 
 ## Descrição completa
 
 Quem estuda sério sabe: a rotina é puxada, o tempo livre é pouco e nem todo mundo entende por que você troca o sábado à noite por um simulado. No ConMatch, todo mundo entende.
 
-O ConMatch é o app de relacionamento para quem está se preparando para concurso, vestibular, OAB ou residência. Aqui você conhece pessoas que vivem a mesma jornada e têm ambições parecidas com as suas.
+O ConMatch é o app de relacionamento para quem está se preparando para concurso, vestibular/ENEM, carreira militar, OAB ou residência. Aqui você conhece pessoas que vivem a mesma jornada e têm ambições parecidas com as suas.
 
 **Como funciona**
 - Monte seu perfil com fotos, "Sobre mim", seus interesses, o que você estuda e em que fase está.
@@ -17,8 +17,8 @@ O ConMatch é o app de relacionamento para quem está se preparando para concurs
 - Curtida recíproca? Deu ConMatch! A conversa abre na hora, com sugestões para quebrar o gelo.
 
 **Feito para a sua rotina**
-- Afinidades em destaque: mesmo objetivo, mesma área, estudam no mesmo período, interesses em comum.
-- Modo Lotação: vai ser nomeado(a) em outra cidade? Conheça quem já mora lá ou vai para o mesmo destino.
+- Afinidades em destaque: mesmo objetivo, mesma prova ou curso desejado, estudam no mesmo período, interesses em comum. Você também pode conhecer pessoas de outros objetivos.
+- Seu próximo destino: vai estudar ou trabalhar em outra cidade? Conheça quem já mora lá ou vai para o mesmo lugar.
 - Rotina no perfil: quem estuda até as 22h ou só tem o domingo livre encontra quem respeita isso.
 
 **Segurança em primeiro lugar**

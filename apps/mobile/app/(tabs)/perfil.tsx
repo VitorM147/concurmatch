@@ -3,11 +3,13 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, Share, StyleSheet, Switch, Text, View } from 'react-native';
 import { Button, ChipGroup, Field, H1, Screen } from '@/components/ui';
+import { StudyGoalFields } from '@/components/StudyGoalFields';
+import { cleanStudyGoal, emptyStudyGoal, goalStatusLabels, studyGoalFromProfile } from '@/lib/studyGoals';
 import { api, type ModerationStatus, type StudyStatus } from '@/lib/api';
 import { pickAndUploadPhoto, useSignedUrls } from '@/lib/photos';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
-import { brand, interestLabels, MAX_INTERESTS, statusLabels } from '@/brand';
+import { brand, interestLabels, MAX_INTERESTS } from '@/brand';
 import { font, radius, space, useColors } from '@/theme';
 
 const DISTANCES = [10, 25, 50, 100, 300].map((d) => ({ value: d, label: `${d} km` }));
@@ -20,11 +22,14 @@ export default function Perfil() {
   const c = useColors();
   const router = useRouter();
   const { profile, refreshProfile, session } = useSession();
-  const [photos, setPhotos] = useState<{ storage_path: string; position: number }[]>([]);
+  const [photos, setPhotos] = useState<{ storage_path: string; position: number; approved: boolean; auto_checked_at: string | null }[]>([]);
   const [busy, setBusy] = useState(false);
   const urls = useSignedUrls(photos.map((p) => p.storage_path));
   const [bio, setBio] = useState(profile?.bio ?? '');
+  const [goal, setGoal] = useState(emptyStudyGoal);
+  const [savingGoal, setSavingGoal] = useState(false);
   useEffect(() => { setBio(profile?.bio ?? ''); }, [profile?.bio]);
+  useEffect(() => { if (profile) setGoal(studyGoalFromProfile(profile)); }, [profile]);
 
   const [mod, setMod] = useState<ModerationStatus | null>(null);
   const loadPhotos = useCallback(() => { api.myPhotos().then(setPhotos).catch(() => {}); }, []);
@@ -43,18 +48,19 @@ export default function Perfil() {
   const setPhoto = async (position: number) => {
     if (!session) return;
     setBusy(true);
-    try { await pickAndUploadPhoto(session.user.id, position); loadPhotos(); }
+    try { await pickAndUploadPhoto(session.user.id, position); loadPhotos(); await refreshProfile(); }
     catch { Alert.alert('Falha no envio', 'Tente outra foto.'); }
     finally { setBusy(false); }
   };
 
   const deleteAccount = () => Alert.alert(
     'Excluir conta',
-    'Isso apaga permanentemente seu perfil, fotos, matches e conversas. Não dá para desfazer.',
+    'Seu perfil será ocultado agora. O servidor removerá seus arquivos e concluirá a exclusão da conta. Não dá para desfazer.',
     [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Excluir tudo', style: 'destructive', onPress: async () => {
-        try { await api.deleteAccount(); await supabase.auth.signOut(); }
+        try { await api.deleteAccount(); await supabase.auth.signOut({ scope: 'local' });
+          Alert.alert('Exclusão solicitada', 'Seu perfil foi ocultado. O servidor concluirá a remoção dos arquivos e da conta.'); }
         catch (e: any) { Alert.alert('Ops', e.message); }
       } },
     ],
@@ -66,6 +72,16 @@ export default function Perfil() {
       const data = await api.exportMyData();
       await Share.share({ title: 'Meus dados', message: JSON.stringify(data, null, 2) });
     } catch (e: any) { Alert.alert('Ops', e.message); }
+  };
+
+  const saveGoal = async () => {
+    if ([goal.desired_institution, goal.goal_detail].some((s) => s?.trim() && s.trim().length < 2)) {
+      return Alert.alert('Confira seu objetivo', 'Use pelo menos 2 caracteres nos detalhes ou deixe o campo vazio.');
+    }
+    setSavingGoal(true);
+    try { await api.updateProfile(cleanStudyGoal(goal)); await refreshProfile(); }
+    catch (e: any) { Alert.alert('Não foi possível salvar', e.message); }
+    finally { setSavingGoal(false); }
   };
 
   const ageKey = `${profile.age_min}-${profile.age_max}`;
@@ -98,6 +114,7 @@ export default function Perfil() {
         ) : null}
 
         {/* Fotos (até 6) */}
+        <Text style={[font.small, { color: c.textMuted }]}>Fotos novas passam por análise. Ao trocar uma foto, será necessário verificar o perfil novamente.</Text>
         <View style={styles.grid}>
           {Array.from({ length: 6 }).map((_, pos) => {
             const p = photos.find((x) => x.position === pos);
@@ -108,6 +125,10 @@ export default function Perfil() {
                 {p && urls[p.storage_path]
                   ? <Image source={{ uri: urls[p.storage_path] }} style={StyleSheet.absoluteFill} contentFit="cover" />
                   : <Text style={[font.h2, { color: c.textMuted }]}>+</Text>}
+                {p ? <Text style={{ position: 'absolute', bottom: 0, left: 0, right: 0,
+                  backgroundColor: 'rgba(0,0,0,0.65)', color: '#fff', fontSize: 11, padding: 4 }}>
+                  {p.approved ? 'Aprovada' : p.auto_checked_at ? 'Recusada — trocar' : 'Em análise'}
+                </Text> : null}
               </Pressable>
             );
           })}
@@ -130,8 +151,13 @@ export default function Perfil() {
             }} />
         </Section>
 
+        <Section title="Meu objetivo">
+          <StudyGoalFields value={goal} onChange={setGoal} secondary />
+          <Button title="Salvar objetivo" onPress={saveGoal} loading={savingGoal} />
+        </Section>
+
         <Section title="Fase atual">
-          <ChipGroup options={Object.entries(statusLabels).map(([value, label]) => ({ value, label }))}
+          <ChipGroup options={Object.entries(goalStatusLabels(profile.goal_type ?? 'concurso')).map(([value, label]) => ({ value, label }))}
             value={profile.status} onChange={(v: StudyStatus) => save({ status: v })} />
         </Section>
 

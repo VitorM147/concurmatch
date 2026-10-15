@@ -7,6 +7,7 @@ import { supabase } from './supabase';
 const BUCKET = 'photos';
 const TTL_SECONDS = 60 * 60;
 const cache = new Map<string, { url: string; exp: number }>();
+export function clearPhotoCache() { cache.clear(); }
 
 export async function signedUrls(paths: string[]): Promise<Record<string, string>> {
   const now = Date.now();
@@ -35,7 +36,8 @@ export function useSignedUrls(paths: (string | null | undefined)[]) {
   useEffect(() => {
     let alive = true;
     const list = paths.filter((p): p is string => !!p);
-    if (list.length) signedUrls(list).then((u) => alive && setUrls(u));
+    setUrls({});
+    if (list.length) signedUrls(list).then((u) => alive && setUrls(u)).catch(() => {});
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
@@ -64,14 +66,14 @@ export async function pickAndUploadPhoto(userId: string, position: number): Prom
   const { error } = await supabase.storage.from(BUCKET).upload(path, body, { contentType: 'image/jpeg' });
   if (error) throw error;
 
-  // Substitui a foto da mesma posição (apaga registro e arquivo antigos)
-  const { data: old } = await supabase.from('photos').select('storage_path').eq('position', position).maybeSingle();
-  if (old) {
-    await supabase.from('photos').delete().eq('position', position);
-    await supabase.storage.from(BUCKET).remove([old.storage_path]);
+  // A troca é uma única escrita. O servidor reinicia a análise e agenda a limpeza
+  // do arquivo anterior; a foto antiga não é perdida se a escrita falhar.
+  const { error: dbError } = await supabase.rpc('replace_my_photo', { p_path: path, p_position: position });
+  if (dbError) {
+    // A resposta pode falhar após o commit. Não apague um arquivo que o banco
+    // talvez já referencie; o servidor coleta uploads órfãos após 24 horas.
+    throw dbError;
   }
-  const { error: dbError } = await supabase.from('photos').insert({ user_id: userId, storage_path: path, position });
-  if (dbError) throw dbError;
   return path;
 }
 

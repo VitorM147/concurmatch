@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/ 'sha256-oakrEaZuTPtt6RLR77PZ+eATGXE8eYi7v6C3SfX8skE='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src https://*.supabase.co wss://*.supabase.co; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/ 'sha256-M5ziBpSDk38Jxz/jpNjfennmlM0tvPtKS1CRgJrRcR8='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://*.supabase.co; connect-src https://*.supabase.co wss://*.supabase.co; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>ConMatch · Suporte</title>
@@ -227,12 +227,35 @@ th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}
       h('button', { onclick: () => render() }, 'Atualizar'),
       h('button', { onclick: async () => { await db.auth.signOut(); loginScreen(); } }, 'Sair'));
     const tabs = h('nav', {},
-      ['fila', 'lista'].map((v) => h('button', { class: view === v ? 'on' : '', onclick: () => { view = v; render(); } },
-        v === 'fila' ? 'Fila de decisões' : 'Lista de espera')));
+      ['fila', 'fotos', 'lista'].map((v) => h('button', { class: view === v ? 'on' : '', onclick: () => { view = v; render(); } },
+        v === 'fila' ? 'Fila de decisões' : v === 'fotos' ? 'Fotos pendentes' : 'Lista de espera')));
     const main = h('main');
     $app.replaceChildren(head, tabs, main);
     if (view === 'lista') return renderWaitlist(main);
+    if (view === 'fotos') return renderPhotos(main);
     return renderQueue(main);
+  }
+
+  async function renderPhotos(main) {
+    main.style.gridTemplateColumns = '1fr';
+    const photos = await rpc('admin_pending_photos');
+    const urls = await signed(photos.map((photo) => photo.path));
+    if (!photos.length) main.append(h('p', { class: 'empty' }, 'Nenhuma foto pendente.'));
+    for (const photo of photos) {
+      const note = h('textarea', { placeholder: 'Motivo da decisão (obrigatório)', rows: 2 });
+      const error = h('p', { class: 'err' });
+      const decide = (approve) => async () => {
+        try {
+          await rpc('admin_review_photo', { p_photo: photo.id, p_approve: approve, p_note: note.value });
+          await render();
+        } catch { error.textContent = 'Não foi possível decidir. Escreva um motivo e atualize a fila se o caso já foi analisado.'; }
+      };
+      main.append(h('div', { class: 'card' }, h('h3', {}, photo.name),
+        h('div', { class: 'photos' }, h('img', { src: urls[photo.path] || '', alt: 'Foto pendente de análise' })),
+        note, error, h('div', { class: 'row' },
+          h('button', { class: 'okb', onclick: decide(true) }, 'Aprovar foto'),
+          h('button', { class: 'danger', onclick: decide(false) }, 'Recusar foto'))));
+    }
   }
 
   async function renderWaitlist(main) {
@@ -303,7 +326,7 @@ th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)}
       box.append(h('h3', {}, 'Decisão'), note, out, h('div', { class: 'row' },
         h('button', { class: 'okb', onclick: decide(true) }, 'Aprovar: é a mesma pessoa'),
         h('button', { class: 'danger', onclick: decide(false) }, 'Recusar')),
-        h('p', { class: 'muted' }, 'A selfie é apagada assim que você decide.'));
+        h('p', { class: 'muted' }, 'A exclusão da selfie é agendada após a decisão; falhas são tentadas novamente pelo servidor.'));
       return;
     }
 

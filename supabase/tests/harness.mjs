@@ -34,7 +34,7 @@ export async function createDb(opts = {}) {
                    '0007_message_likes_and_interests.sql', '0008_verified_first_and_moderation.sql',
                    '0009_unverified_actions.sql', '0010_report_auto_triage.sql',
                    '0012_admin_panel_and_rules.sql', '0013_selfie_auto_check.sql', '0014_waitlist.sql',
-                   '0016_security_run3.sql']) {
+                   '0016_security_run3.sql', '0018_study_goals.sql', '0019_beta_operations.sql']) {
     if ((opts.exclude ?? []).includes(f)) continue;
     await db.exec(read(`migrations/${f}`));
   }
@@ -94,6 +94,8 @@ export async function createUser(db, overrides = {}) {
   if (u.photo !== false) {
     await asUser(db, id, `insert into public.photos (user_id, storage_path, position) values ($1, $2, 0)`,
       [id, `${id}/0.jpg`]);
+    // Fixtures comuns representam fotos já revisadas; testes da fila usam photoPending.
+    if (!u.photoPending) await db.query('update public.photos set approved = true, auto_checked_at = now() where user_id = $1', [id]);
   }
   return id;
 }

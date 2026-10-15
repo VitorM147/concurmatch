@@ -8,6 +8,15 @@ O relatório completo, a trilha de eventos e o score ficam em [`security/`](secu
 Envie para **seguranca@conmatch.com.br** (troque pelo e-mail real antes de publicar).
 Não abra issue pública. Respondemos em até 3 dias úteis.
 
+## Alterações de preparação do beta
+
+As migrations `0019`/`0020` introduzem fotos pendentes por padrão, invalidação de
+verificação após troca de imagem, confirmação de entrega de alertas e filas de
+exclusão/limpeza. O worker de manutenção remove arquivos pela Storage API antes de
+remover a identidade. A configuração e o aceite no ambiente real estão em
+`docs/BETA.md`. O score ESAA abaixo é da auditoria anterior, não uma nova auditoria
+destas alterações.
+
 ## Controles em vigor
 
 | Área | Controle | Onde |

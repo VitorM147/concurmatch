@@ -1,6 +1,12 @@
 // Camada de acesso ao backend. Telas nunca chamam o Supabase direto:
 // se um dia trocarmos por uma API própria (BFF), só este arquivo muda.
 import { supabase } from './supabase';
+import type { GoalType } from './studyGoals';
+
+export interface GoalCatalog {
+  exams: { id: number; name: string; goal_type: GoalType }[];
+  courses: { id: number; name: string }[];
+}
 
 export type Gender = 'mulher' | 'homem' | 'nao_binario';
 export type StudyStatus =
@@ -28,6 +34,12 @@ export interface Candidate {
   interests: string[];
   /** Recado que essa pessoa mandou junto da curtida (só quem recebeu vê) */
   message_to_me: string | null;
+  goal_type: GoalType;
+  goal_exam: string | null;
+  desired_course: string | null;
+  desired_institution: string | null;
+  goal_detail: string | null;
+  secondary_goals: GoalType[];
 }
 
 export interface MatchRow {
@@ -84,6 +96,12 @@ export interface ModerationStatus {
 }
 
 export interface ProfileInput {
+  goal_type?: GoalType;
+  goal_exam_id?: number | null;
+  desired_course_id?: number | null;
+  desired_institution?: string | null;
+  goal_detail?: string | null;
+  secondary_goals?: GoalType[];
   display_name: string;
   birthdate: string; // YYYY-MM-DD
   gender: Gender;
@@ -105,10 +123,16 @@ export interface ProfileInput {
   interests?: string[];
 }
 
-export type Profile = ProfileInput & { id: string; verified: boolean; is_visible: boolean };
+export type Profile = ProfileInput & { id: string; verified: boolean; is_visible: boolean; banned_at: string | null };
 
 // Erros do banco → mensagens para o usuário
 const friendly: Record<string, string> = {
+  INVALID_GOAL_EXAM: 'Escolha uma prova correspondente ao seu objetivo.',
+  INVALID_GOAL_CAREER: 'Confira a área e a seleção do seu objetivo.',
+  INVALID_SECONDARY_GOALS: 'Escolha objetivos adicionais diferentes do principal, sem repetir.',
+  GOAL_TEXT_NOT_ALLOWED: 'Descreva seu objetivo sem links, telefone ou oferta de serviços.',
+  ACCOUNT_DELETION_PENDING: 'Sua exclusão está em processamento. O perfil já foi ocultado.',
+  PHOTO_PATH_RETIRED: 'Envie a foto novamente para gerar um arquivo novo.',
   ACTION_LIMIT_REACHED: 'ACTION_LIMIT_REACHED',
   VERIFICATION_REQUIRED: 'Verifique seu perfil para mandar mensagens e conversar.',
   TARGET_NOT_VERIFIED: 'Essa pessoa ainda não verificou o perfil e não recebe mensagens. Você pode curtir normalmente.',
@@ -154,10 +178,19 @@ async function call<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
 
 export const api = {
   // ---- Catálogo
+  async goalCatalog(): Promise<GoalCatalog> {
+    const [exams, courses] = await Promise.all([
+      supabase.from('goal_exams').select('id, name, goal_type').order('id'),
+      supabase.from('study_courses').select('id, name').order('id'),
+    ]);
+    if (exams.error) fail(exams.error);
+    if (courses.error) fail(courses.error);
+    return { exams: exams.data as GoalCatalog['exams'], courses: courses.data as GoalCatalog['courses'] };
+  },
   async areas() {
-    const { data, error } = await supabase.from('career_areas').select('id, name').order('name');
+    const { data, error } = await supabase.from('career_areas').select('id, name, slug').order('name');
     if (error) fail(error);
-    return data as { id: number; name: string }[];
+    return data as { id: number; name: string; slug: string }[];
   },
   async competitions(areaId: number) {
     const { data, error } = await supabase
@@ -167,10 +200,12 @@ export const api = {
   },
 
   // ---- Perfil
-  async myProfile(): Promise<Profile | null> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
-    const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+  async myProfile(knownUserId?: string): Promise<Profile | null> {
+    const auth = knownUserId ? null : await supabase.auth.getUser();
+    if (auth?.error) fail(auth.error);
+    const uid = knownUserId ?? auth?.data.user?.id;
+    if (!uid) return null;
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
     if (error) fail(error);
     return data as Profile | null;
   },
@@ -178,7 +213,8 @@ export const api = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new ApiError('NOT_AUTHENTICATED', friendly.NOT_AUTHENTICATED);
     const c = await supabase.from('consents')
-      .upsert(consents.map((kind) => ({ user_id: user.id, kind, version: termsVersion })));
+      .upsert(consents.map((kind) => ({ user_id: user.id, kind, version: termsVersion })),
+        { onConflict: 'user_id,kind,version', ignoreDuplicates: true });
     if (c.error) fail(c.error);
     const { error } = await supabase.from('profiles').insert({ id: user.id, ...input });
     if (error) fail(error);
@@ -190,9 +226,9 @@ export const api = {
     if (error) fail(error);
   },
   async myPhotos() {
-    const { data, error } = await supabase.from('photos').select('id, storage_path, position').order('position');
+    const { data, error } = await supabase.from('photos').select('id, storage_path, position, approved, auto_checked_at').order('position');
     if (error) fail(error);
-    return data as { id: string; storage_path: string; position: number }[];
+    return data as { id: string; storage_path: string; position: number; approved: boolean; auto_checked_at: string | null }[];
   },
 
   // ---- Discovery / swipe
@@ -222,13 +258,19 @@ export const api = {
     if (error) fail(error);
     return data as Message;
   },
-  subscribeMessages(matchId: string, onMessage: (m: Message) => void) {
+  async messagesSince(matchId: string, afterId: number) {
+    const { data, error } = await supabase.from('messages').select('*').eq('match_id', matchId)
+      .gt('id', afterId).order('id', { ascending: true }).limit(100);
+    if (error) fail(error);
+    return data as Message[];
+  },
+  subscribeMessages(matchId: string, onMessage: (m: Message) => void, onConnected?: () => void) {
     const channel = supabase
       .channel(`chat:${matchId}`)
       .on('postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages', filter: `match_id=eq.${matchId}` },
-        (payload) => onMessage(payload.new as Message))
-      .subscribe();
+        { event: '*', schema: 'public', table: 'messages', filter: `match_id=eq.${matchId}` },
+        (payload) => { if ('id' in payload.new) onMessage(payload.new as Message); })
+      .subscribe((status) => { if (status === 'SUBSCRIBED') onConnected?.(); });
     return () => { supabase.removeChannel(channel); };
   },
 
@@ -244,10 +286,6 @@ export const api = {
     call<string>('report_user', { p_target: target, p_reason: reason, p_details: details ?? null, p_match: matchId ?? null }),
   exportMyData: () => call<Record<string, unknown>>('export_my_data'),
   async deleteAccount() {
-    // LGPD: apaga os arquivos de foto do Storage antes de apagar a conta
-    // (o banco apaga os registros em cascata, mas não os arquivos).
-    const photos = await api.myPhotos().catch(() => []);
-    if (photos.length) await supabase.storage.from('photos').remove(photos.map((p) => p.storage_path));
-    await call<void>('delete_my_account');
+    await call<void>('request_account_deletion');
   },
 };

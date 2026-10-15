@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
-import { Empty, Screen } from '@/components/ui';
+import { Button, Empty, Screen } from '@/components/ui';
 import { api, type MatchRow } from '@/lib/api';
 import { useSignedUrls } from '@/lib/photos';
 import { useSession } from '@/lib/session';
@@ -15,17 +15,23 @@ export default function Mensagens() {
   const { session } = useSession();
   const [rows, setRows] = useState<MatchRow[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const urls = useSignedUrls(rows.map((r) => r.photo));
 
   const load = useCallback(async () => {
-    setRefreshing(true);
-    try { setRows((await api.matches()).filter((r) => r.last_message)); } catch {} finally { setRefreshing(false); }
+    setRefreshing(true); setLoadError(false);
+    try { setRows((await api.matches()).filter((r) => r.last_message)); } catch { setLoadError(true); } finally { setRefreshing(false); }
   }, []);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const open = (r: MatchRow) => router.push({
     pathname: '/chat/[id]', params: { id: r.match_id, name: r.display_name, other: r.other_id },
   });
+
+  if (loadError) return <Screen><View style={{ padding: space.xl, gap: space.md }}>
+    <Text style={[font.body, { color: c.text }]}>Não conseguimos carregar suas conexões. Confira a conexão.</Text>
+    <Button title="Tentar novamente" onPress={load} loading={refreshing} />
+  </View></Screen>;
 
   if (!rows.length && !refreshing) {
     return (

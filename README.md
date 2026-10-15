@@ -1,6 +1,6 @@
 # ConMatch — MVP
 
-App de relacionamento para quem estuda para concursos, vestibular, OAB e residência (18+). *Pessoas que constroem mais juntas.* Para trocar o nome, edite `apps/mobile/src/brand.ts` e `apps/mobile/app.json`.
+App de relacionamento para quem estuda para concursos, vestibular/ENEM, carreira militar, OAB e residência (18+). *Pessoas que constroem mais juntas.* Para trocar o nome, edite `apps/mobile/src/brand.ts` e `apps/mobile/app.json`.
 
 > Deu match? **"Deu ConMatch! Vocês querem se conhecer."**
 
@@ -11,13 +11,45 @@ App de relacionamento para quem estuda para concursos, vestibular, OAB e residê
 | Parte | Conteúdo |
 |---|---|
 | **Banco (Supabase/Postgres)** | Schema, RLS, regras de negócio em funções SQL, catálogo de concursos e configurações |
-| **Testes do banco** | 94 testes automatizados com Postgres embarcado: match, cotas diárias, verificação, curtida com mensagem, filtro de programa/cobrança, denúncia com evidência, recurso, interesses, discovery, chat, bloqueio, denúncia, RLS, LGPD e regressões de segurança |
+| **Testes do banco** | 115 testes automatizados com Postgres embarcado: match, cotas diárias, verificação, curtida com mensagem, filtro de programa/cobrança, denúncia com evidência, recurso, interesses, discovery, chat, bloqueio, denúncia, RLS, LGPD e regressões de segurança |
 | **App (Expo / React Native)** | Cadastro e login, onboarding com consentimento LGPD, Descobrir (swipe + curtida com mensagem), tela de match, abas Conexões e Mensagens, chat em tempo real com sugestões para conversar, denunciar, bloquear e desfazer match, perfil com fotos, "Sobre mim", interesses e preferências, Premium (tela, só verificado), verificação por gesto + selfie, perfil em análise com recurso, Central de segurança, excluir conta |
 | **CI** | GitHub Actions rodando os testes do banco e o typecheck do app |
 
+### Beta fechado e teste manual
+
+Consulte [docs/BETA.md](docs/BETA.md) para a implantação em homologação e o roteiro
+completo de aceite no aparelho. As migrations `0019` e `0020` exigem a atualização
+das Edge Functions e a configuração de `storage-maintenance`; a exclusão de conta
+passa a ser uma solicitação persistente, concluída após remover os arquivos.
+Fotos novas ficam pendentes e podem ser aprovadas na aba **Fotos pendentes** do
+painel de suporte, com MFA. Trocar fotos exige nova verificação do perfil.
+O app inclui recuperação de senha e callback de e-mail; esses links precisam ser
+testados em build nativo com os redirects do Supabase configurados.
+
+### Objetivos de preparação
+
+O onboarding parte de um objetivo principal: concurso público, vestibular/ENEM,
+carreira militar ou OAB/residência. Área, prova, curso, instituição e detalhes são
+opcionais. O perfil permite editar o objetivo e adicionar outros caminhos.
+Os cards mostram prova/seleção e curso desejado. O público não é um filtro de
+exclusão: a descoberta continua respeitando gênero, idade, distância e segurança.
+Afinidades de objetivo, prova e curso têm pesos configuráveis no banco.
+
+**Atualização de uma instalação existente:** aplique
+`supabase/migrations/0018_study_goals.sql` antes de publicar o novo aplicativo.
+Ela preserva os dados antigos e identifica perfis da área militar; recria a RPC
+`discover` com os novos campos e mantém seu acesso restrito a usuários autenticados.
+Os catálogos iniciais são sugestões de preparação, não uma agenda de inscrições.
+Para alterá-los, use uma nova migration, preservando os IDs já referenciados.
+Valide primeiro em homologação. A atualização não publica o app nem aplica SQL
+no projeto hospedado automaticamente.
+
+O app também tem oito testes de objetivos, links de autenticação e histórico de mensagens:
+`cd apps/mobile && npm test` (Node 22.6+).
+
 ### Regras de negócio implementadas
 
-- **Mostrou a cara, ganhou voz.** Sem verificação a pessoa só curte e passa, até 10 vezes por dia: não manda nem recebe curtida com mensagem, não conversa depois do match (o chat só abre entre dois verificados) e não assina o Premium. A verificação é um gesto sorteado + selfie, revisada pelo suporte (`moderation_review_verification`), e vale para sempre.
+- **Mostrou a cara, ganhou voz.** Sem verificação a pessoa só curte e passa, até 10 vezes por dia: não manda nem recebe curtida com mensagem, não conversa depois do match (o chat só abre entre dois verificados) e não assina o Premium. A verificação é um gesto sorteado + selfie, revisada pelo suporte (`moderation_review_verification`), e precisa ser refeita após trocar fotos.
 - **Ações por dia = curtir + passar.** 10 sem verificação, 50 verificado grátis e 250 no Premium, renovando à meia-noite de Brasília (configurável em `app_config`). Passar conta para ninguém "folhear" perfis só atrás de @ na bio.
 - **Curtida com mensagem (botão ★).** Recado de até 100 caracteres junto da curtida, só entre perfis verificados. A pessoa vê o recado no card, e quem mandou recado aparece primeiro no Descobrir. Se der match, os recados viram as primeiras mensagens da conversa. Sem links, e-mails, @perfis, telefone, Pix ou preço; 5 por dia no grátis e 100 no Premium. A curtida conta nas ações do dia.
 - **Sem programa nem cobrança.** Termos típicos ("faço programa", "atendo com local", "cachê", "valores no pv", OnlyFans, sugar...) são barrados na bio, no recado e no chat; na bio e no recado também Pix e preço. A bio não aceita telefone, link ou e-mail (o @ do Instagram pode). Há um motivo de denúncia próprio, com alerta prioritário.
@@ -75,7 +107,7 @@ conmatch/
 ### 1. Supabase (cerca de 10 min)
 
 1. Crie um projeto em [supabase.com](https://supabase.com), na região **South America (São Paulo)**.
-2. Em **SQL Editor**, rode em ordem os arquivos `0001` a `0007` de `supabase/migrations/` e depois o `seed.sql` (o `0006` exige a extensão `pg_cron`).
+2. Em **SQL Editor**, rode em ordem os arquivos `0001` a `0020` de `supabase/migrations/` e depois o `seed.sql` (o `0006` exige a extensão `pg_cron`).
    - Se usar a Supabase CLI: `supabase link` e depois `supabase db push`.
 3. Em **Authentication → Providers → Email**, deixe ativo. Em desenvolvimento, você pode desligar o "Confirm email".
 
@@ -97,7 +129,7 @@ Abra no celular pelo app **Expo Go**, lendo o QR code. Para testar o match, crie
 ```bash
 cd supabase/tests
 npm install
-npm test          # 41 testes (regras + segurança + curtida com mensagem), sem Docker nem Supabase
+npm test          # 115 testes: regras, segurança e objetivos, sem Docker nem Supabase
 ```
 
 ## Próximos passos (fora deste MVP)
@@ -108,7 +140,7 @@ npm test          # 41 testes (regras + segurança + curtida com mensagem), sem 
 | Push de "novo match" e "nova mensagem" | Database Webhook → Edge Function → Expo Push |
 | Prova de vida na verificação (Face Liveness) | Componente nativo da AWS no app; hoje a selfie com desafio + CompareFaces já roda (`selfie-check`) |
 | Moderação automática de fotos | Edge Function + Rekognition `DetectModerationLabels` → `photos.approved` |
-| Apagar arquivos de foto ao excluir conta | Edge Function agendada limpando arquivos órfãos do Storage |
+| Validar exclusão e limpeza no ambiente real | Worker `storage-maintenance` e fila durável já implementados; configurar conforme `docs/BETA.md` |
 | Login com Google/Apple | Supabase Auth OAuth (a Apple exige "Sign in with Apple" se houver login social) |
 
 ## Custos (MVP)
