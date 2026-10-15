@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: supabase/tests } }
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with: { node-version: 22, cache: npm, cache-dependency-path: supabase/tests/package-lock.json }
       - run: npm ci                      # DS-006: build reproduzível pelo lockfile
@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: apps/mobile } }
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with: { node-version: 22, cache: npm, cache-dependency-path: apps/mobile/package-lock.json }
       - run: npm ci
@@ -43,14 +43,14 @@ jobs:
     name: Trilha da auditoria ESAA (replay + SHA-256)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: python3 security/tools/esaa_project.py verify
 
   secrets:
     name: Secrets scanning (gitleaks)      # DO-003 / SC-001
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { fetch-depth: 0 }           # varre o histórico inteiro
       - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
         env:
@@ -60,7 +60,7 @@ jobs:
     name: Site e painel (cabeçalhos de segurança)   # SH-001..005
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # Falha se um <script> inline mudou e a CSP (hashes) não foi regenerada
       - run: python3 apps/security-headers.py --check
 
@@ -68,7 +68,7 @@ jobs:
     name: Edge Functions (deno check)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with: { deno-version: v2.x }
       - run: deno check supabase/functions/report-triage/index.ts supabase/functions/selfie-check/index.ts supabase/functions/storage-maintenance/index.ts
@@ -78,7 +78,7 @@ jobs:
     runs-on: ubuntu-latest
     container: semgrep/semgrep
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: semgrep scan --config p/typescript --config p/javascript --config p/react --config p/secrets --error --metrics=off
 
   dependencies:
@@ -88,7 +88,7 @@ jobs:
       matrix: { dir: [apps/mobile, supabase/tests] }
     defaults: { run: { working-directory: '${{ matrix.dir }}' } }
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with: { node-version: 22 }
       # Bloqueia CRITICAL. Os HIGH restantes são de ferramentas de build sem
