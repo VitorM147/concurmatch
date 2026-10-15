@@ -1,6 +1,6 @@
 # ConMatch — MVP
 
-App de relacionamento para quem estuda para concursos, vestibular, OAB e residência (18+). *Pessoas que constroem mais juntas.* Para trocar o nome, edite `apps/mobile/src/brand.ts` e `apps/mobile/app.json`.
+App de relacionamento para quem estuda para concursos, vestibular/ENEM, carreira militar, OAB e residência (18+). *Pessoas que constroem mais juntas.* Para trocar o nome, edite `apps/mobile/src/brand.ts` e `apps/mobile/app.json`.
 
 > Deu match? **"Deu ConMatch! Vocês querem se conhecer."**
 
@@ -11,9 +11,30 @@ App de relacionamento para quem estuda para concursos, vestibular, OAB e residê
 | Parte | Conteúdo |
 |---|---|
 | **Banco (Supabase/Postgres)** | Schema, RLS, regras de negócio em funções SQL, catálogo de concursos e configurações |
-| **Testes do banco** | 94 testes automatizados com Postgres embarcado: match, cotas diárias, verificação, curtida com mensagem, filtro de programa/cobrança, denúncia com evidência, recurso, interesses, discovery, chat, bloqueio, denúncia, RLS, LGPD e regressões de segurança |
+| **Testes do banco** | 103 testes automatizados com Postgres embarcado: match, cotas diárias, verificação, curtida com mensagem, filtro de programa/cobrança, denúncia com evidência, recurso, interesses, discovery, chat, bloqueio, denúncia, RLS, LGPD e regressões de segurança |
 | **App (Expo / React Native)** | Cadastro e login, onboarding com consentimento LGPD, Descobrir (swipe + curtida com mensagem), tela de match, abas Conexões e Mensagens, chat em tempo real com sugestões para conversar, denunciar, bloquear e desfazer match, perfil com fotos, "Sobre mim", interesses e preferências, Premium (tela, só verificado), verificação por gesto + selfie, perfil em análise com recurso, Central de segurança, excluir conta |
 | **CI** | GitHub Actions rodando os testes do banco e o typecheck do app |
+
+### Objetivos de preparação
+
+O onboarding parte de um objetivo principal: concurso público, vestibular/ENEM,
+carreira militar ou OAB/residência. Área, prova, curso, instituição e detalhes são
+opcionais. O perfil permite editar o objetivo e adicionar outros caminhos.
+Os cards mostram prova/seleção e curso desejado. O público não é um filtro de
+exclusão: a descoberta continua respeitando gênero, idade, distância e segurança.
+Afinidades de objetivo, prova e curso têm pesos configuráveis no banco.
+
+**Atualização de uma instalação existente:** aplique
+`supabase/migrations/0018_study_goals.sql` antes de publicar o novo aplicativo.
+Ela preserva os dados antigos e identifica perfis da área militar; recria a RPC
+`discover` com os novos campos e mantém seu acesso restrito a usuários autenticados.
+Os catálogos iniciais são sugestões de preparação, não uma agenda de inscrições.
+Para alterá-los, use uma nova migration, preservando os IDs já referenciados.
+Valide primeiro em homologação. A atualização não publica o app nem aplica SQL
+no projeto hospedado automaticamente.
+
+O app também tem quatro testes de transformação e apresentação de objetivos:
+`cd apps/mobile && npm test` (Node 22.6+).
 
 ### Regras de negócio implementadas
 
@@ -75,7 +96,7 @@ conmatch/
 ### 1. Supabase (cerca de 10 min)
 
 1. Crie um projeto em [supabase.com](https://supabase.com), na região **South America (São Paulo)**.
-2. Em **SQL Editor**, rode em ordem os arquivos `0001` a `0007` de `supabase/migrations/` e depois o `seed.sql` (o `0006` exige a extensão `pg_cron`).
+2. Em **SQL Editor**, rode em ordem os arquivos `0001` a `0018` de `supabase/migrations/` e depois o `seed.sql` (o `0006` exige a extensão `pg_cron`).
    - Se usar a Supabase CLI: `supabase link` e depois `supabase db push`.
 3. Em **Authentication → Providers → Email**, deixe ativo. Em desenvolvimento, você pode desligar o "Confirm email".
 
@@ -97,7 +118,7 @@ Abra no celular pelo app **Expo Go**, lendo o QR code. Para testar o match, crie
 ```bash
 cd supabase/tests
 npm install
-npm test          # 41 testes (regras + segurança + curtida com mensagem), sem Docker nem Supabase
+npm test          # 103 testes: regras, segurança e objetivos, sem Docker nem Supabase
 ```
 
 ## Próximos passos (fora deste MVP)

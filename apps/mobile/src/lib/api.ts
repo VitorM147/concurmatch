@@ -1,6 +1,12 @@
 // Camada de acesso ao backend. Telas nunca chamam o Supabase direto:
 // se um dia trocarmos por uma API própria (BFF), só este arquivo muda.
 import { supabase } from './supabase';
+import type { GoalType } from './studyGoals';
+
+export interface GoalCatalog {
+  exams: { id: number; name: string; goal_type: GoalType }[];
+  courses: { id: number; name: string }[];
+}
 
 export type Gender = 'mulher' | 'homem' | 'nao_binario';
 export type StudyStatus =
@@ -28,6 +34,12 @@ export interface Candidate {
   interests: string[];
   /** Recado que essa pessoa mandou junto da curtida (só quem recebeu vê) */
   message_to_me: string | null;
+  goal_type: GoalType;
+  goal_exam: string | null;
+  desired_course: string | null;
+  desired_institution: string | null;
+  goal_detail: string | null;
+  secondary_goals: GoalType[];
 }
 
 export interface MatchRow {
@@ -84,6 +96,12 @@ export interface ModerationStatus {
 }
 
 export interface ProfileInput {
+  goal_type?: GoalType;
+  goal_exam_id?: number | null;
+  desired_course_id?: number | null;
+  desired_institution?: string | null;
+  goal_detail?: string | null;
+  secondary_goals?: GoalType[];
   display_name: string;
   birthdate: string; // YYYY-MM-DD
   gender: Gender;
@@ -109,6 +127,10 @@ export type Profile = ProfileInput & { id: string; verified: boolean; is_visible
 
 // Erros do banco → mensagens para o usuário
 const friendly: Record<string, string> = {
+  INVALID_GOAL_EXAM: 'Escolha uma prova correspondente ao seu objetivo.',
+  INVALID_GOAL_CAREER: 'Confira a área e a seleção do seu objetivo.',
+  INVALID_SECONDARY_GOALS: 'Escolha objetivos adicionais diferentes do principal, sem repetir.',
+  GOAL_TEXT_NOT_ALLOWED: 'Descreva seu objetivo sem links, telefone ou oferta de serviços.',
   ACTION_LIMIT_REACHED: 'ACTION_LIMIT_REACHED',
   VERIFICATION_REQUIRED: 'Verifique seu perfil para mandar mensagens e conversar.',
   TARGET_NOT_VERIFIED: 'Essa pessoa ainda não verificou o perfil e não recebe mensagens. Você pode curtir normalmente.',
@@ -154,10 +176,19 @@ async function call<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
 
 export const api = {
   // ---- Catálogo
+  async goalCatalog(): Promise<GoalCatalog> {
+    const [exams, courses] = await Promise.all([
+      supabase.from('goal_exams').select('id, name, goal_type').order('id'),
+      supabase.from('study_courses').select('id, name').order('id'),
+    ]);
+    if (exams.error) fail(exams.error);
+    if (courses.error) fail(courses.error);
+    return { exams: exams.data as GoalCatalog['exams'], courses: courses.data as GoalCatalog['courses'] };
+  },
   async areas() {
-    const { data, error } = await supabase.from('career_areas').select('id, name').order('name');
+    const { data, error } = await supabase.from('career_areas').select('id, name, slug').order('name');
     if (error) fail(error);
-    return data as { id: number; name: string }[];
+    return data as { id: number; name: string; slug: string }[];
   },
   async competitions(areaId: number) {
     const { data, error } = await supabase

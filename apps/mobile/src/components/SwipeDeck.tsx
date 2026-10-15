@@ -6,7 +6,8 @@ import {
   Animated, Dimensions, PanResponder, Pressable, StyleSheet, Text, View,
 } from 'react-native';
 import type { Candidate } from '@/lib/api';
-import { interestLabels, periodLabels, statusLabels } from '@/brand';
+import { interestLabels, periodLabels } from '@/brand';
+import { goalLabels, goalStatusLabels, studyGoalSummary } from '@/lib/studyGoals';
 import { fonts, palette, radius, space, useColors } from '@/theme';
 
 const { width: W, height: H } = Dimensions.get('window');
@@ -122,12 +123,16 @@ function Card({ c, urls, mine }: { c: Candidate; urls: Record<string, string>; m
         <Text style={styles.name}>
           {c.display_name}, {c.age}{c.verified ? '  ✓' : ''}
         </Text>
-        {c.competition ? (
-          <Text style={styles.comp}>
-            <Text style={styles.highlight}> {c.competition} </Text>
-            {'  '}{statusLabels[c.status]}
-          </Text>
-        ) : null}
+        <Text style={styles.comp} numberOfLines={2}>
+          <Text style={styles.highlight}> {studyGoalSummary(c)} </Text>
+          {'  '}{goalStatusLabels(c.goal_type ?? 'concurso')[c.status]}
+        </Text>
+        {c.desired_institution || c.goal_detail ? <Text style={styles.meta} numberOfLines={1}>
+          {[c.desired_institution, c.goal_detail].filter(Boolean).join(' · ')}
+        </Text> : null}
+        {c.secondary_goals?.length ? <Text style={styles.meta} numberOfLines={1}>
+          Também: {c.secondary_goals.map((g) => goalLabels[g]).join(' · ')}
+        </Text> : null}
         <Text style={styles.meta}>
           {place}{c.study_period ? ` · estuda de ${periodLabels[c.study_period].toLowerCase()}` : ''}
         </Text>

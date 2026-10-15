@@ -1,15 +1,17 @@
-// Onboarding em etapas: consentimento → você → onde → concurso → lotação → foto
+// Onboarding em etapas: consentimento → você → onde → objetivo → destino → foto
 import { Image } from 'expo-image';
 import * as Location from 'expo-location';
 import { useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, ChipGroup, Field, H1, P, Screen } from '@/components/ui';
+import { StudyGoalFields } from '@/components/StudyGoalFields';
+import { cleanStudyGoal, emptyStudyGoal, goalStatusLabels } from '@/lib/studyGoals';
 import { api, ApiError, type Gender, type ProfileInput, type StudyPeriod, type StudyStatus } from '@/lib/api';
 import { pickAndUploadPhoto, signedUrls } from '@/lib/photos';
 import { useSession } from '@/lib/session';
 import { supabase } from '@/lib/supabase';
-import { brand, communityRules, genderLabels, periodLabels, statesOrdered, statusLabels } from '@/brand';
+import { brand, communityRules, genderLabels, periodLabels, statesOrdered } from '@/brand';
 import { font, radius, space, useColors } from '@/theme';
 
 const STEPS = 6;
@@ -51,11 +53,8 @@ export default function Onboarding() {
   const [state, setState] = useState<string | null>(null);
   const [city, setCity] = useState('');
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-  // concurso
-  const [areas, setAreas] = useState<{ id: number; name: string }[]>([]);
-  const [areaId, setAreaId] = useState<number | null>(null);
-  const [comps, setComps] = useState<{ id: number; organization: string; name: string }[]>([]);
-  const [compId, setCompId] = useState<number | null>(null);
+  // Um objetivo principal; detalhes são opcionais e podem ser editados depois.
+  const [goal, setGoal] = useState(emptyStudyGoal);
   const [status, setStatus] = useState<StudyStatus>('estudando');
   const [period, setPeriod] = useState<StudyPeriod | null>(null);
   // lotação
@@ -66,15 +65,10 @@ export default function Onboarding() {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [profileCreated, setProfileCreated] = useState(false);
 
-  useEffect(() => { api.areas().then(setAreas).catch(() => {}); }, []);
   // Perfil já criado mas sem foto (app fechado no meio): retoma na etapa da foto
   useEffect(() => {
     if (profile) { setProfileCreated(true); setStep(5); }
   }, [profile]);
-  useEffect(() => {
-    setCompId(null);
-    if (areaId) api.competitions(areaId).then(setComps).catch(() => setComps([]));
-  }, [areaId]);
 
   const useMyLocation = async () => {
     const { status: perm } = await Location.requestForegroundPermissionsAsync();
@@ -98,7 +92,7 @@ export default function Onboarding() {
     terms && sensitive && rules,
     name.trim().length >= 2 && !!birthIso && ageOf(birthIso) >= 18 && !!gender && interest.length > 0,
     !!state && city.trim().length >= 2,
-    !!areaId,
+    !!goal.goal_type && [goal.desired_institution, goal.goal_detail].every((s) => !s?.trim() || s.trim().length >= 2),
     !lotacao || (!!tState && tCity.trim().length >= 2),
     !!photoUrl,
   ];
@@ -116,8 +110,7 @@ export default function Onboarding() {
       lng_approx: coords?.lng ?? null,
       target_state: lotacao ? tState : null,
       target_city: lotacao ? tCity.trim() : null,
-      area_id: areaId,
-      competition_id: compId,
+      ...cleanStudyGoal(goal),
       status,
       study_period: period,
     };
@@ -205,7 +198,7 @@ export default function Onboarding() {
                 <Label>Tenho interesse em</Label>
                 <ChipGroup options={opts(genderLabels)} value={interest} onChange={setInterest} multi />
                 <Field label="Sobre mim (opcional)" value={bio} onChangeText={setBio} multiline maxLength={500}
-                  placeholder="Ex.: Pós-edital da PF, café preto e Lei Seca às 6h."
+                  placeholder="Ex.: Entre estudos, café e cinema, quero conhecer alguém especial."
                   style={{ height: 96, textAlignVertical: 'top', paddingTop: space.md }} />
               </>
             )}
@@ -224,18 +217,10 @@ export default function Onboarding() {
 
             {step === 3 && (
               <>
-                <H1>Seu concurso</H1>
-                <Label>Área</Label>
-                <ChipGroup options={areas.map((a) => ({ value: a.id, label: a.name }))} value={areaId} onChange={setAreaId} />
-                {comps.length > 0 && (
-                  <>
-                    <Label>Concurso / cargo (opcional)</Label>
-                    <ChipGroup options={comps.map((x) => ({ value: x.id, label: `${x.organization} — ${x.name}` }))}
-                      value={compId} onChange={setCompId} />
-                  </>
-                )}
+                <H1>Seu momento</H1>
+                <StudyGoalFields value={goal} onChange={setGoal} />
                 <Label>Em que fase você está</Label>
-                <ChipGroup options={opts(statusLabels)} value={status} onChange={setStatus} />
+                <ChipGroup options={opts(goalStatusLabels(goal.goal_type))} value={status} onChange={setStatus} />
                 <Label>Quando você estuda</Label>
                 <ChipGroup options={opts(periodLabels)} value={period} onChange={setPeriod} />
               </>
@@ -243,11 +228,11 @@ export default function Onboarding() {
 
             {step === 4 && (
               <>
-                <H1>Modo Lotação</H1>
-                <P muted>Vai (ou quer) ser lotado(a) em outra cidade? Mostramos também pessoas de lá e quem vai para o mesmo lugar.</P>
+                <H1>{goal.goal_type === 'vestibular' ? 'Onde você quer estudar' : 'Seu próximo destino'}</H1>
+                <P muted>Quer mudar de cidade para estudar ou trabalhar? Você também pode conhecer pessoas de lá e quem vai para o mesmo lugar.</P>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Text style={[font.body, { color: c.text }]}>Ativar Modo Lotação</Text>
-                  <Switch value={lotacao} onValueChange={setLotacao} accessibilityLabel="Ativar Modo Lotação" />
+                  <Text style={[font.body, { color: c.text }]}>Conhecer pessoas no destino</Text>
+                  <Switch value={lotacao} onValueChange={setLotacao} accessibilityLabel="Conhecer pessoas no destino" />
                 </View>
                 {lotacao && (
                   <>
