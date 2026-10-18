@@ -3,5 +3,5 @@
   "private": true,
   "type": "module",
   "scripts": { "test": "node --test --test-concurrency=1" },
-  "devDependencies": { "@electric-sql/pglite": "^0.5.8" }
+  "devDependencies": { "@electric-sql/pglite": "^0.5.10" }
 }
